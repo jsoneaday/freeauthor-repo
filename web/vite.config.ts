@@ -12,4 +12,10 @@ export default defineConfig({
     environment: "node",
     testTimeout: 30000,
   },
+  resolve: {
+    alias: {
+      stream: "rollup-plugin-node-polyfills/polyfills/stream",
+      crypto: "crypto-browserify",
+    },
+  },
 });

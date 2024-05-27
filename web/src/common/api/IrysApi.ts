@@ -10,12 +10,15 @@ import {
   WorkTopicModel,
   WorkWithAuthorModel,
   QueryResponse,
+  TxValidationMetadata,
 } from "./ApiModels";
 import { IApi, TxHashPromise } from "./IApi";
-import { WebIrys, NodeIrys } from "@irys/sdk";
+import { WebIrys } from "@irys/sdk";
+import SolanaConfig from "@irys/sdk/node/tokens/solana";
+import { BaseWebIrys } from "@irys/sdk/web/base";
+import { type WebToken } from "@irys/sdk/web/types";
 import Query from "@irys/query";
 import { IRYS_DATA_URL, RPC_URL, TOKEN, TX_METADATA_URL } from "../Env";
-import { readFileSync } from "fs";
 import bs58 from "bs58";
 
 const DESC = "DESC";
@@ -24,7 +27,7 @@ const SEARCH_TX = "irys:transactions";
 
 /// Note all entity id are the transaction id on Irys
 export class IrysApi implements IApi {
-  #irys?: WebIrys | NodeIrys;
+  #irys?: WebIrys | BaseWebIrys;
   get #Irys() {
     if (!this.#irys) throw new Error("#webIrys is not set yet!");
     return this.#irys;
@@ -67,13 +70,20 @@ export class IrysApi implements IApi {
       );
       const key = bs58.encode(keyBuffer);
 
-      const irys = new NodeIrys({
+      const irys = new BaseWebIrys({
         network: this.#network,
-        token: this.#token,
-        key,
         config: {
           providerUrl: RPC_URL,
         },
+        getTokenConfig: (irys): WebToken =>
+          new SolanaConfig({
+            irys,
+            name: "solana",
+            ticker: "SOL",
+            minConfirm: 1,
+            providerUrl: RPC_URL,
+            wallet: key,
+          }) as unknown as WebToken,
       });
       this.#irys = await irys.ready();
     }
@@ -94,10 +104,6 @@ export class IrysApi implements IApi {
     await this.#Irys.fund(await this.#Irys.getPrice(file.size));
   }
 
-  async #fundFileBuffer(file: Buffer) {
-    await this.#Irys.fund(await this.#Irys.getPrice(file.byteLength));
-  }
-
   #getByteSizeOfString(content: string): number {
     const encoder = new TextEncoder();
     const encodedString = encoder.encode(content);
@@ -116,43 +122,37 @@ export class IrysApi implements IApi {
     });
   }
 
-  async #uploadFile(
-    file: File | string,
-    tags: Tag[],
-    fund: boolean
-  ): TxHashPromise {
-    if (typeof file == "string") {
-      return await this.#uploadFileFromPath(file, tags, fund);
-    }
+  async #uploadFile(file: File, tags: Tag[], fund: boolean): TxHashPromise {
     if (fund) await this.#fundFile(file);
     return await (this.#Irys as WebIrys).uploadFile(file, {
       tags: [...BaseTags, ...tags],
     });
   }
 
-  async #uploadFileFromPath(
-    path: string,
-    tags: Tag[],
-    fund: boolean
-  ): TxHashPromise {
-    const file = readFileSync(path);
-    if (fund) await this.#fundFileBuffer(file);
-    return await (this.#Irys as NodeIrys).uploadFile(path, {
-      tags: [...BaseTags, ...tags],
-    });
-  }
-
-  async #confirmEntityOwner(
+  async #isEntityOwner(
     txId: string,
-    _verificationAddress: string
+    verificationAddress: string
   ): Promise<boolean> {
     const result = await fetch(`${TX_METADATA_URL}/${txId}`);
     if (result.ok) {
-      const txMeta = await result.json();
-      console.log("txMeta", txMeta);
-      return true;
+      const txMeta: TxValidationMetadata = await result.json();
+
+      return txMeta.address === verificationAddress;
     }
     return false;
+  }
+
+  async #convertQueryToWorkWithModel(
+    queryResp: QueryResponse,
+    data: null | string | ArrayBuffer
+  ) {
+    const queryWorkWithData: QueryResponseWithData = { data, ...queryResp };
+    const workModel = convertQueryToWork(queryWorkWithData);
+    const profileModel = await this.getProfile(workModel.author_id);
+
+    if (!profileModel)
+      throw new Error(`Profile with id ${workModel.author_id} not found!`);
+    return convertModelsToWorkWithAuthor(workModel, profileModel);
   }
 
   async getData(
@@ -213,8 +213,8 @@ export class IrysApi implements IApi {
     priorWorkId: string,
     fund: boolean = false
   ): TxHashPromise {
-    if (!(await this.#confirmEntityOwner(priorWorkId, this.Address))) {
-      throw new Error("");
+    if (!(await this.#isEntityOwner(priorWorkId, this.Address))) {
+      throw new Error("This user is not the original entity creator and owner");
     }
     return await this.addWork(
       title,
@@ -233,25 +233,35 @@ export class IrysApi implements IApi {
       .sort(DESC);
 
     if (workQueryResponse.length > 0) {
-      const workQueryResponseItem: QueryResponse = workQueryResponse[0];
-      const data = await this.getData(workQueryResponseItem.id, true);
-      const workResponse: QueryResponseWithData = {
-        data,
-        ...workQueryResponseItem,
-      };
-      const work = convertQueryToWork(workResponse);
-
-      const profile = await this.getProfile(work.author_id);
-      return convertModelsToWorkWithAuthor(work, profile!);
+      const data = await this.getData(workQueryResponse[0].id, true);
+      return this.#convertQueryToWorkWithModel(workQueryResponse[0], data);
     }
     return null;
   }
 
   async searchWorksTop(
-    _searchTxt: string,
-    _pageSize: number
+    searchTxt: string,
+    pageSize: number
   ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    const workResponses: QueryResponse[] = await this.#Query
+      .search(SEARCH_TX)
+      .tags([
+        { name: "title", values: [searchTxt] },
+        { name: "description", values: [searchTxt] },
+      ])
+      .limit(pageSize);
+
+    const works: WorkWithAuthorModel[] = new Array(workResponses.length);
+    if (workResponses.length > 0) {
+      for (let i = 0; i < workResponses.length; i++) {
+        const data = await this.getData(workResponses[i].id, true);
+        works[i] = await this.#convertQueryToWorkWithModel(
+          workResponses[0],
+          data
+        );
+      }
+    }
+    return works;
   }
 
   async searchWorks(

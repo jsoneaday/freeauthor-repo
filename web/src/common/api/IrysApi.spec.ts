@@ -36,6 +36,50 @@ describe("IrysApi tests", () => {
     expect(work.id).toBeTypeOf("string");
   });
 
+  it("updateWork modifies an existing work", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+
+    const username = faker.internet.userName();
+    const fullname = faker.internet.displayName();
+    const profileDesc = faker.lorem.sentences(1);
+
+    const profileResult = await api.addProfile(username, fullname, profileDesc);
+    const profileResponse = profileResult as UploadResponse;
+
+    const title = faker.lorem.words(3);
+    const description = faker.lorem.lines(1);
+    const content = faker.lorem.paragraph(1);
+    const authorId = profileResponse.id;
+    const topicId = "topic123";
+
+    const addResult = await api.addWork(
+      title,
+      description,
+      content,
+      authorId,
+      topicId
+    );
+    const addedWork = addResult as UploadResponse;
+
+    const updateAppendage = "123";
+    const updateResult = await api.updateWork(
+      title + updateAppendage,
+      description + updateAppendage,
+      content + updateAppendage,
+      authorId,
+      topicId,
+      addedWork.id
+    );
+    const updatedWork = updateResult as UploadResponse;
+    const getResult = await api.getWork(updatedWork.id);
+
+    expect(getResult?.title).toBe(title + updateAppendage);
+    expect(getResult?.description).toBe(description + updateAppendage);
+    expect(getResult?.content).toBe(content + updateAppendage);
+    expect(getResult?.author_id).toBe(authorId);
+  });
+
   it("getWork gets back a saved new work", async () => {
     const api: IApi = new IrysApi();
     await api.connect();

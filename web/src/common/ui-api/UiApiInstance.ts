@@ -13,8 +13,5 @@ export function initOrGetUiApi(apiObj: IApi, walletProvider: object) {
 }
 
 export function useApi(walletProvider: object) {
-  if (!uiApi) {
-    initOrGetUiApi(new IrysApi(), walletProvider);
-  }
-  return uiApi;
+  return initOrGetUiApi(new IrysApi(), walletProvider);
 }
