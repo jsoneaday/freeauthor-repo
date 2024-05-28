@@ -1,7 +1,58 @@
+export enum AppTagNames {
+  App = "App",
+  Version = "Version",
+  ContentType = "Content-Type",
+  EntityType = "Entity-Type",
+}
+
+export enum WorkTagNames {
+  WorkId = "WorkId",
+  Title = "Title",
+  Description = "Description",
+  AuthorId = "AuthorId",
+}
+
+export enum ProfileTagNames {
+  UserName = "UserName",
+  FullName = "FullName",
+  Description = "Description",
+  OwnerAddress = "OwnerAddress",
+  SocialLinkPrimary = "SocialLinkPrimary",
+  SocialLinkSecondary = "SocialLinkSecondary",
+}
+
+export enum LikeTagNames {
+  LikerId = "LIkerId",
+}
+
+export enum TopicTagNames {
+  TopicId = "TopicId",
+  TopicName = "TopicName",
+}
+
+export enum ResponderTagNames {
+  ResponderId = "ResponderId",
+}
+
+export enum FollowerTagNames {
+  FollowerId = "FollowerId",
+  FollowedId = "FollowedId",
+}
+
 export const BaseTags = [
-  { name: "App", value: "FreeAuth" },
-  { name: "Version", value: "1.0" },
+  { name: AppTagNames.App, value: "FreeAuth" },
+  { name: AppTagNames.Version, value: "1.0" },
 ];
+
+export enum EntityType {
+  WorkLike = "WorkLike",
+  WorkTopic = "WorkTopic",
+  Work = "Work",
+  WorkResponse = "WorkResponse",
+  Profile = "Profile",
+  Follow = "Follow",
+  Topic = "Topic",
+}
 
 /// This type includes example values
 export type TxValidationMetadata = {

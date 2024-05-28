@@ -6,7 +6,7 @@ import { IApi } from "./IApi";
 import { faker } from "@faker-js/faker";
 import { UploadResponse } from "@irys/sdk/common/types";
 
-describe("IrysApi tests", () => {
+describe("IrysApi Work tests", () => {
   beforeEach(async () => {
     const api: IApi = new IrysApi();
     await api.connect();
@@ -111,5 +111,22 @@ describe("IrysApi tests", () => {
     expect(getResult?.description).toBe(description);
     expect(getResult?.content).toBe(content);
     expect(getResult?.author_id).toBe(authorId);
+  });
+
+  it("addWork and get back top liked results", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+
+    const result = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.lines(1),
+      faker.lorem.paragraph(1),
+      "author123",
+      "topic123"
+    );
+
+    const work = result as UploadResponse;
+    expect(work).not.toBeFalsy();
+    expect(work.id).toBeTypeOf("string");
   });
 });

@@ -11,6 +11,14 @@ import {
   WorkWithAuthorModel,
   QueryResponse,
   TxValidationMetadata,
+  EntityType,
+  AppTagNames,
+  WorkTagNames,
+  TopicTagNames,
+  ProfileTagNames,
+  ResponderTagNames,
+  FollowerTagNames,
+  LikeTagNames,
 } from "./ApiModels";
 import { IApi, TxHashPromise } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -148,10 +156,12 @@ export class IrysApi implements IApi {
   ) {
     const queryWorkWithData: QueryResponseWithData = { data, ...queryResp };
     const workModel = convertQueryToWork(queryWorkWithData);
+    console.log("workModel", workModel);
     const profileModel = await this.getProfile(workModel.author_id);
 
-    if (!profileModel)
+    if (!profileModel) {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);
+    }
     return convertModelsToWorkWithAuthor(workModel, profileModel);
   }
 
@@ -193,12 +203,12 @@ export class IrysApi implements IApi {
       : description;
 
     const tags = [
-      { name: "Content-Type", value: "text/html" },
-      { name: "Entity-Type", value: "Work" },
-      { name: "title", value: title },
-      { name: "description", value: _desc },
-      { name: "authorId", value: authorId.toString() },
-      { name: "topicId", value: topicId.toString() },
+      { name: AppTagNames.ContentType, value: "text/html" },
+      { name: AppTagNames.EntityType, value: EntityType.Work },
+      { name: WorkTagNames.Title, value: title },
+      { name: WorkTagNames.Description, value: _desc },
+      { name: WorkTagNames.AuthorId, value: authorId.toString() },
+      { name: TopicTagNames.TopicId, value: topicId.toString() },
     ];
 
     return await this.#uploadText(content, tags, fund);
@@ -246,8 +256,9 @@ export class IrysApi implements IApi {
     const workResponses: QueryResponse[] = await this.#Query
       .search(SEARCH_TX)
       .tags([
-        { name: "title", values: [searchTxt] },
-        { name: "description", values: [searchTxt] },
+        { name: AppTagNames.EntityType, values: [EntityType.Work] },
+        { name: WorkTagNames.Title, values: [searchTxt] },
+        { name: WorkTagNames.Description, values: [searchTxt] },
       ])
       .limit(pageSize);
 
@@ -341,24 +352,32 @@ export class IrysApi implements IApi {
     socialLinkSecondary?: string,
     avatar?: Avatar
   ): TxHashPromise {
-    const tags = [
-      { name: "Entity-Type", value: "Profile" },
-      { name: "userName", value: userName },
-      { name: "fullName", value: fullName },
-      { name: "description", value: description },
-      { name: "ownerAddress", value: this.Address },
+    const tags: Tag[] = [
+      { name: AppTagNames.EntityType, value: EntityType.Profile },
+      { name: ProfileTagNames.UserName, value: userName },
+      { name: ProfileTagNames.FullName, value: fullName },
+      { name: ProfileTagNames.Description, value: description },
+      { name: ProfileTagNames.OwnerAddress, value: this.Address },
     ];
     if (avatar) {
       tags.push({
-        name: "Content-Type",
+        name: AppTagNames.ContentType,
         value: `image/${avatar.fileExtension}`,
       });
+    } else {
+      tags.push({ name: AppTagNames.ContentType, value: "empty" });
     }
     if (socialLinkPrimary) {
-      tags.push({ name: "socialLinkPrimary", value: socialLinkPrimary });
+      tags.push({
+        name: ProfileTagNames.SocialLinkPrimary,
+        value: socialLinkPrimary,
+      });
     }
     if (socialLinkSecondary) {
-      tags.push({ name: "socialLinkSecondary", value: socialLinkSecondary });
+      tags.push({
+        name: ProfileTagNames.SocialLinkSecondary,
+        value: socialLinkSecondary,
+      });
     }
 
     if (!avatar) {
@@ -422,10 +441,10 @@ export class IrysApi implements IApi {
     fund: boolean = false
   ): TxHashPromise {
     const tags = [
-      { name: "Content-Type", value: "text/html" },
-      { name: "Entity-Type", value: "Work" },
-      { name: "workId", value: workId.toString() },
-      { name: "responderId", value: responderId.toString() },
+      { name: AppTagNames.ContentType, value: "text/html" },
+      { name: AppTagNames.EntityType, value: EntityType.Work },
+      { name: WorkTagNames.WorkId, value: workId.toString() },
+      { name: ResponderTagNames.ResponderId, value: responderId.toString() },
     ];
 
     return await this.#uploadText(content, tags, fund);
@@ -467,9 +486,10 @@ export class IrysApi implements IApi {
     fund: boolean = false
   ): TxHashPromise {
     const tags = [
-      { name: "Entity-Type", value: "Follow" },
-      { name: "followerId", value: followerId.toString() },
-      { name: "followedId", value: followedId.toString() },
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: AppTagNames.EntityType, value: EntityType.Follow },
+      { name: FollowerTagNames.FollowerId, value: followerId.toString() },
+      { name: FollowerTagNames.FollowedId, value: followedId.toString() },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -480,8 +500,9 @@ export class IrysApi implements IApi {
 
   async addTopic(name: string, fund: boolean = false): TxHashPromise {
     const tags = [
-      { name: "Entity-Type", value: "Topic" },
-      { name: "name", value: name },
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: AppTagNames.EntityType, value: EntityType.Topic },
+      { name: TopicTagNames.TopicName, value: name },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -496,9 +517,10 @@ export class IrysApi implements IApi {
     fund: boolean = false
   ): TxHashPromise {
     const tags = [
-      { name: "Entity-Type", value: "WorkTopic" },
-      { name: "topicId", value: topicId.toString() },
-      { name: "workId", value: workId.toString() },
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
+      { name: TopicTagNames.TopicId, value: topicId.toString() },
+      { name: WorkTagNames.WorkId, value: workId.toString() },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -513,9 +535,10 @@ export class IrysApi implements IApi {
     fund: boolean = false
   ): TxHashPromise {
     const tags = [
-      { name: "Entity-Type", value: "WorkLike" },
-      { name: "workId", value: workId.toString() },
-      { name: "likerId", value: likerId.toString() },
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: AppTagNames.EntityType, value: EntityType.WorkLike },
+      { name: WorkTagNames.WorkId, value: workId.toString() },
+      { name: LikeTagNames.LikerId, value: likerId.toString() },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -524,8 +547,19 @@ export class IrysApi implements IApi {
     throw new Error("Not implemented");
   }
 
-  async getWorkLikeCount(_workId: string): Promise<number> {
-    throw new Error("Not implemented");
+  async getWorkLikeCount(workId: string): Promise<number> {
+    const likes = await this.#Query.search(SEARCH_TX).tags([
+      { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
+      { name: WorkTagNames.WorkId, values: [workId] },
+    ]);
+
+    let likeCount = 0;
+    if (likes.length > 0) {
+      for (let i = 0; i < likes.length; i++) {
+        likeCount += 1;
+      }
+    }
+    return likeCount;
   }
 
   async getWorkResponseCount(_workId: string): Promise<number> {
@@ -554,10 +588,10 @@ function convertQueryToWork(response: QueryResponseWithData): WorkModel {
   return new WorkModel(
     response.id,
     response.timestamp,
-    response.tags.find((tag) => tag.name == "title")?.value || "",
+    response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
     (response.data as string) ? (response.data as string) : "",
-    response.tags.find((tag) => tag.name == "authorId")?.value || "",
-    response.tags.find((tag) => tag.name == "description")?.value
+    response.tags.find((tag) => tag.name == WorkTagNames.AuthorId)?.value || "",
+    response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
   );
 }
 
@@ -565,12 +599,20 @@ function convertQueryToProfile(response: QueryResponseWithData): ProfileModel {
   return new ProfileModel(
     response.id,
     response.timestamp,
-    response.tags.find((tag) => tag.name == "username")?.value || "",
-    response.tags.find((tag) => tag.name == "fullname")?.value || "",
-    response.tags.find((tag) => tag.name == "description")?.value || "",
-    response.tags.find((tag) => tag.name == "ownerAddress")?.value || "",
-    response.tags.find((tag) => tag.name == "socialLinkPrimary")?.value,
-    response.tags.find((tag) => tag.name == "socialLinkSecondary")?.value
+    response.tags.find((tag) => tag.name == ProfileTagNames.UserName)?.value ||
+      "",
+    response.tags.find((tag) => tag.name == ProfileTagNames.FullName)?.value ||
+      "",
+    response.tags.find((tag) => tag.name == ProfileTagNames.Description)
+      ?.value || "",
+    response.tags.find((tag) => tag.name == ProfileTagNames.OwnerAddress)
+      ?.value || "",
+    response.tags.find(
+      (tag) => tag.name == ProfileTagNames.SocialLinkPrimary
+    )?.value,
+    response.tags.find(
+      (tag) => tag.name == ProfileTagNames.SocialLinkSecondary
+    )?.value
   );
 }
 
