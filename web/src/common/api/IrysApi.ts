@@ -152,17 +152,17 @@ export class IrysApi implements IApi {
 
   async #convertQueryToWorkWithModel(
     queryResp: QueryResponse,
-    data: null | string | ArrayBuffer
+    data: null | string | ArrayBuffer,
+    likeCount: number = 0
   ) {
     const queryWorkWithData: QueryResponseWithData = { data, ...queryResp };
     const workModel = convertQueryToWork(queryWorkWithData);
-    console.log("workModel", workModel);
     const profileModel = await this.getProfile(workModel.author_id);
 
     if (!profileModel) {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);
     }
-    return convertModelsToWorkWithAuthor(workModel, profileModel);
+    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
   async getData(
@@ -257,22 +257,29 @@ export class IrysApi implements IApi {
       .search(SEARCH_TX)
       .tags([
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
-        { name: WorkTagNames.Title, values: [searchTxt] },
         { name: WorkTagNames.Description, values: [searchTxt] },
       ])
+      .sort(DESC)
       .limit(pageSize);
 
     const works: WorkWithAuthorModel[] = new Array(workResponses.length);
     if (workResponses.length > 0) {
       for (let i = 0; i < workResponses.length; i++) {
         const data = await this.getData(workResponses[i].id, true);
+        const likeCount = await this.getWorkLikeCount(workResponses[i].id);
         works[i] = await this.#convertQueryToWorkWithModel(
-          workResponses[0],
-          data
+          workResponses[i],
+          data,
+          likeCount
         );
       }
     }
-    return works;
+    // sort by likes
+    return works.sort((a, b) => {
+      if (a.likes > b.likes) return -1;
+      if (a.likes < b.likes) return 1;
+      return 0;
+    });
   }
 
   async searchWorks(
@@ -618,7 +625,8 @@ function convertQueryToProfile(response: QueryResponseWithData): ProfileModel {
 
 function convertModelsToWorkWithAuthor(
   work: WorkModel,
-  profile: ProfileModel
+  profile: ProfileModel,
+  likeCount: number = 0
 ): WorkWithAuthorModel {
   return new WorkWithAuthorModel(
     work.id,
@@ -629,6 +637,7 @@ function convertModelsToWorkWithAuthor(
     work.author_id,
     profile.username,
     profile.fullname,
-    profile.description
+    profile.description,
+    likeCount
   );
 }

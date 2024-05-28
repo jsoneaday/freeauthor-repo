@@ -133,11 +133,13 @@ export class WorkWithAuthorModel implements Entity {
     public updated_at: number,
     public title: string,
     public content: string,
+    /// description is used to search on
     public description: string | undefined,
     public author_id: string,
     public username: string,
     public fullname: string,
-    public profileDesc: string
+    public profileDesc: string,
+    public likes: number
   ) {}
 }
 

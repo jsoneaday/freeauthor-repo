@@ -113,20 +113,68 @@ describe("IrysApi Work tests", () => {
     expect(getResult?.author_id).toBe(authorId);
   });
 
-  it("addWork and get back top liked results", async () => {
+  it("addWork for multiple items and use searchWorksTop to get back top liked results", async () => {
     const api: IApi = new IrysApi();
     await api.connect();
+    const desc = faker.lorem.lines(1);
 
-    const result = await api.addWork(
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile = profileResp as UploadResponse;
+
+    const workdResp = await api.addWork(
       faker.lorem.words(3),
-      faker.lorem.lines(1),
+      desc,
       faker.lorem.paragraph(1),
-      "author123",
+      profile.id,
       "topic123"
     );
+    const workd = workdResp as UploadResponse;
 
-    const work = result as UploadResponse;
-    expect(work).not.toBeFalsy();
-    expect(work.id).toBeTypeOf("string");
+    const workcResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      "topic123"
+    );
+    const workc = workcResp as UploadResponse;
+
+    const workbResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      "topic123"
+    );
+    const workb = workbResp as UploadResponse;
+
+    const workaResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      "topic123"
+    );
+    const worka = workaResp as UploadResponse;
+
+    await api.addWorkLike(worka.id, workb.id);
+    await api.addWorkLike(worka.id, workc.id);
+    await api.addWorkLike(worka.id, workd.id);
+
+    await api.addWorkLike(workb.id, workc.id);
+    await api.addWorkLike(workb.id, workd.id);
+
+    await api.addWorkLike(workc.id, workd.id);
+
+    const searchResults = await api.searchWorksTop(desc, 10);
+
+    expect(worka.id).toBe(searchResults![0].id);
+    expect(workb.id).toBe(searchResults![1].id);
+    expect(workc.id).toBe(searchResults![2].id);
+    expect(workd.id).toBe(searchResults![3].id);
   });
 });
