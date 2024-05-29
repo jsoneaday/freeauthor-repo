@@ -177,4 +177,47 @@ describe("IrysApi Work tests", () => {
     expect(workc.id).toBe(searchResults![2].id);
     expect(workd.id).toBe(searchResults![3].id);
   });
+
+  it("addWork for 3 items and use searchWorks to get back two results", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+    const desc = faker.lorem.lines(1);
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile = profileResp as UploadResponse;
+
+    const workdResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      "topic123"
+    );
+
+    const workcResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      "topic123"
+    );
+    const workc = workcResp as UploadResponse;
+
+    const workbResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      "topic123"
+    );
+    const workb = workbResp as UploadResponse;
+
+    const searchResult = await api.searchWorks(desc, 2);
+    expect(workb.id).toBe(searchResult![0].id);
+    expect(workc.id).toBe(searchResult![1].id);
+  });
 });

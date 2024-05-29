@@ -2,7 +2,6 @@ import {
   Avatar,
   BaseTags,
   ProfileModel,
-  QueryResponseWithData,
   Tag,
   TopicModel,
   WorkModel,
@@ -19,6 +18,10 @@ import {
   ResponderTagNames,
   FollowerTagNames,
   LikeTagNames,
+  IrysGraphqlVariables,
+  IrysGraphqlResponse,
+  DataUpload,
+  IrysGraphqlResponseNode,
 } from "./ApiModels";
 import { IApi, TxHashPromise } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -26,7 +29,13 @@ import SolanaConfig from "@irys/sdk/node/tokens/solana";
 import { BaseWebIrys } from "@irys/sdk/web/base";
 import { type WebToken } from "@irys/sdk/web/types";
 import Query from "@irys/query";
-import { IRYS_DATA_URL, RPC_URL, TOKEN, TX_METADATA_URL } from "../Env";
+import {
+  IRYS_DATA_URL,
+  IRYS_GRAPHQL_URL,
+  RPC_URL,
+  TOKEN,
+  TX_METADATA_URL,
+} from "../Env";
 import bs58 from "bs58";
 
 const DESC = "DESC";
@@ -152,11 +161,9 @@ export class IrysApi implements IApi {
 
   async #convertQueryToWorkWithModel(
     queryResp: QueryResponse,
-    data: null | string | ArrayBuffer,
     likeCount: number = 0
   ) {
-    const queryWorkWithData: QueryResponseWithData = { data, ...queryResp };
-    const workModel = convertQueryToWork(queryWorkWithData);
+    const workModel = convertQueryToWork(queryResp);
     const profileModel = await this.getProfile(workModel.author_id);
 
     if (!profileModel) {
@@ -165,10 +172,16 @@ export class IrysApi implements IApi {
     return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
-  async getData(
-    entityTxId: string,
-    isTextData: boolean
-  ): Promise<null | string | ArrayBuffer> {
+  async #convertGqlQueryToWorkWithModel(gqlResponse: IrysGraphqlResponseNode) {
+    const workModel = convertGqlQueryToWork(gqlResponse);
+    const profileModel = await this.getProfile(workModel.author_id);
+    if (!profileModel) {
+      throw new Error(`Profile with id ${workModel.author_id} not found!`);
+    }
+    return convertModelsToWorkWithAuthor(workModel, profileModel, 0);
+  }
+
+  async getData(entityTxId: string, isTextData: boolean): Promise<DataUpload> {
     const response = await fetch(`${IRYS_DATA_URL}/${entityTxId}`);
 
     if (response.ok) {
@@ -243,8 +256,10 @@ export class IrysApi implements IApi {
       .sort(DESC);
 
     if (workQueryResponse.length > 0) {
-      const data = await this.getData(workQueryResponse[0].id, true);
-      return this.#convertQueryToWorkWithModel(workQueryResponse[0], data);
+      let response: QueryResponse = workQueryResponse[0];
+      const data = await this.getData(response.id, true);
+      response.data = data;
+      return this.#convertQueryToWorkWithModel(response);
     }
     return null;
   }
@@ -265,11 +280,12 @@ export class IrysApi implements IApi {
     const works: WorkWithAuthorModel[] = new Array(workResponses.length);
     if (workResponses.length > 0) {
       for (let i = 0; i < workResponses.length; i++) {
-        const data = await this.getData(workResponses[i].id, true);
-        const likeCount = await this.getWorkLikeCount(workResponses[i].id);
+        let response = workResponses[i];
+        const data = await this.getData(response.id, true);
+        response.data = data;
+        const likeCount = await this.getWorkLikeCount(response.id);
         works[i] = await this.#convertQueryToWorkWithModel(
           workResponses[i],
-          data,
           likeCount
         );
       }
@@ -282,12 +298,107 @@ export class IrysApi implements IApi {
     });
   }
 
+  async #queryGraphQL(
+    query: string,
+    variables: IrysGraphqlVariables
+  ): Promise<IrysGraphqlResponse | null> {
+    const result = await fetch(IRYS_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    if (result.ok) {
+      return await result.json();
+    }
+    return null;
+  }
+
   async searchWorks(
-    _searchTxt: string,
-    _lastKeyset: string,
-    _pageSize: number
+    searchTxt: string,
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    let query = `
+      query Get($tags: [TagFilter!]!, $limit: Int!) {
+        transactions(
+          tags: $tags
+          limit: $limit
+          order: DESC          
+        ) {
+          edges {
+            node {
+              id
+              address
+              token
+              receipt {
+                deadlineHeight
+                signature
+                version
+              }
+              tags {
+                name
+                value
+              }
+              timestamp
+            }
+            cursor
+          }
+        }
+      }
+    `;
+    if (cursor) {
+      query = `
+        query Get($tags: [TagFilter!]!, $limit: Int!, $cursor: String!) {
+          transactions(
+            tags: $tags
+            limit: $limit
+            order: DESC
+            cursor: $cursor
+          ) {
+            edges {
+              node {
+                id
+                address
+                token
+                receipt {
+                  deadlineHeight
+                  signature
+                  version
+                }
+                tags {
+                  name
+                  value
+                }
+                timestamp
+              }
+              cursor
+            }
+          }
+        }
+      `;
+    }
+    const searchResults = await this.#queryGraphQL(query, {
+      tags: [{ name: WorkTagNames.Description, values: [searchTxt] }],
+      limit: pageSize,
+      cursor,
+    });
+
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workModels[i] = await this.#convertGqlQueryToWorkWithModel(edge.node);
+    }
+    return workModels;
   }
 
   async getWorksByAllFollowed(
@@ -591,7 +702,7 @@ export class IrysApi implements IApi {
   }
 }
 
-function convertQueryToWork(response: QueryResponseWithData): WorkModel {
+function convertQueryToWork(response: QueryResponse): WorkModel {
   return new WorkModel(
     response.id,
     response.timestamp,
@@ -602,7 +713,18 @@ function convertQueryToWork(response: QueryResponseWithData): WorkModel {
   );
 }
 
-function convertQueryToProfile(response: QueryResponseWithData): ProfileModel {
+function convertGqlQueryToWork(response: IrysGraphqlResponseNode): WorkModel {
+  return new WorkModel(
+    response.id,
+    response.timestamp,
+    response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
+    (response.data as string) ? (response.data as string) : "",
+    response.tags.find((tag) => tag.name == WorkTagNames.AuthorId)?.value || "",
+    response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
+  );
+}
+
+function convertQueryToProfile(response: QueryResponse): ProfileModel {
   return new ProfileModel(
     response.id,
     response.timestamp,

@@ -1,3 +1,5 @@
+export type DataUpload = null | string | ArrayBuffer;
+
 export enum AppTagNames {
   App = "App",
   Version = "Version",
@@ -93,10 +95,8 @@ export type QueryResponse = {
   token: string;
   signature: string;
   timestamp: number;
-};
-
-export type QueryResponseWithData = QueryResponse & {
-  data: undefined | null | string | ArrayBuffer;
+  /// note: is not coming from gql query, but added later!
+  data?: DataUpload;
 };
 
 export interface Entity {
@@ -112,6 +112,44 @@ export type Tag = {
 export type Avatar = {
   file: File;
   fileExtension: string;
+};
+
+export type IrysGraphqlVariables = {
+  ids?: string[];
+  owners?: string[];
+  token?: string;
+  tags?: { name: string; values: string[] }[];
+  after?: string;
+  before?: string;
+  order?: string;
+  limit?: number;
+  cursor?: string;
+};
+
+export type IrysGraphqlResponse = {
+  data: {
+    transactions: {
+      edges: {
+        node: IrysGraphqlResponseNode;
+        cursor?: string;
+      }[];
+    };
+  };
+};
+
+export type IrysGraphqlResponseNode = {
+  id: string;
+  address: string;
+  token: string;
+  receipt: {
+    deadlineHeight: number;
+    signature: string;
+    version: string;
+  };
+  tags: Tag[];
+  timestamp: number;
+  /// note: is not coming from gql query, but added later!
+  data?: DataUpload;
 };
 
 /// The content
