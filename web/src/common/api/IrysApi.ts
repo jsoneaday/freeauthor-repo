@@ -22,6 +22,7 @@ import {
   IrysGraphqlResponse,
   DataUpload,
   IrysGraphqlResponseNode,
+  PagedWorkWithAuthorModel,
 } from "./ApiModels";
 import { IApi, TxHashPromise } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -323,13 +324,29 @@ export class IrysApi implements IApi {
     searchTxt: string,
     pageSize: number,
     cursor?: string
-  ): Promise<WorkWithAuthorModel[] | null> {
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    let outerVariable = "";
+    let innerVariable = "";
+    if (cursor) {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC
+        after: $cursor
+      `;
+    } else {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC 
+      `;
+    }
     let query = `
-      query Get($tags: [TagFilter!]!, $limit: Int!) {
+      query Get(${outerVariable}) {
         transactions(
-          tags: $tags
-          limit: $limit
-          order: DESC          
+          ${innerVariable}          
         ) {
           edges {
             node {
@@ -352,37 +369,6 @@ export class IrysApi implements IApi {
         }
       }
     `;
-    if (cursor) {
-      query = `
-        query Get($tags: [TagFilter!]!, $limit: Int!, $cursor: String!) {
-          transactions(
-            tags: $tags
-            limit: $limit
-            order: DESC
-            cursor: $cursor
-          ) {
-            edges {
-              node {
-                id
-                address
-                token
-                receipt {
-                  deadlineHeight
-                  signature
-                  version
-                }
-                tags {
-                  name
-                  value
-                }
-                timestamp
-              }
-              cursor
-            }
-          }
-        }
-      `;
-    }
     const searchResults = await this.#queryGraphQL(query, {
       tags: [{ name: WorkTagNames.Description, values: [searchTxt] }],
       limit: pageSize,
@@ -398,7 +384,11 @@ export class IrysApi implements IApi {
       const edge = searchResults?.data.transactions.edges[i];
       workModels[i] = await this.#convertGqlQueryToWorkWithModel(edge.node);
     }
-    return workModels;
+    return {
+      workModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
   }
 
   async getWorksByAllFollowed(

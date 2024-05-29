@@ -1,6 +1,7 @@
 import { UploadResponse } from "@irys/sdk/common/types";
 import {
   Avatar,
+  PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
   WorkResponseModel,
@@ -56,7 +57,7 @@ export interface IApi {
     searchTxt: string,
     pageSize: number,
     cursor?: string
-  ): Promise<WorkWithAuthorModel[] | null>;
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByAllFollowed(
     followerId: string,

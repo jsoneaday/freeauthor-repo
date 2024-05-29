@@ -181,6 +181,11 @@ export class WorkWithAuthorModel implements Entity {
   ) {}
 }
 
+/// cursor should be the last cursor for the query
+export type PagedWorkWithAuthorModel = { workModels: WorkWithAuthorModel[] } & {
+  cursor: string;
+};
+
 /// Details about the author
 export class ProfileModel implements Entity {
   constructor(
