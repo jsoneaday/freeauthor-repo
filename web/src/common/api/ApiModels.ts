@@ -113,6 +113,7 @@ export type Avatar = {
 };
 
 export type IrysGraphqlVariables = {
+  limit: number;
   ids?: string[];
   owners?: string[];
   token?: string;
@@ -120,7 +121,6 @@ export type IrysGraphqlVariables = {
   after?: string;
   before?: string;
   order?: string;
-  limit?: number;
   cursor?: string;
 };
 
@@ -196,6 +196,10 @@ export class ProfileModel implements Entity {
     public avatar: ArrayBuffer | null
   ) {}
 }
+
+export type PagedProfileModel = { profileModels: ProfileModel[] } & {
+  cursor: string;
+};
 
 /// Profile follower and the Profile being followed
 export class FollowModel implements Entity {

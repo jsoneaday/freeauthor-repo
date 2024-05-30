@@ -1,6 +1,7 @@
 import { UploadResponse } from "@irys/sdk/common/types";
 import {
   Avatar,
+  PagedProfileModel,
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
@@ -125,7 +126,7 @@ export interface IApi {
   ): TxHashPromise;
 
   getProfile(profileId: string): Promise<ProfileModel | null>;
-  getOwnersProfile(): Promise<ProfileModel | null>;
+  getOwnersProfile(): Promise<PagedProfileModel | null>;
   getFollowedProfiles(profileId: string): Promise<ProfileModel[] | null>;
   getFollowerProfiles(profileId: string): Promise<ProfileModel[] | null>;
 

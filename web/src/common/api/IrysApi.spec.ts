@@ -395,4 +395,19 @@ describe("IrysApi Work tests", () => {
     expect(worka.id).toBe(searchResult!.workModels[2].id);
     expect(workd.id).toBe(searchResult!.workModels[3].id);
   });
+
+  it("getOwnersProfile gets profile of profile just created", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile = profileResp as UploadResponse;
+
+    const ownersProfile = await api.getOwnersProfile();
+    expect(profile.id).toBe(ownersProfile?.profileModels[0].id);
+  });
 });

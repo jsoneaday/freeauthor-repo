@@ -23,6 +23,7 @@ import {
   DataUpload,
   IrysGraphqlResponseNode,
   PagedWorkWithAuthorModel,
+  PagedProfileModel,
 } from "./ApiModels";
 import { IApi, TxHashPromise } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -178,7 +179,6 @@ export class IrysApi implements IApi {
   ) {
     const data = await this.getData(gqlResponse.id, true);
     const workModel = convertGqlQueryToWork(gqlResponse, data);
-    workModel.content = data as string;
     const likeCount = await this.getWorkLikeCount(workModel.id);
     const profileModel = await this.getProfile(workModel.author_id);
 
@@ -204,6 +204,30 @@ export class IrysApi implements IApi {
     }
     return {
       workModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async #convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
+    const data = await this.getData(gqlResponse.id, false);
+    return convertGqlQueryToProfile(gqlResponse, data as ArrayBuffer | null);
+  }
+
+  async #convertGqlResponseToProfile(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedProfileModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let profileModels: ProfileModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      profileModels[i] = await this.#convertGqlResponseNodeToProfile(edge.node);
+    }
+    return {
+      profileModels,
       cursor:
         searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
     };
@@ -564,8 +588,16 @@ export class IrysApi implements IApi {
     return convertQueryToProfile(result[0], data as ArrayBuffer | null);
   }
 
-  async getOwnersProfile(): Promise<ProfileModel | null> {
-    throw new Error("Not implemented");
+  async getOwnersProfile(): Promise<PagedProfileModel | null> {
+    const searchResults = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.Profile] },
+        { name: ProfileTagNames.OwnerAddress, values: [this.Address] },
+      ],
+      limit: 1,
+    });
+
+    return await this.#convertGqlResponseToProfile(searchResults);
   }
 
   async getFollowedProfiles(
@@ -759,6 +791,31 @@ function convertGqlQueryToWork(
 
 function convertQueryToProfile(
   response: QueryResponse,
+  data: ArrayBuffer | null
+): ProfileModel {
+  return new ProfileModel(
+    response.id,
+    response.timestamp,
+    response.tags.find((tag) => tag.name == ProfileTagNames.UserName)?.value ||
+      "",
+    response.tags.find((tag) => tag.name == ProfileTagNames.FullName)?.value ||
+      "",
+    response.tags.find((tag) => tag.name == ProfileTagNames.Description)
+      ?.value || "",
+    response.tags.find((tag) => tag.name == ProfileTagNames.OwnerAddress)
+      ?.value || "",
+    response.tags.find(
+      (tag) => tag.name == ProfileTagNames.SocialLinkPrimary
+    )?.value,
+    response.tags.find(
+      (tag) => tag.name == ProfileTagNames.SocialLinkSecondary
+    )?.value,
+    data
+  );
+}
+
+function convertGqlQueryToProfile(
+  response: IrysGraphqlResponseNode,
   data: ArrayBuffer | null
 ): ProfileModel {
   return new ProfileModel(
