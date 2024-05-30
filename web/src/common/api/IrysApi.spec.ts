@@ -4,7 +4,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { IrysApi } from "./IrysApi";
 import { IApi } from "./IApi";
 import { faker } from "@faker-js/faker";
-import { UploadResponse } from "@irys/sdk/common/types";
 
 describe("IrysApi Work tests", () => {
   beforeEach(async () => {
@@ -23,7 +22,7 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi();
     await api.connect();
 
-    const result = await api.addWork(
+    const work = await api.addWork(
       faker.lorem.words(3),
       faker.lorem.lines(1),
       faker.lorem.paragraph(1),
@@ -31,7 +30,6 @@ describe("IrysApi Work tests", () => {
       "topic123"
     );
 
-    const work = result as UploadResponse;
     expect(work).not.toBeFalsy();
     expect(work.id).toBeTypeOf("string");
   });
@@ -44,8 +42,11 @@ describe("IrysApi Work tests", () => {
     const fullname = faker.internet.displayName();
     const profileDesc = faker.lorem.sentences(1);
 
-    const profileResult = await api.addProfile(username, fullname, profileDesc);
-    const profileResponse = profileResult as UploadResponse;
+    const profileResponse = await api.addProfile(
+      username,
+      fullname,
+      profileDesc
+    );
 
     const title = faker.lorem.words(3);
     const description = faker.lorem.lines(1);
@@ -53,17 +54,16 @@ describe("IrysApi Work tests", () => {
     const authorId = profileResponse.id;
     const topicId = "topic123";
 
-    const addResult = await api.addWork(
+    const addedWork = await api.addWork(
       title,
       description,
       content,
       authorId,
       topicId
     );
-    const addedWork = addResult as UploadResponse;
 
     const updateAppendage = "123";
-    const updateResult = await api.updateWork(
+    const updatedWork = await api.updateWork(
       title + updateAppendage,
       description + updateAppendage,
       content + updateAppendage,
@@ -71,7 +71,6 @@ describe("IrysApi Work tests", () => {
       topicId,
       addedWork.id
     );
-    const updatedWork = updateResult as UploadResponse;
     const getResult = await api.getWork(updatedWork.id);
 
     expect(getResult?.title).toBe(title + updateAppendage);
@@ -88,8 +87,11 @@ describe("IrysApi Work tests", () => {
     const fullname = faker.internet.displayName();
     const profileDesc = faker.lorem.sentences(1);
 
-    const profileResult = await api.addProfile(username, fullname, profileDesc);
-    const profileResponse = profileResult as UploadResponse;
+    const profileResponse = await api.addProfile(
+      username,
+      fullname,
+      profileDesc
+    );
 
     const title = faker.lorem.words(3);
     const description = faker.lorem.lines(1);
@@ -97,7 +99,7 @@ describe("IrysApi Work tests", () => {
     const authorId = profileResponse.id;
     const topicId = "topic123";
 
-    const addResult = await api.addWork(
+    const work = await api.addWork(
       title,
       description,
       content,
@@ -105,7 +107,6 @@ describe("IrysApi Work tests", () => {
       topicId
     );
 
-    const work = addResult as UploadResponse;
     const getResult = await api.getWork(work.id);
     expect(getResult?.title).toBe(title);
     expect(getResult?.description).toBe(description);
@@ -117,49 +118,45 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi();
     await api.connect();
     const desc = faker.lorem.lines(1);
+    const topicId = "topic123";
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
 
-    const workdResp = await api.addWork(
+    const workd = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
-      "topic123"
+      topicId
     );
-    const workd = workdResp as UploadResponse;
 
-    const workcResp = await api.addWork(
+    const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
-      "topic123"
+      topicId
     );
-    const workc = workcResp as UploadResponse;
 
-    const workbResp = await api.addWork(
+    const workb = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
-      "topic123"
+      topicId
     );
-    const workb = workbResp as UploadResponse;
 
-    const workaResp = await api.addWork(
+    const worka = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
-      "topic123"
+      topicId
     );
-    const worka = workaResp as UploadResponse;
 
     await api.addWorkLike(worka.id, workb.id);
     await api.addWorkLike(worka.id, workc.id);
@@ -183,12 +180,11 @@ describe("IrysApi Work tests", () => {
     await api.connect();
     const desc = faker.lorem.lines(1);
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
 
     await api.addWork(
       faker.lorem.words(3),
@@ -198,23 +194,21 @@ describe("IrysApi Work tests", () => {
       "topic123"
     );
 
-    const workcResp = await api.addWork(
+    const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       "topic123"
     );
-    const workc = workcResp as UploadResponse;
 
-    const workbResp = await api.addWork(
+    const workb = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       "topic123"
     );
-    const workb = workbResp as UploadResponse;
 
     const searchResult = await api.searchWorks(desc, 2);
     expect(workb.id).toBe(searchResult!.workModels[0].id);
@@ -227,30 +221,27 @@ describe("IrysApi Work tests", () => {
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
 
-    const workdResp = await api.addWork(
+    const workd = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workd = workdResp as UploadResponse;
 
-    const workcResp = await api.addWork(
+    const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workc = workcResp as UploadResponse;
 
     await api.addWork(
       faker.lorem.words(3),
@@ -284,30 +275,27 @@ describe("IrysApi Work tests", () => {
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
 
-    const workdResp = await api.addWork(
+    const workd = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workd = workdResp as UploadResponse;
 
-    const workcResp = await api.addWork(
+    const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workc = workcResp as UploadResponse;
 
     await api.addWork(
       faker.lorem.words(3),
@@ -341,53 +329,48 @@ describe("IrysApi Work tests", () => {
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
 
-    const workdResp = await api.addWork(
+    const workd = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workd = workdResp as UploadResponse;
 
-    const workcResp = await api.addWork(
+    const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workc = workcResp as UploadResponse;
     await api.addWorkLike(workc.id, profile.id);
     await api.addWorkLike(workc.id, profile.id);
     await api.addWorkLike(workc.id, profile.id);
 
-    const workbResp = await api.addWork(
+    const workb = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const workb = workbResp as UploadResponse;
     await api.addWorkLike(workb.id, profile.id);
     await api.addWorkLike(workb.id, profile.id);
 
-    const workaResp = await api.addWork(
+    const worka = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const worka = workaResp as UploadResponse;
 
     const searchResult = await api.getAuthorWorksTop(profile.id, 10);
     expect(workc.id).toBe(searchResult!.workModels[0].id);
@@ -400,12 +383,11 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi();
     await api.connect();
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
 
     const ownersProfile = await api.getOwnersProfile();
     expect(profile.id).toBe(ownersProfile?.profileModels[0].id);
@@ -417,41 +399,23 @@ describe("IrysApi Work tests", () => {
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
 
-    const profileResp = await api.addProfile(
+    const profile = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile = profileResp as UploadResponse;
-    const workResp = await api.addWork(
+    const work = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id,
       topicId
     );
-    const work = workResp as UploadResponse;
 
-    (await api.addWorkResponse(
-      "hello a",
-      work.id,
-      profile.id
-    )) as UploadResponse;
-    const responseb = (await api.addWorkResponse(
-      "hello b",
-      work.id,
-      profile.id
-    )) as UploadResponse;
-    const responsec = (await api.addWorkResponse(
-      "hello c",
-      work.id,
-      profile.id
-    )) as UploadResponse;
-    const responsed = (await api.addWorkResponse(
-      "hello d",
-      work.id,
-      profile.id
-    )) as UploadResponse;
+    api.addWorkResponse("hello a", work.id, profile.id);
+    const responseb = await api.addWorkResponse("hello b", work.id, profile.id);
+    const responsec = await api.addWorkResponse("hello c", work.id, profile.id);
+    const responsed = await api.addWorkResponse("hello d", work.id, profile.id);
 
     const workResponses = await api.getWorkResponses(work.id, 3);
     expect(responsed.id).toBe(workResponses?.workResponseModels[0].id);
