@@ -690,19 +690,28 @@ export class IrysApi implements IApi {
     return await this.#convertGqlResponseToWorkResponse(response);
   }
 
+  /// todo: needs an update to include likes or I might not have response likes altogether
   async getWorkResponsesTop(
-    _workId: string,
-    _pageSize: number
-  ): Promise<WorkResponseModel[] | null> {
-    throw new Error("Not implemented");
+    workId: string,
+    pageSize: number
+  ): Promise<PagedWorkResponseModel | null> {
+    return await this.getWorkResponses(workId, pageSize);
   }
 
   async getWorkResponsesByProfile(
-    _profileId: string,
-    _lastKeyset: string,
-    _pageSize: number
-  ): Promise<WorkResponseModel[] | null> {
-    throw new Error("Not implemented");
+    profileId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null> {
+    const response = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
+        { name: WorkResponderTagNames.ResponderId, values: [profileId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
+    return await this.#convertGqlResponseToWorkResponse(response);
   }
 
   async getWorkResponsesByProfileTop(

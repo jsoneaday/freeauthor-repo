@@ -145,13 +145,13 @@ export interface IApi {
   getWorkResponsesTop(
     workId: string,
     pageSize: number
-  ): Promise<WorkResponseModel[] | null>;
+  ): Promise<PagedWorkResponseModel | null>;
 
   getWorkResponsesByProfile(
     profileId: string,
-    lastKeyset: string,
-    pageSize: number
-  ): Promise<WorkResponseModel[] | null>;
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null>;
 
   getWorkResponsesByProfileTop(
     profileId: string,

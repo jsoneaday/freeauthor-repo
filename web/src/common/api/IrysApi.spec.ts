@@ -412,7 +412,7 @@ describe("IrysApi Work tests", () => {
       topicId
     );
 
-    api.addWorkResponse("hello a", work.id, profile.id);
+    await api.addWorkResponse("hello a", work.id, profile.id);
     const responseb = await api.addWorkResponse("hello b", work.id, profile.id);
     const responsec = await api.addWorkResponse("hello c", work.id, profile.id);
     const responsed = await api.addWorkResponse("hello d", work.id, profile.id);
@@ -421,5 +421,60 @@ describe("IrysApi Work tests", () => {
     expect(responsed.id).toBe(workResponses?.workResponseModels[0].id);
     expect(responsec.id).toBe(workResponses?.workResponseModels[1].id);
     expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
+  });
+
+  it("getWorkResponsesByProfile returns the expected paged responses", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+    const desc = faker.lorem.lines(1);
+    const topicId = "topic123";
+
+    const profileWorkOwner = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profileWorkResponseOwner = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const work = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profileWorkOwner.id,
+      topicId
+    );
+
+    const responsea = await api.addWorkResponse(
+      "hello a",
+      work.id,
+      profileWorkResponseOwner.id
+    );
+    const responseb = await api.addWorkResponse(
+      "hello b",
+      work.id,
+      profileWorkResponseOwner.id
+    );
+    const responsec = await api.addWorkResponse(
+      "hello c",
+      work.id,
+      profileWorkResponseOwner.id
+    );
+    const responsed = await api.addWorkResponse(
+      "hello d",
+      work.id,
+      profileWorkResponseOwner.id
+    );
+
+    const workResponses = await api.getWorkResponsesByProfile(
+      profileWorkResponseOwner.id,
+      4
+    );
+    expect(responsed.id).toBe(workResponses?.workResponseModels[0].id);
+    expect(responsec.id).toBe(workResponses?.workResponseModels[1].id);
+    expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
+    expect(responsea.id).toBe(workResponses?.workResponseModels[3].id);
   });
 });
