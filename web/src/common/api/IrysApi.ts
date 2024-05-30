@@ -27,7 +27,7 @@ import {
   PagedWorkResponseModel,
   WorkResponseModelWithProfile,
 } from "./ApiModels";
-import { IApi, TxHashPromise } from "./IApi";
+import { IApi } from "./IApi";
 import { WebIrys } from "@irys/sdk";
 import SolanaConfig from "@irys/sdk/node/tokens/solana";
 import { BaseWebIrys } from "@irys/sdk/web/base";
@@ -41,6 +41,7 @@ import {
   TX_METADATA_URL,
 } from "../Env";
 import bs58 from "bs58";
+import { UploadResponse } from "@irys/sdk/common/types";
 
 const DESC = "DESC";
 //const ASC = "ASC";
@@ -135,7 +136,7 @@ export class IrysApi implements IApi {
     content: string,
     tags: Tag[],
     fund: boolean
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     if (fund) await this.#fundText(content);
 
     return await this.#Irys.upload(content, {
@@ -143,7 +144,11 @@ export class IrysApi implements IApi {
     });
   }
 
-  async #uploadFile(file: File, tags: Tag[], fund: boolean): TxHashPromise {
+  async #uploadFile(
+    file: File,
+    tags: Tag[],
+    fund: boolean
+  ): Promise<UploadResponse> {
     if (fund) await this.#fundFile(file);
     return await (this.#Irys as WebIrys).uploadFile(file, {
       tags: [...BaseTags, ...tags],
@@ -304,7 +309,7 @@ export class IrysApi implements IApi {
     authorId: string,
     topicId: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     let _desc = !description
       ? content.substring(0, content.length < 20 ? content.length : 20)
       : description;
@@ -329,7 +334,7 @@ export class IrysApi implements IApi {
     topicId: string,
     priorWorkId: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     if (!(await this.#isEntityOwner(priorWorkId, this.Address))) {
       throw new Error("This user is not the original entity creator and owner");
     }
@@ -562,7 +567,7 @@ export class IrysApi implements IApi {
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
     avatar?: Avatar
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     const tags: Tag[] = [
       { name: AppTagNames.EntityType, value: EntityType.Profile },
       { name: ProfileTagNames.UserName, value: userName },
@@ -606,7 +611,7 @@ export class IrysApi implements IApi {
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
     avatar?: Avatar
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     // todo: find immediate prior profile and match tx id and owner address
     return await this.addProfile(
       userName,
@@ -658,7 +663,7 @@ export class IrysApi implements IApi {
     workId: string,
     responderId: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "text/html" },
       { name: AppTagNames.EntityType, value: EntityType.WorkResponse },
@@ -711,7 +716,7 @@ export class IrysApi implements IApi {
     followerId: string,
     followedId: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.Follow },
@@ -722,11 +727,14 @@ export class IrysApi implements IApi {
     return await this.#uploadText("", tags, fund);
   }
 
-  async removeFollow(_followerId: string, _followedId: string): TxHashPromise {
+  async removeFollow(
+    _followerId: string,
+    _followedId: string
+  ): Promise<UploadResponse> {
     throw new Error("Not implemented");
   }
 
-  async addTopic(name: string, fund: boolean = false): TxHashPromise {
+  async addTopic(name: string, fund: boolean = false): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.Topic },
@@ -736,7 +744,7 @@ export class IrysApi implements IApi {
     return await this.#uploadText("", tags, fund);
   }
 
-  async removeTopic(_name: string): TxHashPromise {
+  async removeTopic(_name: string): Promise<UploadResponse> {
     throw new Error("Not implemented");
   }
 
@@ -744,7 +752,7 @@ export class IrysApi implements IApi {
     topicId: string,
     workId: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
@@ -755,7 +763,10 @@ export class IrysApi implements IApi {
     return await this.#uploadText("", tags, fund);
   }
 
-  async removeWorkTopic(_topicId: string, _workId: string): TxHashPromise {
+  async removeWorkTopic(
+    _topicId: string,
+    _workId: string
+  ): Promise<UploadResponse> {
     throw new Error("Not implemented");
   }
 
@@ -763,7 +774,7 @@ export class IrysApi implements IApi {
     workId: string,
     likerId: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkLike },
@@ -774,7 +785,10 @@ export class IrysApi implements IApi {
     return await this.#uploadText("", tags, fund);
   }
 
-  async removeWorkLike(_workId: string, _likerId: string): TxHashPromise {
+  async removeWorkLike(
+    _workId: string,
+    _likerId: string
+  ): Promise<UploadResponse> {
     throw new Error("Not implemented");
   }
 

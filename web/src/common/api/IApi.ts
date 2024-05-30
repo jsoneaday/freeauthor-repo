@@ -11,8 +11,6 @@ import {
   WorkWithAuthorModel,
 } from "./ApiModels";
 
-export type TxHashPromise = Promise<string | null | undefined | UploadResponse>;
-
 export interface IApi {
   get Address(): string;
 
@@ -35,7 +33,7 @@ export interface IApi {
     authorId: string,
     topicId: string,
     fund?: boolean
-  ): TxHashPromise;
+  ): Promise<UploadResponse>;
 
   updateWork(
     title: string,
@@ -45,7 +43,7 @@ export interface IApi {
     topicId: string,
     priorWorkId: string,
     fund?: boolean
-  ): TxHashPromise;
+  ): Promise<UploadResponse>;
 
   /// workId is transaction id
   getWork(workId: string): Promise<WorkWithAuthorModel | null>;
@@ -113,7 +111,7 @@ export interface IApi {
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
     avatar?: Avatar
-  ): TxHashPromise;
+  ): Promise<UploadResponse>;
 
   updateProfile(
     userName: string,
@@ -124,7 +122,7 @@ export interface IApi {
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
     avatar?: Avatar
-  ): TxHashPromise;
+  ): Promise<UploadResponse>;
 
   getProfile(profileId: string): Promise<ProfileModel | null>;
   getOwnersProfile(): Promise<PagedProfileModel | null>;
@@ -136,7 +134,7 @@ export interface IApi {
     workId: string,
     responderId: string,
     fund?: boolean
-  ): TxHashPromise;
+  ): Promise<UploadResponse>;
 
   getWorkResponses(
     workId: string,
@@ -167,17 +165,25 @@ export interface IApi {
     followerId: string,
     followedId: string,
     fund?: boolean
-  ): TxHashPromise;
-  removeFollow(followerId: string, followedId: string): TxHashPromise;
+  ): Promise<UploadResponse>;
+  removeFollow(followerId: string, followedId: string): Promise<UploadResponse>;
 
-  addTopic(name: string, fund?: boolean): TxHashPromise;
-  removeTopic(name: string): TxHashPromise;
+  addTopic(name: string, fund?: boolean): Promise<UploadResponse>;
+  removeTopic(name: string): Promise<UploadResponse>;
 
-  addWorkTopic(topicId: string, workId: string, fund?: boolean): TxHashPromise;
-  removeWorkTopic(topicId: string, workId: string): TxHashPromise;
+  addWorkTopic(
+    topicId: string,
+    workId: string,
+    fund?: boolean
+  ): Promise<UploadResponse>;
+  removeWorkTopic(topicId: string, workId: string): Promise<UploadResponse>;
 
-  addWorkLike(workId: string, likerId: string, fund?: boolean): TxHashPromise;
-  removeWorkLike(workId: string, likerId: string): TxHashPromise;
+  addWorkLike(
+    workId: string,
+    likerId: string,
+    fund?: boolean
+  ): Promise<UploadResponse>;
+  removeWorkLike(workId: string, likerId: string): Promise<UploadResponse>;
 
   /// Used to wait for tx completion and then get entity id
   // waitAndGetId(

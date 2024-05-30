@@ -432,7 +432,7 @@ describe("IrysApi Work tests", () => {
     );
     const work = workResp as UploadResponse;
 
-    const responsea = (await api.addWorkResponse(
+    (await api.addWorkResponse(
       "hello a",
       work.id,
       profile.id
