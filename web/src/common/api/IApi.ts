@@ -90,7 +90,7 @@ export interface IApi {
   getAuthorWorksTop(
     authorId: string,
     pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null>;
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByTopic(
     topicId: string,

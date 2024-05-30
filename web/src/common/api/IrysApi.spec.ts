@@ -334,4 +334,65 @@ describe("IrysApi Work tests", () => {
     expect(workc.id).toBe(secondSearchResult!.workModels[0].id);
     expect(workd.id).toBe(secondSearchResult!.workModels[1].id);
   });
+
+  it("addWork for multiple items and use getAuthorWorksTop to receive a sorted list of works sorted by like count", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+    const desc = faker.lorem.lines(1);
+    const topicId = "topic123";
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile = profileResp as UploadResponse;
+
+    const workdResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const workd = workdResp as UploadResponse;
+
+    const workcResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const workc = workcResp as UploadResponse;
+    await api.addWorkLike(workc.id, profile.id);
+    await api.addWorkLike(workc.id, profile.id);
+    await api.addWorkLike(workc.id, profile.id);
+
+    const workbResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const workb = workbResp as UploadResponse;
+    await api.addWorkLike(workb.id, profile.id);
+    await api.addWorkLike(workb.id, profile.id);
+
+    const workaResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const worka = workaResp as UploadResponse;
+
+    const searchResult = await api.getAuthorWorksTop(profile.id, 10);
+    expect(workc.id).toBe(searchResult!.workModels[0].id);
+    expect(workb.id).toBe(searchResult!.workModels[1].id);
+    expect(worka.id).toBe(searchResult!.workModels[2].id);
+    expect(workd.id).toBe(searchResult!.workModels[3].id);
+  });
 });

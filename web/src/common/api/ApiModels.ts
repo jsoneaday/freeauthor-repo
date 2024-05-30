@@ -95,8 +95,6 @@ export type QueryResponse = {
   token: string;
   signature: string;
   timestamp: number;
-  /// note: is not coming from gql query, but added later!
-  data?: DataUpload;
 };
 
 export interface Entity {
@@ -148,8 +146,6 @@ export type IrysGraphqlResponseNode = {
   };
   tags: Tag[];
   timestamp: number;
-  /// note: is not coming from gql query, but added later!
-  data?: DataUpload;
 };
 
 /// The content
@@ -196,7 +192,8 @@ export class ProfileModel implements Entity {
     public description: string,
     public owner_address: string,
     public social_link_primary: string | undefined,
-    public social_link_second: string | undefined
+    public social_link_second: string | undefined,
+    public avatar: ArrayBuffer | null
   ) {}
 }
 

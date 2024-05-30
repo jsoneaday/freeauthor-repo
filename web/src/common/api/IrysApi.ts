@@ -160,11 +160,11 @@ export class IrysApi implements IApi {
     return false;
   }
 
-  async #convertQueryToWorkWithModel(
-    queryResp: QueryResponse,
-    likeCount: number = 0
-  ) {
-    const workModel = convertQueryToWork(queryResp);
+  async #convertQueryToWorkWithModel(queryResp: QueryResponse) {
+    const data = await this.getData(queryResp.id, true);
+    const workModel = convertQueryToWork(queryResp, data);
+    workModel.content = data as string;
+    const likeCount = await this.getWorkLikeCount(workModel.id);
     const profileModel = await this.getProfile(workModel.author_id);
 
     if (!profileModel) {
@@ -176,19 +176,21 @@ export class IrysApi implements IApi {
   async #convertGqlResponseNodeToWorkWithAuthor(
     gqlResponse: IrysGraphqlResponseNode
   ) {
-    const workModel = convertGqlQueryToWork(gqlResponse);
-    const profileModel = await this.getProfile(workModel.author_id);
-    const data = await this.getData(workModel.id, true);
+    const data = await this.getData(gqlResponse.id, true);
+    const workModel = convertGqlQueryToWork(gqlResponse, data);
     workModel.content = data as string;
+    const likeCount = await this.getWorkLikeCount(workModel.id);
+    const profileModel = await this.getProfile(workModel.author_id);
+
     if (!profileModel) {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);
     }
-    return convertModelsToWorkWithAuthor(workModel, profileModel, 0);
+    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
   async #convertGqlResponseToWorkWithAuthor(
     searchResults: IrysGraphqlResponse | null
-  ) {
+  ): Promise<PagedWorkWithAuthorModel | null> {
     if (!searchResults) {
       return null;
     }
@@ -282,10 +284,7 @@ export class IrysApi implements IApi {
       .sort(DESC);
 
     if (workQueryResponse.length > 0) {
-      let response: QueryResponse = workQueryResponse[0];
-      const data = await this.getData(response.id, true);
-      response.data = data;
-      return this.#convertQueryToWorkWithModel(response);
+      return this.#convertQueryToWorkWithModel(workQueryResponse[0]);
     }
     return null;
   }
@@ -306,17 +305,10 @@ export class IrysApi implements IApi {
     const works: WorkWithAuthorModel[] = new Array(workResponses.length);
     if (workResponses.length > 0) {
       for (let i = 0; i < workResponses.length; i++) {
-        let response = workResponses[i];
-        const data = await this.getData(response.id, true);
-        response.data = data;
-        const likeCount = await this.getWorkLikeCount(response.id);
-        works[i] = await this.#convertQueryToWorkWithModel(
-          workResponses[i],
-          likeCount
-        );
+        works[i] = await this.#convertQueryToWorkWithModel(workResponses[i]);
       }
     }
-    // sort by likes
+
     return works.sort((a, b) => {
       if (a.likes > b.likes) return -1;
       if (a.likes < b.likes) return 1;
@@ -325,10 +317,9 @@ export class IrysApi implements IApi {
   }
 
   async #queryGraphQL(
-    variables: IrysGraphqlVariables,
-    cursor?: string
+    variables: IrysGraphqlVariables
   ): Promise<IrysGraphqlResponse | null> {
-    const query = this.#buildQuery(cursor);
+    const query = this.#buildQuery(variables.cursor);
     const result = await fetch(IRYS_GRAPHQL_URL, {
       method: "POST",
       headers: {
@@ -399,17 +390,14 @@ export class IrysApi implements IApi {
     pageSize: number,
     cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    const searchResults = await this.#queryGraphQL(
-      {
-        tags: [
-          { name: AppTagNames.EntityType, values: [EntityType.Work] },
-          { name: WorkTagNames.Description, values: [searchTxt] },
-        ],
-        limit: pageSize,
-        cursor,
-      },
-      cursor
-    );
+    const searchResults = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.Work] },
+        { name: WorkTagNames.Description, values: [searchTxt] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
 
     return await this.#convertGqlResponseToWorkWithAuthor(searchResults);
   }
@@ -449,26 +437,40 @@ export class IrysApi implements IApi {
     pageSize: number,
     cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    const searchResults = await this.#queryGraphQL(
-      {
-        tags: [
-          { name: AppTagNames.EntityType, values: [EntityType.Work] },
-          { name: WorkTagNames.AuthorId, values: [authorId] },
-        ],
-        limit: pageSize,
-        cursor,
-      },
-      cursor
-    );
+    const searchResults = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.Work] },
+        { name: WorkTagNames.AuthorId, values: [authorId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
 
     return await this.#convertGqlResponseToWorkWithAuthor(searchResults);
   }
 
   async getAuthorWorksTop(
-    _authorId: string,
-    _pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    authorId: string,
+    pageSize: number
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    const searchResults = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.Work] },
+        { name: WorkTagNames.AuthorId, values: [authorId] },
+      ],
+      limit: pageSize,
+    });
+
+    const works = await this.#convertGqlResponseToWorkWithAuthor(searchResults);
+    if (!works) {
+      return null;
+    }
+    works.workModels.sort((a, b) => {
+      if (a.likes > b.likes) return -1;
+      if (a.likes < b.likes) return 1;
+      return 0;
+    });
+    return works;
   }
 
   async getWorksByTopic(
@@ -559,7 +561,7 @@ export class IrysApi implements IApi {
 
     const data = await this.getData(result[0].id, false);
 
-    return convertQueryToProfile({ data, ...result[0] });
+    return convertQueryToProfile(result[0], data as ArrayBuffer | null);
   }
 
   async getOwnersProfile(): Promise<ProfileModel | null> {
@@ -727,29 +729,38 @@ export class IrysApi implements IApi {
   }
 }
 
-function convertQueryToWork(response: QueryResponse): WorkModel {
+function convertQueryToWork(
+  response: QueryResponse,
+  data: DataUpload
+): WorkModel {
   return new WorkModel(
     response.id,
     response.timestamp,
     response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
-    (response.data as string) ? (response.data as string) : "",
+    (data as string) ? (data as string) : "",
     response.tags.find((tag) => tag.name == WorkTagNames.AuthorId)?.value || "",
     response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
   );
 }
 
-function convertGqlQueryToWork(response: IrysGraphqlResponseNode): WorkModel {
+function convertGqlQueryToWork(
+  response: IrysGraphqlResponseNode,
+  data: DataUpload
+): WorkModel {
   return new WorkModel(
     response.id,
     response.timestamp,
     response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
-    (response.data as string) ? (response.data as string) : "",
+    (data as string) ? (data as string) : "",
     response.tags.find((tag) => tag.name == WorkTagNames.AuthorId)?.value || "",
     response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
   );
 }
 
-function convertQueryToProfile(response: QueryResponse): ProfileModel {
+function convertQueryToProfile(
+  response: QueryResponse,
+  data: ArrayBuffer | null
+): ProfileModel {
   return new ProfileModel(
     response.id,
     response.timestamp,
@@ -766,7 +777,8 @@ function convertQueryToProfile(response: QueryResponse): ProfileModel {
     )?.value,
     response.tags.find(
       (tag) => tag.name == ProfileTagNames.SocialLinkSecondary
-    )?.value
+    )?.value,
+    data
   );
 }
 
