@@ -32,7 +32,7 @@ export enum TopicTagNames {
   TopicName = "TopicName",
 }
 
-export enum ResponderTagNames {
+export enum WorkResponderTagNames {
   ResponderId = "ResponderId",
 }
 
@@ -161,7 +161,7 @@ export class WorkModel implements Entity {
   ) {}
 }
 
-export class WorkWithAuthorModel implements Entity {
+export class WorkWithAuthorModel implements WorkModel {
   constructor(
     public id: string,
     public updated_at: number,
@@ -256,9 +256,24 @@ export class WorkResponseModel implements Entity {
     public work_id: string,
     public work_title: string,
     public response_content: string,
+    public responder_id: string
+  ) {}
+}
+
+export class WorkResponseModelWithProfile implements WorkResponseModel {
+  constructor(
+    public id: string,
+    public updated_at: number,
+    public work_id: string,
+    public work_title: string,
+    public response_content: string,
     public responder_id: string,
     public username: string,
     public fullname: string,
     public profileDesc: string
   ) {}
 }
+
+export type PagedWorkResponseModel = {
+  workResponseModels: WorkResponseModelWithProfile[];
+} & { cursor: string };

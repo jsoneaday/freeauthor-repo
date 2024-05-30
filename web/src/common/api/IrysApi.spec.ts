@@ -410,4 +410,52 @@ describe("IrysApi Work tests", () => {
     const ownersProfile = await api.getOwnersProfile();
     expect(profile.id).toBe(ownersProfile?.profileModels[0].id);
   });
+
+  it("getWorkResponses returns the expected paged responses", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+    const desc = faker.lorem.lines(1);
+    const topicId = "topic123";
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile = profileResp as UploadResponse;
+    const workResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const work = workResp as UploadResponse;
+
+    const responsea = (await api.addWorkResponse(
+      "hello a",
+      work.id,
+      profile.id
+    )) as UploadResponse;
+    const responseb = (await api.addWorkResponse(
+      "hello b",
+      work.id,
+      profile.id
+    )) as UploadResponse;
+    const responsec = (await api.addWorkResponse(
+      "hello c",
+      work.id,
+      profile.id
+    )) as UploadResponse;
+    const responsed = (await api.addWorkResponse(
+      "hello d",
+      work.id,
+      profile.id
+    )) as UploadResponse;
+
+    const workResponses = await api.getWorkResponses(work.id, 3);
+    expect(responsed.id).toBe(workResponses?.workResponseModels[0].id);
+    expect(responsec.id).toBe(workResponses?.workResponseModels[1].id);
+    expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
+  });
 });

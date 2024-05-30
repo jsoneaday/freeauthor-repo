@@ -15,7 +15,7 @@ import {
   WorkTagNames,
   TopicTagNames,
   ProfileTagNames,
-  ResponderTagNames,
+  WorkResponderTagNames,
   FollowerTagNames,
   LikeTagNames,
   IrysGraphqlVariables,
@@ -24,6 +24,8 @@ import {
   IrysGraphqlResponseNode,
   PagedWorkWithAuthorModel,
   PagedProfileModel,
+  PagedWorkResponseModel,
+  WorkResponseModelWithProfile,
 } from "./ApiModels";
 import { IApi, TxHashPromise } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -228,6 +230,46 @@ export class IrysApi implements IApi {
     }
     return {
       profileModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async #convertGqlResponseNodeToWorkResponse(
+    gqlResponse: IrysGraphqlResponseNode
+  ) {
+    const data = await this.getData(gqlResponse.id, false);
+    const workResponse = convertGqlQueryToWorkResponse(
+      gqlResponse,
+      data as string | null
+    );
+    const profile = await this.getProfile(workResponse.responder_id);
+    if (!profile) {
+      throw new Error(
+        `Responder ${workResponse.responder_id} for work response cannot be found`
+      );
+    }
+    return convertModelsToWorkResponseWithAuthor(workResponse, profile);
+  }
+
+  async #convertGqlResponseToWorkResponse(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedWorkResponseModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workResponseModel: WorkResponseModelWithProfile[] = new Array(
+      edgeLength
+    );
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workResponseModel[i] = await this.#convertGqlResponseNodeToWorkResponse(
+        edge.node
+      );
+    }
+    return {
+      workResponseModels: workResponseModel,
       cursor:
         searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
     };
@@ -619,20 +661,28 @@ export class IrysApi implements IApi {
   ): TxHashPromise {
     const tags = [
       { name: AppTagNames.ContentType, value: "text/html" },
-      { name: AppTagNames.EntityType, value: EntityType.Work },
-      { name: WorkTagNames.WorkId, value: workId.toString() },
-      { name: ResponderTagNames.ResponderId, value: responderId.toString() },
+      { name: AppTagNames.EntityType, value: EntityType.WorkResponse },
+      { name: WorkTagNames.WorkId, value: workId },
+      { name: WorkResponderTagNames.ResponderId, value: responderId },
     ];
 
     return await this.#uploadText(content, tags, fund);
   }
 
   async getWorkResponses(
-    _workId: string,
-    _lastKeyset: string,
-    _pageSize: number
-  ): Promise<WorkResponseModel[] | null> {
-    throw new Error("Not implemented");
+    workId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null> {
+    const response = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
+        { name: WorkTagNames.WorkId, values: [workId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
+    return await this.#convertGqlResponseToWorkResponse(response);
   }
 
   async getWorkResponsesTop(
@@ -671,6 +721,7 @@ export class IrysApi implements IApi {
 
     return await this.#uploadText("", tags, fund);
   }
+
   async removeFollow(_followerId: string, _followedId: string): TxHashPromise {
     throw new Error("Not implemented");
   }
@@ -684,6 +735,7 @@ export class IrysApi implements IApi {
 
     return await this.#uploadText("", tags, fund);
   }
+
   async removeTopic(_name: string): TxHashPromise {
     throw new Error("Not implemented");
   }
@@ -702,6 +754,7 @@ export class IrysApi implements IApi {
 
     return await this.#uploadText("", tags, fund);
   }
+
   async removeWorkTopic(_topicId: string, _workId: string): TxHashPromise {
     throw new Error("Not implemented");
   }
@@ -720,6 +773,7 @@ export class IrysApi implements IApi {
 
     return await this.#uploadText("", tags, fund);
   }
+
   async removeWorkLike(_workId: string, _likerId: string): TxHashPromise {
     throw new Error("Not implemented");
   }
@@ -839,9 +893,24 @@ function convertGqlQueryToProfile(
   );
 }
 
+function convertGqlQueryToWorkResponse(
+  response: IrysGraphqlResponseNode,
+  data: string | null
+): WorkResponseModel {
+  return new WorkResponseModel(
+    response.id,
+    response.timestamp,
+    response.tags.find((tag) => tag.name == WorkTagNames.WorkId)?.value || "",
+    response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
+    data || "",
+    response.tags.find((tag) => tag.name == WorkResponderTagNames.ResponderId)
+      ?.value || ""
+  );
+}
+
 function convertModelsToWorkWithAuthor(
   work: WorkModel,
-  profile: ProfileModel,
+  profileModel: ProfileModel,
   likeCount: number = 0
 ): WorkWithAuthorModel {
   return new WorkWithAuthorModel(
@@ -851,9 +920,26 @@ function convertModelsToWorkWithAuthor(
     work.content,
     work.description,
     work.author_id,
-    profile.username,
-    profile.fullname,
-    profile.description,
+    profileModel.username,
+    profileModel.fullname,
+    profileModel.description,
     likeCount
+  );
+}
+
+function convertModelsToWorkResponseWithAuthor(
+  workResponse: WorkResponseModel,
+  profileModel: ProfileModel
+) {
+  return new WorkResponseModelWithProfile(
+    workResponse.id,
+    workResponse.updated_at,
+    workResponse.work_id,
+    workResponse.work_title,
+    workResponse.response_content,
+    workResponse.responder_id,
+    profileModel.username,
+    profileModel.fullname,
+    profileModel.description
   );
 }

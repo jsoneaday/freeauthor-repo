@@ -2,6 +2,7 @@ import { UploadResponse } from "@irys/sdk/common/types";
 import {
   Avatar,
   PagedProfileModel,
+  PagedWorkResponseModel,
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
@@ -139,9 +140,9 @@ export interface IApi {
 
   getWorkResponses(
     workId: string,
-    lastKeyset: string,
-    pageSize: number
-  ): Promise<WorkResponseModel[] | null>;
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null>;
 
   getWorkResponsesTop(
     workId: string,
