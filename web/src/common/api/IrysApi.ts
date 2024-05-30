@@ -173,13 +173,38 @@ export class IrysApi implements IApi {
     return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
-  async #convertGqlQueryToWorkWithModel(gqlResponse: IrysGraphqlResponseNode) {
+  async #convertGqlResponseNodeToWorkWithAuthor(
+    gqlResponse: IrysGraphqlResponseNode
+  ) {
     const workModel = convertGqlQueryToWork(gqlResponse);
     const profileModel = await this.getProfile(workModel.author_id);
+    const data = await this.getData(workModel.id, true);
+    workModel.content = data as string;
     if (!profileModel) {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);
     }
     return convertModelsToWorkWithAuthor(workModel, profileModel, 0);
+  }
+
+  async #convertGqlResponseToWorkWithAuthor(
+    searchResults: IrysGraphqlResponse | null
+  ) {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workModels[i] = await this.#convertGqlResponseNodeToWorkWithAuthor(
+        edge.node
+      );
+    }
+    return {
+      workModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
   }
 
   async getData(entityTxId: string, isTextData: boolean): Promise<DataUpload> {
@@ -300,9 +325,10 @@ export class IrysApi implements IApi {
   }
 
   async #queryGraphQL(
-    query: string,
-    variables: IrysGraphqlVariables
+    variables: IrysGraphqlVariables,
+    cursor?: string
   ): Promise<IrysGraphqlResponse | null> {
+    const query = this.#buildQuery(cursor);
     const result = await fetch(IRYS_GRAPHQL_URL, {
       method: "POST",
       headers: {
@@ -320,11 +346,7 @@ export class IrysApi implements IApi {
     return null;
   }
 
-  async searchWorks(
-    searchTxt: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null> {
+  #buildQuery(cursor?: string) {
     let outerVariable = "";
     let innerVariable = "";
     if (cursor) {
@@ -369,26 +391,24 @@ export class IrysApi implements IApi {
         }
       }
     `;
-    const searchResults = await this.#queryGraphQL(query, {
-      tags: [{ name: WorkTagNames.Description, values: [searchTxt] }],
-      limit: pageSize,
-      cursor,
-    });
+    return query;
+  }
 
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      workModels[i] = await this.#convertGqlQueryToWorkWithModel(edge.node);
-    }
-    return {
-      workModels,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
+  async searchWorks(
+    searchTxt: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    const searchResults = await this.#queryGraphQL(
+      {
+        tags: [{ name: WorkTagNames.Description, values: [searchTxt] }],
+        limit: pageSize,
+        cursor,
+      },
+      cursor
+    );
+
+    return await this.#convertGqlResponseToWorkWithAuthor(searchResults);
   }
 
   async getWorksByAllFollowed(
@@ -422,11 +442,20 @@ export class IrysApi implements IApi {
   }
 
   async getAuthorWorks(
-    _authorId: string,
-    _lastKeyset: string,
-    _pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    authorId: string,
+    cursor: string,
+    pageSize: number
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    const searchResults = await this.#queryGraphQL(
+      {
+        tags: [{ name: WorkTagNames.AuthorId, values: [authorId] }],
+        limit: pageSize,
+        cursor,
+      },
+      cursor
+    );
+
+    return await this.#convertGqlResponseToWorkWithAuthor(searchResults);
   }
 
   async getAuthorWorksTop(
