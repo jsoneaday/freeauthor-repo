@@ -6,7 +6,6 @@ import {
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
-  WorkResponseModel,
   WorkTopicModel,
   WorkWithAuthorModel,
 } from "./ApiModels";
@@ -126,8 +125,8 @@ export interface IApi {
 
   getProfile(profileId: string): Promise<ProfileModel | null>;
   getOwnersProfile(): Promise<PagedProfileModel | null>;
-  getFollowedProfiles(profileId: string): Promise<ProfileModel[] | null>;
-  getFollowerProfiles(profileId: string): Promise<ProfileModel[] | null>;
+  getFollowedProfiles(followerId: string): Promise<ProfileModel[] | null>;
+  getFollowerProfiles(followedId: string): Promise<ProfileModel[] | null>;
 
   addWorkResponse(
     content: string,
@@ -156,7 +155,7 @@ export interface IApi {
   getWorkResponsesByProfileTop(
     profileId: string,
     pageSize: number
-  ): Promise<WorkResponseModel[] | null>;
+  ): Promise<PagedWorkResponseModel | null>;
 
   isConnected(): Promise<boolean>;
   connect(walletProvider?: object): Promise<void>;

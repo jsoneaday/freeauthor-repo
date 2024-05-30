@@ -477,4 +477,24 @@ describe("IrysApi Work tests", () => {
     expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
     expect(responsea.id).toBe(workResponses?.workResponseModels[3].id);
   });
+
+  it.only("addFollow adds one follow record", async () => {
+    const api = new IrysApi();
+    await api.connect();
+
+    const profile_follower = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile_followed = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    await api.addFollow(profile_follower.id, profile_followed.id);
+    const followed = await api.getFollowedProfiles(profile_follower.id);
+    expect(profile_followed.id).toBe(followed![0].id);
+  });
 });

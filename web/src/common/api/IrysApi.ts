@@ -319,8 +319,8 @@ export class IrysApi implements IApi {
       { name: AppTagNames.EntityType, value: EntityType.Work },
       { name: WorkTagNames.Title, value: title },
       { name: WorkTagNames.Description, value: _desc },
-      { name: WorkTagNames.AuthorId, value: authorId.toString() },
-      { name: TopicTagNames.TopicId, value: topicId.toString() },
+      { name: WorkTagNames.AuthorId, value: authorId },
+      { name: TopicTagNames.TopicId, value: topicId },
     ];
 
     return await this.#uploadText(content, tags, fund);
@@ -648,10 +648,29 @@ export class IrysApi implements IApi {
   }
 
   async getFollowedProfiles(
-    _profileId: string
+    followerId: string
   ): Promise<ProfileModel[] | null> {
-    throw new Error("Not implemented");
+    const responses: QueryResponse[] = await this.#Query
+      .search(SEARCH_TX)
+      .tags([
+        { name: AppTagNames.EntityType, values: [EntityType.Follow] },
+        { name: FollowerTagNames.FollowerId, values: [followerId] },
+      ]);
+
+    const followed: ProfileModel[] = new Array(responses.length);
+    for (let i = 0; i < responses.length; i++) {
+      const followedId = responses[i].tags.find(
+        (tag) => tag.name === FollowerTagNames.FollowedId
+      )!.value;
+      const profileModel = await this.getProfile(followedId);
+      if (!profileModel)
+        throw new Error(`ProfileModel ${followedId} was not found!`);
+      followed[i] = profileModel;
+    }
+
+    return followed;
   }
+
   async getFollowerProfiles(
     _profileId: string
   ): Promise<ProfileModel[] | null> {
@@ -715,10 +734,10 @@ export class IrysApi implements IApi {
   }
 
   async getWorkResponsesByProfileTop(
-    _profileId: string,
-    _pageSize: number
-  ): Promise<WorkResponseModel[] | null> {
-    throw new Error("Not implemented");
+    profileId: string,
+    pageSize: number
+  ): Promise<PagedWorkResponseModel | null> {
+    return await this.getWorkResponsesByProfile(profileId, pageSize);
   }
 
   async addFollow(
@@ -729,8 +748,8 @@ export class IrysApi implements IApi {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.Follow },
-      { name: FollowerTagNames.FollowerId, value: followerId.toString() },
-      { name: FollowerTagNames.FollowedId, value: followedId.toString() },
+      { name: FollowerTagNames.FollowerId, value: followerId },
+      { name: FollowerTagNames.FollowedId, value: followedId },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -765,8 +784,8 @@ export class IrysApi implements IApi {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
-      { name: TopicTagNames.TopicId, value: topicId.toString() },
-      { name: WorkTagNames.WorkId, value: workId.toString() },
+      { name: TopicTagNames.TopicId, value: topicId },
+      { name: WorkTagNames.WorkId, value: workId },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -787,8 +806,8 @@ export class IrysApi implements IApi {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkLike },
-      { name: WorkTagNames.WorkId, value: workId.toString() },
-      { name: LikeTagNames.LikerId, value: likerId.toString() },
+      { name: WorkTagNames.WorkId, value: workId },
+      { name: LikeTagNames.LikerId, value: likerId },
     ];
 
     return await this.#uploadText("", tags, fund);
