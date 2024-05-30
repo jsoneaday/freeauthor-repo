@@ -401,7 +401,10 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkWithAuthorModel | null> {
     const searchResults = await this.#queryGraphQL(
       {
-        tags: [{ name: WorkTagNames.Description, values: [searchTxt] }],
+        tags: [
+          { name: AppTagNames.EntityType, values: [EntityType.Work] },
+          { name: WorkTagNames.Description, values: [searchTxt] },
+        ],
         limit: pageSize,
         cursor,
       },
@@ -443,12 +446,15 @@ export class IrysApi implements IApi {
 
   async getAuthorWorks(
     authorId: string,
-    cursor: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null> {
     const searchResults = await this.#queryGraphQL(
       {
-        tags: [{ name: WorkTagNames.AuthorId, values: [authorId] }],
+        tags: [
+          { name: AppTagNames.EntityType, values: [EntityType.Work] },
+          { name: WorkTagNames.AuthorId, values: [authorId] },
+        ],
         limit: pageSize,
         cursor,
       },

@@ -221,7 +221,7 @@ describe("IrysApi Work tests", () => {
     expect(workc.id).toBe(searchResult!.workModels[1].id);
   });
 
-  it("addWork for multiple items and use searchWorks to page once", async () => {
+  it("addWork for multiple items and use searchWorks to page twice", async () => {
     const api: IApi = new IrysApi();
     await api.connect();
     const desc = faker.lorem.lines(1);
@@ -271,6 +271,63 @@ describe("IrysApi Work tests", () => {
     const firstSearchResult = await api.searchWorks(desc, 2);
     const secondSearchResult = await api.searchWorks(
       desc,
+      2,
+      firstSearchResult!.cursor
+    );
+    expect(workc.id).toBe(secondSearchResult!.workModels[0].id);
+    expect(workd.id).toBe(secondSearchResult!.workModels[1].id);
+  });
+
+  it("addWork for multiple items and use getAuthorWorks to page twice", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+    const desc = faker.lorem.lines(1);
+    const topicId = "topic123";
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile = profileResp as UploadResponse;
+
+    const workdResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const workd = workdResp as UploadResponse;
+
+    const workcResp = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+    const workc = workcResp as UploadResponse;
+
+    await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+
+    await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+
+    const firstSearchResult = await api.getAuthorWorks(profile.id, 2);
+    const secondSearchResult = await api.getAuthorWorks(
+      profile.id,
       2,
       firstSearchResult!.cursor
     );

@@ -83,8 +83,8 @@ export interface IApi {
 
   getAuthorWorks(
     authorId: string,
-    cursor: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null>;
 
   getAuthorWorksTop(
