@@ -27,6 +27,7 @@ import {
   PagedWorkResponseModel,
   WorkResponseModelWithProfile,
   InputTag,
+  WorkTopicTagNames,
 } from "./ApiModels";
 import { IApi } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -391,7 +392,7 @@ export class IrysApi implements IApi {
   async #queryGraphQL(
     variables: IrysGraphqlVariables
   ): Promise<IrysGraphqlResponse | null> {
-    const query = this.#buildQuery(variables.cursor);
+    const query = this.#buildQuery(variables.limit, variables.cursor);
     const result = await fetch(IRYS_GRAPHQL_URL, {
       method: "POST",
       headers: {
@@ -409,9 +410,20 @@ export class IrysApi implements IApi {
     return null;
   }
 
-  #buildQuery(cursor?: string) {
-    let outerVariable = "";
-    let innerVariable = "";
+  #buildQuery(limit?: number, cursor?: string) {
+    let outerVariable = "$tags: [TagFilter!]!";
+    let innerVariable = `
+      tags: $tags      
+      order: DESC 
+    `;
+    if (limit) {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC
+      `;
+    }
     if (cursor) {
       outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
       innerVariable = `
@@ -420,14 +432,8 @@ export class IrysApi implements IApi {
         order: DESC
         after: $cursor
       `;
-    } else {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
-      innerVariable = `
-        tags: $tags
-        limit: $limit
-        order: DESC 
-      `;
     }
+
     let query = `
       query Get(${outerVariable}) {
         transactions(
@@ -715,7 +721,7 @@ export class IrysApi implements IApi {
 
   async getWorkResponses(
     workId: string,
-    pageSize: number,
+    pageSize?: number,
     cursor?: string
   ): Promise<PagedWorkResponseModel | null> {
     const response = await this.#queryGraphQL({
@@ -753,6 +759,7 @@ export class IrysApi implements IApi {
     return await this.#convertGqlResponseToWorkResponse(response);
   }
 
+  /// todo: needs an update to include likes or I might not have response likes altogether
   async getWorkResponsesByProfileTop(
     profileId: string,
     pageSize: number
@@ -804,8 +811,8 @@ export class IrysApi implements IApi {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
-      { name: TopicTagNames.TopicId, value: topicId },
-      { name: WorkTagNames.WorkId, value: workId },
+      { name: WorkTopicTagNames.TopicId, value: topicId },
+      { name: WorkTopicTagNames.WorkId, value: workId },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -855,26 +862,85 @@ export class IrysApi implements IApi {
     return likeCount;
   }
 
-  async getWorkResponseCount(_workId: string): Promise<number> {
-    throw new Error("Not implemented");
+  async getWorkResponseCount(workId: string): Promise<number> {
+    return (
+      (await this.getWorkResponses(workId))?.workResponseModels.length || 0
+    );
   }
 
-  async getFollowedCount(_profileId: string): Promise<number> {
-    throw new Error("Not implemented");
-  }
-  async getFollowerCount(_profileId: string): Promise<number> {
-    throw new Error("Not implemented");
+  async getFollowedCount(profileId: string): Promise<number> {
+    return (await this.getFollowedProfiles(profileId))?.length || 0;
   }
 
-  async getAllTopics(): Promise<TopicModel[] | null> {
-    throw new Error("Not implemented");
+  async getFollowerCount(profileId: string): Promise<number> {
+    return (await this.getFollowerProfiles(profileId))?.length || 0;
   }
-  async getWorkTopic(_workId: string): Promise<WorkTopicModel | null> {
-    throw new Error("Not implemented");
+
+  async getAllTopics(): Promise<TopicModel[]> {
+    const response = await this.#queryGraphQL({
+      tags: [{ name: AppTagNames.EntityType, values: [EntityType.Topic] }],
+    });
+
+    return convertGqlQueryToTopic(response) || [];
   }
-  async getTopicByWork(_workId: string): Promise<TopicModel | null> {
-    throw new Error("Not implemented");
+
+  async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
+    const workTopicResponse = await this.#queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
+        { name: WorkTopicTagNames.WorkId, values: [workId] },
+      ],
+    });
+
+    const workTopics = convertGqlQueryToWorkTopic(workTopicResponse);
+    const topicModels = await this.getAllTopics();
+    const topics: TopicModel[] = new Array(workTopics.length);
+    for (let i = 0; i < workTopics.length; i++) {
+      topics[i] = topicModels.find(
+        (topic) => topic.id === workTopics[i].topic_id
+      )!;
+    }
+
+    return topics;
   }
+}
+
+function convertGqlQueryToWorkTopic(response: IrysGraphqlResponse | null) {
+  const count = response?.data.transactions.edges.length || 0;
+  const topics: WorkTopicModel[] = new Array(count);
+  for (let i = 0; i < count; i++) {
+    const node = response?.data.transactions.edges[i].node;
+    if (!node) throw new Error("Topic item is null");
+    topics[i] = {
+      id: node.id,
+      updated_at: node.timestamp,
+      work_id:
+        node.tags.find((tag) => tag.name === WorkTopicTagNames.WorkId)?.value ||
+        "",
+      topic_id:
+        node.tags.find((tag) => tag.name === WorkTopicTagNames.TopicId)
+          ?.value || "",
+    };
+  }
+  return topics;
+}
+
+function convertGqlQueryToTopic(response: IrysGraphqlResponse | null) {
+  const count = response?.data.transactions.edges.length || 0;
+  console.log("count", count);
+  const topics: TopicModel[] = new Array(count);
+  for (let i = 0; i < count; i++) {
+    const node = response?.data.transactions.edges[i].node;
+    if (!node) throw new Error("Topic item is null");
+    topics[i] = {
+      id: node.id,
+      updated_at: node.timestamp,
+      name:
+        node.tags.find((tag) => tag.name === TopicTagNames.TopicName)?.value ||
+        "",
+    };
+  }
+  return topics;
 }
 
 function convertQueryToWork(

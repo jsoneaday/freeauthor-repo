@@ -41,6 +41,11 @@ export enum FollowerTagNames {
   FollowedId = "FollowedId",
 }
 
+export enum WorkTopicTagNames {
+  WorkId = "WorkId",
+  TopicId = "TopicId",
+}
+
 export const BaseTags = [
   { name: AppTagNames.App, value: "FreeAuth" },
   { name: AppTagNames.Version, value: "1.0" },
@@ -118,7 +123,7 @@ export type Avatar = {
 };
 
 export type IrysGraphqlVariables = {
-  limit: number;
+  limit?: number;
   ids?: string[];
   owners?: string[];
   token?: string;

@@ -423,6 +423,34 @@ describe("IrysApi Work tests", () => {
     expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
   });
 
+  it("getWorkResponseCount returns the expected response count", async () => {
+    const api: IApi = new IrysApi();
+    await api.connect();
+    const desc = faker.lorem.lines(1);
+    const topicId = "topic123";
+
+    const profile = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const work = await api.addWork(
+      faker.lorem.words(3),
+      desc,
+      faker.lorem.paragraph(1),
+      profile.id,
+      topicId
+    );
+
+    await api.addWorkResponse("hello a", work.id, profile.id);
+    await api.addWorkResponse("hello b", work.id, profile.id);
+    await api.addWorkResponse("hello c", work.id, profile.id);
+    await api.addWorkResponse("hello d", work.id, profile.id);
+
+    const workResponseCount = await api.getWorkResponseCount(work.id);
+    expect(workResponseCount).toBe(4);
+  });
+
   it("getWorkResponsesByProfile returns the expected paged responses", async () => {
     const api: IApi = new IrysApi();
     await api.connect();
@@ -498,7 +526,7 @@ describe("IrysApi Work tests", () => {
     expect(profile_followed.id).toBe(followed![0].id);
   });
 
-  it.only("addFollow adds one follow record and getFollowerProfiles retrieves follower profile", async () => {
+  it("addFollow adds one follow record and getFollowerProfiles retrieves follower profile", async () => {
     const api = new IrysApi();
     await api.connect();
 
@@ -516,5 +544,53 @@ describe("IrysApi Work tests", () => {
     await api.addFollow(profile_follower.id, profile_followed.id);
     const followers = await api.getFollowerProfiles(profile_followed.id);
     expect(profile_follower.id).toBe(followers![0].id);
+  });
+
+  it("call getAllTopics and confirm complete list of topics is returned", async () => {
+    const api = new IrysApi();
+    await api.connect();
+
+    const topica = faker.company.name() + faker.number.int();
+    const topicb = faker.company.name() + faker.number.int();
+    const topicc = faker.company.name() + faker.number.int();
+    await api.addTopic(topica);
+    await api.addTopic(topicb);
+    await api.addTopic(topicc);
+
+    const topics = await api.getAllTopics();
+    expect(topics![0].name).toBe(topicc);
+    expect(topics![1].name).toBe(topicb);
+    expect(topics![2].name).toBe(topica);
+  });
+
+  it.only("call getTopicByWork and confirm returned topic", async () => {
+    const api = new IrysApi();
+    await api.connect();
+
+    const topicNameA = faker.company.name() + faker.number.int();
+    const topicNameB = faker.company.name() + faker.number.int();
+    const topicNameC = faker.company.name() + faker.number.int();
+    const topica = await api.addTopic(topicNameA);
+    await api.addTopic(topicNameB);
+    await api.addTopic(topicNameC);
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const workResp = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profileResp.id,
+      topica.id
+    );
+
+    await api.addWorkTopic(topica.id, workResp.id);
+
+    const topics = await api.getTopicsByWork(workResp.id);
+    expect(topics![0].name).toBe(topicNameA);
   });
 });

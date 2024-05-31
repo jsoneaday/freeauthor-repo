@@ -360,25 +360,12 @@ export class UiApi {
   }
 
   async getTopicByWork(workId: string): Promise<Topic | null> {
-    const topic = await this.#Api.getTopicByWork(workId);
+    const topic = await this.#Api.getTopicsByWork(workId);
     if (topic) {
       return {
         id: topic.id,
         updatedAt: topic.updated_at.toString(),
         name: topic.name,
-      };
-    }
-    return null;
-  }
-
-  async getWorkTopic(workId: string): Promise<WorkTopic | null> {
-    const workTopic = await this.#Api.getWorkTopic(workId);
-    if (workTopic) {
-      return {
-        id: workTopic.id,
-        updatedAt: workTopic.updated_at.toString(),
-        workId: workTopic.work_id,
-        topicId: workTopic.topic_id,
       };
     }
     return null;

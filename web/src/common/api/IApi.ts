@@ -6,7 +6,6 @@ import {
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
-  WorkTopicModel,
   WorkWithAuthorModel,
 } from "./ApiModels";
 
@@ -137,7 +136,7 @@ export interface IApi {
 
   getWorkResponses(
     workId: string,
-    pageSize: number,
+    pageSize?: number,
     cursor?: string
   ): Promise<PagedWorkResponseModel | null>;
 
@@ -197,9 +196,8 @@ export interface IApi {
   getFollowedCount(profileId: string): Promise<number>;
   getFollowerCount(profileId: string): Promise<number>;
 
-  getAllTopics(): Promise<TopicModel[] | null>;
-  getWorkTopic(workId: string): Promise<WorkTopicModel | null>;
-  getTopicByWork(workId: string): Promise<TopicModel | null>;
+  getAllTopics(): Promise<TopicModel[]>;
+  getTopicsByWork(workId: string): Promise<TopicModel[] | null>;
 
   // cleanDb(): TxHashPromise;
   // setupData(): TxHashPromise;
