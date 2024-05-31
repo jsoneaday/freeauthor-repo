@@ -107,6 +107,11 @@ export type Tag = {
   value: string;
 };
 
+export type InputTag = {
+  name: string;
+  values: string[];
+};
+
 export type Avatar = {
   file: File;
   fileExtension: string;
@@ -117,7 +122,7 @@ export type IrysGraphqlVariables = {
   ids?: string[];
   owners?: string[];
   token?: string;
-  tags?: { name: string; values: string[] }[];
+  tags?: InputTag[];
   after?: string;
   before?: string;
   order?: string;

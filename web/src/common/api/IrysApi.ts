@@ -26,6 +26,7 @@ import {
   PagedProfileModel,
   PagedWorkResponseModel,
   WorkResponseModelWithProfile,
+  InputTag,
 } from "./ApiModels";
 import { IApi } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -647,34 +648,53 @@ export class IrysApi implements IApi {
     return await this.#convertGqlResponseToProfile(searchResults);
   }
 
+  async #getFollowProfiles(profileId: string, getFollowed: boolean) {
+    const searchTags: InputTag[] = [
+      { name: AppTagNames.EntityType, values: [EntityType.Follow] },
+    ];
+    if (getFollowed) {
+      searchTags.push({
+        name: FollowerTagNames.FollowerId,
+        values: [profileId],
+      });
+    } else {
+      searchTags.push({
+        name: FollowerTagNames.FollowedId,
+        values: [profileId],
+      });
+    }
+    const responses: QueryResponse[] = await this.#Query
+      .search(SEARCH_TX)
+      .tags(searchTags);
+
+    const follow: ProfileModel[] = new Array(responses.length);
+    let filterTagValue = FollowerTagNames.FollowedId;
+    if (!getFollowed) {
+      filterTagValue = FollowerTagNames.FollowerId;
+    }
+    for (let i = 0; i < responses.length; i++) {
+      const followId = responses[i].tags.find(
+        (tag) => tag.name === filterTagValue
+      )!.value;
+      const profileModel = await this.getProfile(followId);
+      if (!profileModel)
+        throw new Error(`Follow ProfileModel ${followId} was not found!`);
+      follow[i] = profileModel;
+    }
+
+    return follow;
+  }
+
   async getFollowedProfiles(
     followerId: string
   ): Promise<ProfileModel[] | null> {
-    const responses: QueryResponse[] = await this.#Query
-      .search(SEARCH_TX)
-      .tags([
-        { name: AppTagNames.EntityType, values: [EntityType.Follow] },
-        { name: FollowerTagNames.FollowerId, values: [followerId] },
-      ]);
-
-    const followed: ProfileModel[] = new Array(responses.length);
-    for (let i = 0; i < responses.length; i++) {
-      const followedId = responses[i].tags.find(
-        (tag) => tag.name === FollowerTagNames.FollowedId
-      )!.value;
-      const profileModel = await this.getProfile(followedId);
-      if (!profileModel)
-        throw new Error(`ProfileModel ${followedId} was not found!`);
-      followed[i] = profileModel;
-    }
-
-    return followed;
+    return this.#getFollowProfiles(followerId, true);
   }
 
   async getFollowerProfiles(
-    _profileId: string
+    followedId: string
   ): Promise<ProfileModel[] | null> {
-    throw new Error("Not implemented");
+    return this.#getFollowProfiles(followedId, false);
   }
 
   async addWorkResponse(
