@@ -17,7 +17,7 @@ import {
   ProfileTagNames,
   WorkResponderTagNames,
   FollowerTagNames,
-  LikeTagNames,
+  WorkLikeTagNames,
   IrysGraphqlVariables,
   IrysGraphqlResponse,
   DataUpload,
@@ -837,7 +837,7 @@ export class IrysApi implements IApi {
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
-      { name: ActionTagName, value: ActionTagType.AddOrUpdate },
+      { name: ActionTagName, value: ActionTagType.Add },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
       { name: WorkTopicTagNames.TopicId, value: topicId },
       { name: WorkTopicTagNames.WorkId, value: workId },
@@ -870,8 +870,8 @@ export class IrysApi implements IApi {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkLike },
-      { name: WorkTagNames.WorkId, value: workId },
-      { name: LikeTagNames.LikerId, value: likerId },
+      { name: WorkLikeTagNames.WorkId, value: workId },
+      { name: WorkLikeTagNames.LikerId, value: likerId },
     ];
 
     return await this.#uploadText("", tags, fund);
@@ -929,30 +929,35 @@ export class IrysApi implements IApi {
       ],
     });
 
-    const workTopics = convertGqlQueryToWorkTopic(workTopicResponse);
-    const topicModels = await this.getAllTopics();
+    const workTopics = convertGqlQueryToWorkTopic(
+      workTopicResponse,
+      EntityType.WorkTopic
+    );
+    const allTopicModels = await this.getAllTopics();
     const topics: TopicModel[] = new Array(workTopics.length);
-    console.log("workTopics", workTopics);
+
     for (let i = 0; i < workTopics.length; i++) {
-      topics[i] = topicModels.find(
+      topics[i] = allTopicModels.find(
         (topic) => topic.id === workTopics[i].topic_id
       )!;
     }
-
     return topics;
   }
 }
 
 /// Assumed sort by last inserted record first (i.e. timestamp),
 /// as its possible after a remove a new insert is then done
-function getNonRemovedEdges(sourceEdges: IrysGraphqlEdge[]) {
+function getNonRemovedEdges(
+  entityType: EntityType,
+  sourceEdges: IrysGraphqlEdge[]
+) {
   const nonRemovedEdges: IrysGraphqlEdge[] = [];
 
   // see if each edge is already in final list and add it if not
   for (let i = 0; i < sourceEdges.length; i++) {
     const currentEdge = sourceEdges[i];
 
-    if (!containsMatchingEdge(currentEdge, nonRemovedEdges)) {
+    if (!containsMatchingEdge(currentEdge, nonRemovedEdges, entityType)) {
       nonRemovedEdges.push(currentEdge);
     }
   }
@@ -970,7 +975,8 @@ function getNonRemovedEdges(sourceEdges: IrysGraphqlEdge[]) {
 /// if all tags have matching names
 function containsMatchingEdge(
   edgeToCheck: IrysGraphqlEdge,
-  searchEdges: IrysGraphqlEdge[]
+  searchEdges: IrysGraphqlEdge[],
+  entityType: EntityType
 ) {
   const checkTags = edgeToCheck.node.tags;
   for (const searchEdge of searchEdges) {
@@ -978,7 +984,7 @@ function containsMatchingEdge(
     for (const checkTag of checkTags) {
       let currentTagMatches = false;
       for (const searchEdgeTag of searchEdge.node.tags) {
-        if (searchEdgeTag.name === checkTag.name) {
+        if (checkEqualityByEntityType(entityType, checkTag, searchEdgeTag)) {
           currentTagMatches = true;
           break;
         }
@@ -994,13 +1000,39 @@ function containsMatchingEdge(
   return false;
 }
 
-function removeDeletedRecords(response: IrysGraphqlResponse | null) {
+function checkEqualityByEntityType(
+  entityType: EntityType,
+  checkTag: Tag,
+  searchTag: Tag
+) {
+  if (entityType === EntityType.WorkTopic) {
+    if (
+      checkTag.name === WorkTopicTagNames.WorkId ||
+      checkTag.name === WorkTopicTagNames.TopicId
+    ) {
+      if (
+        checkTag.name === searchTag.name &&
+        checkTag.value === searchTag.value
+      ) {
+        return true;
+      }
+    } else if (checkTag.name === searchTag.name) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function removeDeletedRecords(
+  response: IrysGraphqlResponse | null,
+  entityType: EntityType
+) {
   const cleanedList: IrysGraphqlResponse = {
     data: {
       transactions: {
         edges: !response
           ? []
-          : getNonRemovedEdges(response.data.transactions.edges),
+          : getNonRemovedEdges(entityType, response.data.transactions.edges),
       },
     },
   };
@@ -1008,8 +1040,11 @@ function removeDeletedRecords(response: IrysGraphqlResponse | null) {
   return cleanedList;
 }
 
-function convertGqlQueryToWorkTopic(response: IrysGraphqlResponse | null) {
-  const _response = removeDeletedRecords(response);
+function convertGqlQueryToWorkTopic(
+  response: IrysGraphqlResponse | null,
+  entityType: EntityType
+) {
+  const _response = removeDeletedRecords(response, entityType);
   const count = _response?.data.transactions.edges.length || 0;
   const topics: WorkTopicModel[] = new Array(count);
   for (let i = 0; i < count; i++) {
@@ -1031,7 +1066,7 @@ function convertGqlQueryToWorkTopic(response: IrysGraphqlResponse | null) {
 
 function convertGqlQueryToTopic(response: IrysGraphqlResponse | null) {
   const count = response?.data.transactions.edges.length || 0;
-  console.log("count", count);
+
   const topics: TopicModel[] = new Array(count);
   for (let i = 0; i < count; i++) {
     const node = response?.data.transactions.edges[i].node;

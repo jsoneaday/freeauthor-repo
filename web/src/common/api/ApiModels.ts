@@ -10,7 +10,8 @@ export enum AppTagNames {
 export const ActionTagName = "ActionTag";
 
 export enum ActionTagType {
-  AddOrUpdate = "AddOrUpdate",
+  Add = "Add",
+  Update = "Update",
   Remove = "Remove",
 }
 
@@ -30,7 +31,8 @@ export enum ProfileTagNames {
   SocialLinkSecondary = "SocialLinkSecondary",
 }
 
-export enum LikeTagNames {
+export enum WorkLikeTagNames {
+  WorkId = "WorkId",
   LikerId = "LIkerId",
 }
 
@@ -53,11 +55,6 @@ export enum WorkTopicTagNames {
   TopicId = "TopicId",
 }
 
-export const BaseTags = [
-  { name: AppTagNames.App, value: "FreeAuth" },
-  { name: AppTagNames.Version, value: "1.0" },
-];
-
 export enum EntityType {
   WorkLike = "WorkLike",
   WorkTopic = "WorkTopic",
@@ -67,6 +64,11 @@ export enum EntityType {
   Follow = "Follow",
   Topic = "Topic",
 }
+
+export const BaseTags = [
+  { name: AppTagNames.App, value: "FreeAuth" },
+  { name: AppTagNames.Version, value: "1.0" },
+];
 
 /// This type includes example values
 export type TxValidationMetadata = {

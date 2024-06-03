@@ -1,9 +1,10 @@
 // import { render, waitFor, screen } from "@testing-library/react";
 // import UserEvent from "@testing-library/user-event";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import { IrysApi } from "./IrysApi";
 import { IApi } from "./IApi";
 import { faker } from "@faker-js/faker";
+import { UploadResponse } from "@irys/sdk/common/types";
 
 describe("IrysApi Work tests", () => {
   beforeEach(async () => {
@@ -546,51 +547,54 @@ describe("IrysApi Work tests", () => {
     expect(profile_follower.id).toBe(followers![0].id);
   });
 
-  it("call getAllTopics and confirm complete list of topics is returned", async () => {
-    const api = new IrysApi();
-    await api.connect();
+  describe("topics related tests", () => {
+    let topicNameA = "";
+    let topicNameB = "";
+    let topicNameC = "";
+    let topicaResp: UploadResponse;
+    let topicbResp: UploadResponse;
+    let topiccResp: UploadResponse;
+    let api: IApi;
 
-    const topica = faker.company.name() + faker.number.int();
-    const topicb = faker.company.name() + faker.number.int();
-    const topicc = faker.company.name() + faker.number.int();
-    await api.addTopic(topica);
-    await api.addTopic(topicb);
-    await api.addTopic(topicc);
+    beforeAll(async () => {
+      api = new IrysApi();
+      await api.connect();
 
-    const topics = await api.getAllTopics();
-    expect(topics![0].name).toBe(topicc);
-    expect(topics![1].name).toBe(topicb);
-    expect(topics![2].name).toBe(topica);
-  });
+      topicNameA = faker.company.name() + faker.number.int();
+      topicNameB = faker.company.name() + faker.number.int();
+      topicNameC = faker.company.name() + faker.number.int();
+      topicaResp = await api.addTopic(topicNameA);
+      topicbResp = await api.addTopic(topicNameB);
+      topiccResp = await api.addTopic(topicNameC);
+    });
 
-  it.only("call getTopicByWork and confirm returned topic", async () => {
-    const api = new IrysApi();
-    await api.connect();
+    it("call getAllTopics and confirm complete list of topics is returned", async () => {
+      const topics = await api.getAllTopics();
 
-    const topicNameA = faker.company.name() + faker.number.int();
-    const topicNameB = faker.company.name() + faker.number.int();
-    const topicNameC = faker.company.name() + faker.number.int();
-    const topica = await api.addTopic(topicNameA);
-    await api.addTopic(topicNameB);
-    await api.addTopic(topicNameC);
+      expect(topics![0].name).toBe(topicNameC);
+      expect(topics![1].name).toBe(topicNameB);
+      expect(topics![2].name).toBe(topicNameA);
+    });
 
-    const profileResp = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
+    it("call getTopicByWork and confirm returned topic", async () => {
+      const profileResp = await api.addProfile(
+        faker.internet.userName(),
+        faker.internet.displayName(),
+        faker.lorem.sentence(1)
+      );
 
-    const workResp = await api.addWork(
-      faker.lorem.words(3),
-      faker.lorem.sentence(1),
-      faker.lorem.paragraph(1),
-      profileResp.id,
-      topica.id
-    );
+      const workResp = await api.addWork(
+        faker.lorem.words(3),
+        faker.lorem.sentence(1),
+        faker.lorem.paragraph(1),
+        profileResp.id,
+        topicaResp.id
+      );
 
-    await api.addWorkTopic(topica.id, workResp.id);
+      await api.addWorkTopic(topicaResp.id, workResp.id);
 
-    const topics = await api.getTopicsByWork(workResp.id);
-    expect(topics![0].name).toBe(topicNameA);
+      const topics = await api.getTopicsByWork(workResp.id);
+      expect(topics![0].name).toBe(topicNameA);
+    });
   });
 });
