@@ -4,9 +4,6 @@ import {
   ProfileModel,
   Tag,
   TopicModel,
-  WorkModel,
-  WorkResponseModel,
-  WorkTopicModel,
   WorkWithAuthorModel,
   QueryResponse,
   TxValidationMetadata,
@@ -18,39 +15,31 @@ import {
   WorkResponderTagNames,
   FollowerTagNames,
   WorkLikeTagNames,
-  IrysGraphqlVariables,
-  IrysGraphqlResponse,
-  DataUpload,
-  IrysGraphqlResponseNode,
   PagedWorkWithAuthorModel,
-  PagedProfileModel,
   PagedWorkResponseModel,
-  WorkResponseModelWithProfile,
   InputTag,
   WorkTopicTagNames,
   ActionTagName,
   ActionTagType,
-  IrysGraphqlEdge,
-} from "./ApiModels";
+} from "./models/ApiModels";
 import { IApi } from "../interfaces/IApi";
 import { WebIrys } from "@irys/sdk";
 import SolanaConfig from "@irys/sdk/node/tokens/solana";
 import { BaseWebIrys } from "@irys/sdk/web/base";
 import { type WebToken } from "@irys/sdk/web/types";
 import Query from "@irys/query";
-import {
-  IRYS_DATA_URL,
-  IRYS_GRAPHQL_URL,
-  RPC_URL,
-  TOKEN,
-  TX_METADATA_URL,
-} from "../../Env";
+import { RPC_URL, TOKEN, TX_METADATA_URL } from "../../Env";
 import bs58 from "bs58";
 import { UploadResponse } from "@irys/sdk/common/types";
 import { IGraphql } from "../interfaces/IGraphql";
 import { IrysGraphql } from "./IrysGraphql";
 import { IUploadData } from "../interfaces/IUploadData";
 import { IrysUploadData } from "./IrysUploadData";
+import {
+  convertModelsToWorkWithAuthor,
+  convertQueryToProfile,
+  convertQueryToWork,
+} from "./models/ApiModelConverters";
 
 const DESC = "DESC";
 //const ASC = "ASC";
@@ -137,8 +126,9 @@ export class IrysApi implements IApi {
 
     this.#address = this.#irys.address;
     this.#query = new Query({ network: this.#network });
-    this.#irysgraphql = new IrysGraphql();
+
     this.#uploaddata = new IrysUploadData();
+    this.#irysgraphql = new IrysGraphql(this.#uploaddata, this);
   }
 
   #getTickerFromToken() {
@@ -212,182 +202,6 @@ export class IrysApi implements IApi {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);
     }
     return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
-  }
-
-  async #convertGqlResponseNodeToWorkWithAuthor(
-    gqlResponse: IrysGraphqlResponseNode
-  ) {
-    const data = await this.#UploadData.getData(gqlResponse.id, true);
-    const workModel = this.#IrysGql.convertGqlQueryToWork(gqlResponse, data);
-    const likeCount = await this.getWorkLikeCount(workModel.id);
-    const profileModel = await this.getProfile(workModel.author_id);
-
-    if (!profileModel) {
-      throw new Error(`Profile with id ${workModel.author_id} not found!`);
-    }
-    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
-  }
-
-  async #convertGqlResponseToWorkWithAuthor(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      workModels[i] = await this.#convertGqlResponseNodeToWorkWithAuthor(
-        edge.node
-      );
-    }
-    return {
-      workModels,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
-  }
-
-  async #convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
-    const data = await this.#UploadData.getData(gqlResponse.id, false);
-    return this.#IrysGql.convertGqlQueryToProfile(
-      gqlResponse,
-      data as ArrayBuffer | null
-    );
-  }
-
-  async #convertGqlResponseToProfile(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedProfileModel | null> {
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let profileModels: ProfileModel[] = new Array(edgeLength);
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      profileModels[i] = await this.#convertGqlResponseNodeToProfile(edge.node);
-    }
-    return {
-      profileModels,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
-  }
-
-  async #convertGqlResponseNodeToWorkResponse(
-    gqlResponse: IrysGraphqlResponseNode
-  ) {
-    const data = await this.#UploadData.getData(gqlResponse.id, false);
-    const workResponse = this.#IrysGql.convertGqlQueryToWorkResponse(
-      gqlResponse,
-      data as string | null
-    );
-    const profile = await this.getProfile(workResponse.responder_id);
-    if (!profile) {
-      throw new Error(
-        `Responder ${workResponse.responder_id} for work response cannot be found`
-      );
-    }
-    return convertModelsToWorkResponseWithAuthor(workResponse, profile);
-  }
-
-  async #convertGqlResponseToWorkResponse(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedWorkResponseModel | null> {
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let workResponseModel: WorkResponseModelWithProfile[] = new Array(
-      edgeLength
-    );
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      workResponseModel[i] = await this.#convertGqlResponseNodeToWorkResponse(
-        edge.node
-      );
-    }
-    return {
-      workResponseModels: workResponseModel,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
-  }
-
-  async #queryGraphQL(
-    variables: IrysGraphqlVariables
-  ): Promise<IrysGraphqlResponse | null> {
-    const query = this.#buildQuery(variables.limit, variables.cursor);
-    const result = await fetch(IRYS_GRAPHQL_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
-    });
-
-    if (result.ok) {
-      return await result.json();
-    }
-    return null;
-  }
-
-  #buildQuery(limit?: number, cursor?: string) {
-    let outerVariable = "$tags: [TagFilter!]!";
-    let innerVariable = `
-      tags: $tags      
-      order: DESC 
-    `;
-    if (limit) {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
-      innerVariable = `
-        tags: $tags
-        limit: $limit
-        order: DESC
-      `;
-    }
-    if (cursor) {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
-      innerVariable = `
-        tags: $tags
-        limit: $limit
-        order: DESC
-        after: $cursor
-      `;
-    }
-
-    let query = `
-      query Get(${outerVariable}) {
-        transactions(
-          ${innerVariable}          
-        ) {
-          edges {
-            node {
-              id
-              address
-              token
-              receipt {
-                deadlineHeight
-                signature
-                version
-              }
-              tags {
-                name
-                value
-              }
-              timestamp
-            }
-            cursor
-          }
-        }
-      }
-    `;
-    return query;
   }
 
   async arbitraryFund(amount: number): Promise<void> {
@@ -490,7 +304,7 @@ export class IrysApi implements IApi {
     pageSize: number,
     cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    const searchResults = await this.#queryGraphQL({
+    const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.Description, values: [searchTxt] },
@@ -499,7 +313,9 @@ export class IrysApi implements IApi {
       cursor,
     });
 
-    return await this.#convertGqlResponseToWorkWithAuthor(searchResults);
+    return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
+      searchResults
+    );
   }
 
   async getWorksByAllFollowed(
@@ -537,7 +353,7 @@ export class IrysApi implements IApi {
     pageSize: number,
     cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    const searchResults = await this.#queryGraphQL({
+    const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.AuthorId, values: [authorId] },
@@ -546,14 +362,16 @@ export class IrysApi implements IApi {
       cursor,
     });
 
-    return await this.#convertGqlResponseToWorkWithAuthor(searchResults);
+    return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
+      searchResults
+    );
   }
 
   async getAuthorWorksTop(
     authorId: string,
     pageSize: number
   ): Promise<PagedWorkWithAuthorModel | null> {
-    const searchResults = await this.#queryGraphQL({
+    const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.AuthorId, values: [authorId] },
@@ -561,7 +379,9 @@ export class IrysApi implements IApi {
       limit: pageSize,
     });
 
-    const works = await this.#convertGqlResponseToWorkWithAuthor(searchResults);
+    const works = await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
+      searchResults
+    );
     if (!works) {
       return null;
     }
@@ -665,7 +485,7 @@ export class IrysApi implements IApi {
   }
 
   async getOwnersProfile(): Promise<ProfileModel | null> {
-    const searchResults = await this.#queryGraphQL({
+    const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.Profile] },
         { name: ProfileTagNames.OwnerAddress, values: [this.Address] },
@@ -770,7 +590,7 @@ export class IrysApi implements IApi {
     pageSize?: number,
     cursor?: string
   ): Promise<PagedWorkResponseModel | null> {
-    const response = await this.#queryGraphQL({
+    const response = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
         { name: WorkTagNames.WorkId, values: [workId] },
@@ -778,7 +598,7 @@ export class IrysApi implements IApi {
       limit: pageSize,
       cursor,
     });
-    return await this.#convertGqlResponseToWorkResponse(response);
+    return await this.#IrysGql.convertGqlResponseToWorkResponse(response);
   }
 
   /// todo: needs an update to include likes or I might not have response likes altogether
@@ -794,7 +614,7 @@ export class IrysApi implements IApi {
     pageSize: number,
     cursor?: string
   ): Promise<PagedWorkResponseModel | null> {
-    const response = await this.#queryGraphQL({
+    const response = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
         { name: WorkResponderTagNames.ResponderId, values: [profileId] },
@@ -802,7 +622,7 @@ export class IrysApi implements IApi {
       limit: pageSize,
       cursor,
     });
-    return await this.#convertGqlResponseToWorkResponse(response);
+    return await this.#IrysGql.convertGqlResponseToWorkResponse(response);
   }
 
   /// todo: needs an update to include likes or I might not have response likes altogether
@@ -933,7 +753,7 @@ export class IrysApi implements IApi {
   }
 
   async getAllTopics(): Promise<TopicModel[]> {
-    const response = await this.#queryGraphQL({
+    const response = await this.#IrysGql.queryGraphQL({
       tags: [{ name: AppTagNames.EntityType, values: [EntityType.Topic] }],
     });
 
@@ -941,7 +761,7 @@ export class IrysApi implements IApi {
   }
 
   async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
-    const workTopicResponse = await this.#queryGraphQL({
+    const workTopicResponse = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
         { name: WorkTopicTagNames.WorkId, values: [workId] },
@@ -962,79 +782,4 @@ export class IrysApi implements IApi {
     }
     return topics;
   }
-}
-
-function convertQueryToWork(
-  response: QueryResponse,
-  data: DataUpload
-): WorkModel {
-  return new WorkModel(
-    response.id,
-    response.timestamp,
-    response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
-    (data as string) ? (data as string) : "",
-    response.tags.find((tag) => tag.name == WorkTagNames.AuthorId)?.value || "",
-    response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
-  );
-}
-
-function convertQueryToProfile(
-  response: QueryResponse,
-  data: ArrayBuffer | null
-): ProfileModel {
-  return new ProfileModel(
-    response.id,
-    response.timestamp,
-    response.tags.find((tag) => tag.name == ProfileTagNames.UserName)?.value ||
-      "",
-    response.tags.find((tag) => tag.name == ProfileTagNames.FullName)?.value ||
-      "",
-    response.tags.find((tag) => tag.name == ProfileTagNames.Description)
-      ?.value || "",
-    response.tags.find((tag) => tag.name == ProfileTagNames.OwnerAddress)
-      ?.value || "",
-    response.tags.find(
-      (tag) => tag.name == ProfileTagNames.SocialLinkPrimary
-    )?.value,
-    response.tags.find(
-      (tag) => tag.name == ProfileTagNames.SocialLinkSecondary
-    )?.value,
-    data
-  );
-}
-
-function convertModelsToWorkWithAuthor(
-  work: WorkModel,
-  profileModel: ProfileModel,
-  likeCount: number = 0
-): WorkWithAuthorModel {
-  return new WorkWithAuthorModel(
-    work.id,
-    work.updated_at,
-    work.title,
-    work.content,
-    work.description,
-    work.author_id,
-    profileModel.username,
-    profileModel.fullname,
-    profileModel.description,
-    likeCount
-  );
-}
-
-function convertModelsToWorkResponseWithAuthor(
-  workResponse: WorkResponseModel,
-  profileModel: ProfileModel
-) {
-  return new WorkResponseModelWithProfile(
-    workResponse.id,
-    workResponse.updated_at,
-    workResponse.work_id,
-    workResponse.work_title,
-    workResponse.response_content,
-    workResponse.responder_id,
-    profileModel.username,
-    profileModel.fullname,
-    profileModel.description
-  );
 }

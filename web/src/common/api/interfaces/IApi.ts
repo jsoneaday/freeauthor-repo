@@ -1,13 +1,12 @@
 import { UploadResponse } from "@irys/sdk/common/types";
 import {
   Avatar,
-  PagedProfileModel,
   PagedWorkResponseModel,
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
   WorkWithAuthorModel,
-} from "../irys/ApiModels";
+} from "../irys/models/ApiModels";
 
 export interface IApi {
   get Address(): string;

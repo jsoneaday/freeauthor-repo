@@ -1,4 +1,11 @@
+import { IRYS_GRAPHQL_URL } from "../../Env";
+import { IApi } from "../interfaces/IApi";
 import { IGraphql } from "../interfaces/IGraphql";
+import { IUploadData } from "../interfaces/IUploadData";
+import {
+  convertModelsToWorkResponseWithAuthor,
+  convertModelsToWorkWithAuthor,
+} from "./models/ApiModelConverters";
 import {
   ActionTagName,
   ActionTagType,
@@ -7,6 +14,10 @@ import {
   IrysGraphqlEdge,
   IrysGraphqlResponse,
   IrysGraphqlResponseNode,
+  IrysGraphqlVariables,
+  PagedProfileModel,
+  PagedWorkResponseModel,
+  PagedWorkWithAuthorModel,
   ProfileModel,
   ProfileTagNames,
   Tag,
@@ -15,12 +26,198 @@ import {
   WorkModel,
   WorkResponderTagNames,
   WorkResponseModel,
+  WorkResponseModelWithProfile,
   WorkTagNames,
   WorkTopicModel,
   WorkTopicTagNames,
-} from "./ApiModels";
+  WorkWithAuthorModel,
+} from "./models/ApiModels";
 
 export class IrysGraphql implements IGraphql {
+  #uploadData: IUploadData;
+  #irysApi: IApi;
+
+  constructor(uploaddata: IUploadData, irysApi: IApi) {
+    this.#uploadData = uploaddata;
+    this.#irysApi = irysApi;
+  }
+
+  async queryGraphQL(
+    variables: IrysGraphqlVariables
+  ): Promise<IrysGraphqlResponse | null> {
+    const query = this.#buildQuery(variables.limit, variables.cursor);
+    const result = await fetch(IRYS_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    if (result.ok) {
+      return await result.json();
+    }
+    return null;
+  }
+
+  #buildQuery(limit?: number, cursor?: string) {
+    let outerVariable = "$tags: [TagFilter!]!";
+    let innerVariable = `
+      tags: $tags      
+      order: DESC 
+    `;
+    if (limit) {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC
+      `;
+    }
+    if (cursor) {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC
+        after: $cursor
+      `;
+    }
+
+    let query = `
+      query Get(${outerVariable}) {
+        transactions(
+          ${innerVariable}          
+        ) {
+          edges {
+            node {
+              id
+              address
+              token
+              receipt {
+                deadlineHeight
+                signature
+                version
+              }
+              tags {
+                name
+                value
+              }
+              timestamp
+            }
+            cursor
+          }
+        }
+      }
+    `;
+    return query;
+  }
+
+  async convertGqlResponseNodeToWorkResponse(
+    gqlResponse: IrysGraphqlResponseNode
+  ): Promise<WorkResponseModelWithProfile> {
+    const data = await this.#uploadData.getData(gqlResponse.id, false);
+    const workResponse = this.convertGqlQueryToWorkResponse(
+      gqlResponse,
+      data as string | null
+    );
+    const profile = await this.#irysApi.getProfile(workResponse.responder_id);
+    if (!profile) {
+      throw new Error(
+        `Responder ${workResponse.responder_id} for work response cannot be found`
+      );
+    }
+    return convertModelsToWorkResponseWithAuthor(workResponse, profile);
+  }
+
+  async convertGqlResponseToWorkResponse(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedWorkResponseModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workResponseModel: WorkResponseModelWithProfile[] = new Array(
+      edgeLength
+    );
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workResponseModel[i] = await this.convertGqlResponseNodeToWorkResponse(
+        edge.node
+      );
+    }
+    return {
+      workResponseModels: workResponseModel,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
+    const data = await this.#uploadData.getData(gqlResponse.id, false);
+    return this.convertGqlQueryToProfile(
+      gqlResponse,
+      data as ArrayBuffer | null
+    );
+  }
+
+  async convertGqlResponseToProfile(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedProfileModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let profileModels: ProfileModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      profileModels[i] = await this.convertGqlResponseNodeToProfile(edge.node);
+    }
+    return {
+      profileModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async convertGqlResponseToWorkWithAuthor(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workModels[i] = await this.convertGqlResponseNodeToWorkWithAuthor(
+        edge.node
+      );
+    }
+    return {
+      workModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async convertGqlResponseNodeToWorkWithAuthor(
+    gqlResponse: IrysGraphqlResponseNode
+  ): Promise<WorkWithAuthorModel> {
+    const data = await this.#uploadData.getData(gqlResponse.id, true);
+    const workModel = this.convertGqlQueryToWork(gqlResponse, data);
+    const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
+    const profileModel = await this.#irysApi.getProfile(workModel.author_id);
+
+    if (!profileModel) {
+      throw new Error(`Profile with id ${workModel.author_id} not found!`);
+    }
+    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
+  }
+
   /// Assumed sort by last inserted record first (i.e. timestamp),
   /// as its possible after a remove a new insert is then done
   #getNonRemovedEdges(entityType: EntityType, sourceEdges: IrysGraphqlEdge[]) {

@@ -3,7 +3,7 @@ import {
   ProfileModel,
   WorkResponseModel,
   WorkWithAuthorModel,
-} from "../api/irys/ApiModels";
+} from "../api/irys/models/ApiModels";
 import {
   Profile,
   ResponseWithResponder,

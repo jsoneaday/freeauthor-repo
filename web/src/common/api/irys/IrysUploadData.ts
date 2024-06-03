@@ -1,6 +1,6 @@
 import { IRYS_DATA_URL } from "../../Env";
 import { IUploadData } from "../interfaces/IUploadData";
-import { DataUpload } from "./ApiModels";
+import { DataUpload } from "./models/ApiModels";
 
 export class IrysUploadData implements IUploadData {
   async getData(entityTxId: string, isTextData: boolean): Promise<DataUpload> {
