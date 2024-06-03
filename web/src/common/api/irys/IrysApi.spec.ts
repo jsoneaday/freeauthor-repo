@@ -6,9 +6,12 @@ import { IApi } from "../interfaces/IApi";
 import { faker } from "@faker-js/faker";
 import { UploadResponse } from "@irys/sdk/common/types";
 
+const network = "devnet";
+const token = "solana";
+
 describe("IrysApi Work tests", () => {
   beforeEach(async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
 
     let balance = await api.balance();
@@ -20,7 +23,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addWork adds a new work", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
 
     const work = await api.addWork(
@@ -36,7 +39,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("updateWork modifies an existing work", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
 
     const username = faker.internet.userName();
@@ -81,7 +84,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("getWork gets back a saved new work", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
 
     const username = faker.internet.userName();
@@ -116,7 +119,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addWork for multiple items and use searchWorksTop to get back top liked results", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -177,7 +180,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addWork for 3 items and use searchWorks to get back two results", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
 
@@ -217,7 +220,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addWork for multiple items and use searchWorks to page twice", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -271,7 +274,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addWork for multiple items and use getAuthorWorks to page twice", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -325,7 +328,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addWork for multiple items and use getAuthorWorksTop to receive a sorted list of works sorted by like count", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -381,7 +384,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("getOwnersProfile gets profile of profile just created", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
 
     const profile = await api.addProfile(
@@ -395,7 +398,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("getWorkResponses returns the expected paged responses", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -425,7 +428,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("getWorkResponseCount returns the expected response count", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -453,7 +456,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("getWorkResponsesByProfile returns the expected paged responses", async () => {
-    const api: IApi = new IrysApi();
+    const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
     const topicId = "topic123";
@@ -508,7 +511,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addFollow adds one follow record and getFollowedProfiles retrieves followed profile", async () => {
-    const api = new IrysApi();
+    const api = new IrysApi(network, token);
     await api.connect();
 
     const profile_follower = await api.addProfile(
@@ -528,7 +531,7 @@ describe("IrysApi Work tests", () => {
   });
 
   it("addFollow adds one follow record and getFollowerProfiles retrieves follower profile", async () => {
-    const api = new IrysApi();
+    const api = new IrysApi(network, token);
     await api.connect();
 
     const profile_follower = await api.addProfile(
@@ -557,7 +560,7 @@ describe("IrysApi Work tests", () => {
     let api: IApi;
 
     beforeAll(async () => {
-      api = new IrysApi();
+      api = new IrysApi(network, token);
       await api.connect();
 
       topicNameA = faker.company.name() + faker.number.int();

@@ -13,9 +13,9 @@ import {
 import { UploadResponse } from "@irys/sdk/common/types";
 
 export class UiApi {
-  #_api: IApi | null = null;
+  #api: IApi | null = null;
   get #Api(): IApi {
-    return this.#_api!;
+    return this.#api!;
   }
 
   get Address() {
@@ -25,7 +25,7 @@ export class UiApi {
   /// Pass api instance here
   /// e.g. new FakeApi("0xE7DCCAE2d95A1cB1E30E07477207065A9EDf6D38")
   constructor(apiObj: IApi, walletProvider: object) {
-    this.#_api = apiObj;
+    this.#api = apiObj;
     if (!this.isConnected()) {
       this.connect(walletProvider);
     }

@@ -88,6 +88,11 @@ export class IrysApi implements IApi {
     return this.#uploaddata;
   }
 
+  constructor(network: string, token: string) {
+    this.#network = network;
+    this.#token = token;
+  }
+
   async isConnected(): Promise<boolean> {
     return this.#irys ? true : false;
   }
@@ -120,8 +125,8 @@ export class IrysApi implements IApi {
         getTokenConfig: (irys): WebToken =>
           new SolanaConfig({
             irys,
-            name: "solana",
-            ticker: "SOL",
+            name: this.#token,
+            ticker: this.#getTickerFromToken(),
             minConfirm: 1,
             providerUrl: RPC_URL,
             wallet: key,
@@ -134,6 +139,13 @@ export class IrysApi implements IApi {
     this.#query = new Query({ network: this.#network });
     this.#irysgraphql = new IrysGraphql();
     this.#uploaddata = new IrysUploadData();
+  }
+
+  #getTickerFromToken() {
+    if (this.#token === "solana") {
+      return "SOL";
+    }
+    throw new Error(`${this.#token}'s ticker not implemented`);
   }
 
   async #fundText(content: string) {
