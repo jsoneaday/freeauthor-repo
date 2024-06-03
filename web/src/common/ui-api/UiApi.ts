@@ -1,9 +1,9 @@
-import { IApi } from "../api/IApi";
+import { IApi } from "../api/interfaces/IApi";
 import {
   ProfileModel,
   WorkResponseModel,
   WorkWithAuthorModel,
-} from "../api/ApiModels";
+} from "../api/irys/ApiModels";
 import {
   Profile,
   ResponseWithResponder,

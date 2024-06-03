@@ -2,7 +2,7 @@
 // import UserEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import { IrysApi } from "./IrysApi";
-import { IApi } from "./IApi";
+import { IApi } from "../interfaces/IApi";
 import { faker } from "@faker-js/faker";
 import { UploadResponse } from "@irys/sdk/common/types";
 

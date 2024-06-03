@@ -32,7 +32,7 @@ import {
   ActionTagType,
   IrysGraphqlEdge,
 } from "./ApiModels";
-import { IApi } from "./IApi";
+import { IApi } from "../interfaces/IApi";
 import { WebIrys } from "@irys/sdk";
 import SolanaConfig from "@irys/sdk/node/tokens/solana";
 import { BaseWebIrys } from "@irys/sdk/web/base";
@@ -44,9 +44,13 @@ import {
   RPC_URL,
   TOKEN,
   TX_METADATA_URL,
-} from "../Env";
+} from "../../Env";
 import bs58 from "bs58";
 import { UploadResponse } from "@irys/sdk/common/types";
+import { IGraphql } from "../interfaces/IGraphql";
+import { IrysGraphql } from "./IrysGraphql";
+import { IUploadData } from "../interfaces/IUploadData";
+import { IrysUploadData } from "./IrysUploadData";
 
 const DESC = "DESC";
 //const ASC = "ASC";
@@ -72,6 +76,17 @@ export class IrysApi implements IApi {
   #network = "devnet";
   #token = "solana";
   #wallet?: { rpcUrl: string; name: string; provider: object };
+
+  #irysgraphql?: IGraphql;
+  get #IrysGql() {
+    if (!this.#irysgraphql) throw new Error("#irysgraphql is not set yet!");
+    return this.#irysgraphql;
+  }
+  #uploaddata?: IUploadData;
+  get #UploadData() {
+    if (!this.#uploaddata) throw new Error("#uploaddata is not set yet!");
+    return this.#uploaddata;
+  }
 
   async isConnected(): Promise<boolean> {
     return this.#irys ? true : false;
@@ -116,8 +131,9 @@ export class IrysApi implements IApi {
     }
 
     this.#address = this.#irys.address;
-
     this.#query = new Query({ network: this.#network });
+    this.#irysgraphql = new IrysGraphql();
+    this.#uploaddata = new IrysUploadData();
   }
 
   async #fundText(content: string) {
@@ -174,7 +190,7 @@ export class IrysApi implements IApi {
   }
 
   async #convertQueryToWorkWithModel(queryResp: QueryResponse) {
-    const data = await this.getData(queryResp.id, true);
+    const data = await this.#UploadData.getData(queryResp.id, true);
     const workModel = convertQueryToWork(queryResp, data);
     workModel.content = data as string;
     const likeCount = await this.getWorkLikeCount(workModel.id);
@@ -189,8 +205,8 @@ export class IrysApi implements IApi {
   async #convertGqlResponseNodeToWorkWithAuthor(
     gqlResponse: IrysGraphqlResponseNode
   ) {
-    const data = await this.getData(gqlResponse.id, true);
-    const workModel = convertGqlQueryToWork(gqlResponse, data);
+    const data = await this.#UploadData.getData(gqlResponse.id, true);
+    const workModel = this.#IrysGql.convertGqlQueryToWork(gqlResponse, data);
     const likeCount = await this.getWorkLikeCount(workModel.id);
     const profileModel = await this.getProfile(workModel.author_id);
 
@@ -222,8 +238,11 @@ export class IrysApi implements IApi {
   }
 
   async #convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
-    const data = await this.getData(gqlResponse.id, false);
-    return convertGqlQueryToProfile(gqlResponse, data as ArrayBuffer | null);
+    const data = await this.#UploadData.getData(gqlResponse.id, false);
+    return this.#IrysGql.convertGqlQueryToProfile(
+      gqlResponse,
+      data as ArrayBuffer | null
+    );
   }
 
   async #convertGqlResponseToProfile(
@@ -248,8 +267,8 @@ export class IrysApi implements IApi {
   async #convertGqlResponseNodeToWorkResponse(
     gqlResponse: IrysGraphqlResponseNode
   ) {
-    const data = await this.getData(gqlResponse.id, false);
-    const workResponse = convertGqlQueryToWorkResponse(
+    const data = await this.#UploadData.getData(gqlResponse.id, false);
+    const workResponse = this.#IrysGql.convertGqlQueryToWorkResponse(
       gqlResponse,
       data as string | null
     );
@@ -357,18 +376,6 @@ export class IrysApi implements IApi {
       }
     `;
     return query;
-  }
-
-  async getData(entityTxId: string, isTextData: boolean): Promise<DataUpload> {
-    const response = await fetch(`${IRYS_DATA_URL}/${entityTxId}`);
-
-    if (response.ok) {
-      if (isTextData) {
-        return await response.text();
-      }
-      return await response.arrayBuffer();
-    }
-    return null;
   }
 
   async arbitraryFund(amount: number): Promise<void> {
@@ -640,7 +647,7 @@ export class IrysApi implements IApi {
       .ids([profileId])
       .sort(DESC);
 
-    const data = await this.getData(result[0].id, false);
+    const data = await this.#UploadData.getData(result[0].id, false);
 
     return convertQueryToProfile(result[0], data as ArrayBuffer | null);
   }
@@ -657,7 +664,7 @@ export class IrysApi implements IApi {
     if (!searchResults || searchResults.data.transactions.edges.length === 0)
       return null;
     const node = searchResults.data.transactions.edges[0].node;
-    const data = await this.getData(node.id, false);
+    const data = await this.#UploadData.getData(node.id, false);
     return {
       id: node.id,
       updated_at: node.timestamp,
@@ -918,7 +925,7 @@ export class IrysApi implements IApi {
       tags: [{ name: AppTagNames.EntityType, values: [EntityType.Topic] }],
     });
 
-    return convertGqlQueryToTopic(response) || [];
+    return this.#IrysGql.convertGqlQueryToTopic(response) || [];
   }
 
   async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
@@ -929,7 +936,7 @@ export class IrysApi implements IApi {
       ],
     });
 
-    const workTopics = convertGqlQueryToWorkTopic(
+    const workTopics = this.#IrysGql.convertGqlQueryToWorkTopic(
       workTopicResponse,
       EntityType.WorkTopic
     );
@@ -945,159 +952,8 @@ export class IrysApi implements IApi {
   }
 }
 
-/// Assumed sort by last inserted record first (i.e. timestamp),
-/// as its possible after a remove a new insert is then done
-function getNonRemovedEdges(
-  entityType: EntityType,
-  sourceEdges: IrysGraphqlEdge[]
-) {
-  const nonRemovedEdges: IrysGraphqlEdge[] = [];
-
-  // see if each edge is already in final list and add it if not
-  for (let i = 0; i < sourceEdges.length; i++) {
-    const currentEdge = sourceEdges[i];
-
-    if (!containsMatchingEdge(currentEdge, nonRemovedEdges, entityType)) {
-      nonRemovedEdges.push(currentEdge);
-    }
-  }
-
-  // after getting list of unique records remove the nodes tagged Remove
-  return nonRemovedEdges.filter(
-    (edge) =>
-      !edge.node.tags.find(
-        (tag) =>
-          tag.name === ActionTagName && tag.value === ActionTagType.Remove
-      )
-  );
-}
-
-/// if all tags have matching names
-function containsMatchingEdge(
-  edgeToCheck: IrysGraphqlEdge,
-  searchEdges: IrysGraphqlEdge[],
-  entityType: EntityType
-) {
-  const checkTags = edgeToCheck.node.tags;
-  for (const searchEdge of searchEdges) {
-    let matchCount = 0;
-    for (const checkTag of checkTags) {
-      let currentTagMatches = false;
-      for (const searchEdgeTag of searchEdge.node.tags) {
-        if (checkEqualityByEntityType(entityType, checkTag, searchEdgeTag)) {
-          currentTagMatches = true;
-          break;
-        }
-      }
-      if (currentTagMatches) {
-        matchCount += 1;
-      }
-    }
-    if (checkTags.length !== matchCount) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function checkEqualityByEntityType(
-  entityType: EntityType,
-  checkTag: Tag,
-  searchTag: Tag
-) {
-  if (entityType === EntityType.WorkTopic) {
-    if (
-      checkTag.name === WorkTopicTagNames.WorkId ||
-      checkTag.name === WorkTopicTagNames.TopicId
-    ) {
-      if (
-        checkTag.name === searchTag.name &&
-        checkTag.value === searchTag.value
-      ) {
-        return true;
-      }
-    } else if (checkTag.name === searchTag.name) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function removeDeletedRecords(
-  response: IrysGraphqlResponse | null,
-  entityType: EntityType
-) {
-  const cleanedList: IrysGraphqlResponse = {
-    data: {
-      transactions: {
-        edges: !response
-          ? []
-          : getNonRemovedEdges(entityType, response.data.transactions.edges),
-      },
-    },
-  };
-
-  return cleanedList;
-}
-
-function convertGqlQueryToWorkTopic(
-  response: IrysGraphqlResponse | null,
-  entityType: EntityType
-) {
-  const _response = removeDeletedRecords(response, entityType);
-  const count = _response?.data.transactions.edges.length || 0;
-  const topics: WorkTopicModel[] = new Array(count);
-  for (let i = 0; i < count; i++) {
-    const node = _response?.data.transactions.edges[i].node;
-    if (!node) throw new Error("Topic item is null");
-    topics[i] = {
-      id: node.id,
-      updated_at: node.timestamp,
-      work_id:
-        node.tags.find((tag) => tag.name === WorkTopicTagNames.WorkId)?.value ||
-        "",
-      topic_id:
-        node.tags.find((tag) => tag.name === WorkTopicTagNames.TopicId)
-          ?.value || "",
-    };
-  }
-  return topics;
-}
-
-function convertGqlQueryToTopic(response: IrysGraphqlResponse | null) {
-  const count = response?.data.transactions.edges.length || 0;
-
-  const topics: TopicModel[] = new Array(count);
-  for (let i = 0; i < count; i++) {
-    const node = response?.data.transactions.edges[i].node;
-    if (!node) throw new Error("Topic item is null");
-    topics[i] = {
-      id: node.id,
-      updated_at: node.timestamp,
-      name:
-        node.tags.find((tag) => tag.name === TopicTagNames.TopicName)?.value ||
-        "",
-    };
-  }
-  return topics;
-}
-
 function convertQueryToWork(
   response: QueryResponse,
-  data: DataUpload
-): WorkModel {
-  return new WorkModel(
-    response.id,
-    response.timestamp,
-    response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
-    (data as string) ? (data as string) : "",
-    response.tags.find((tag) => tag.name == WorkTagNames.AuthorId)?.value || "",
-    response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
-  );
-}
-
-function convertGqlQueryToWork(
-  response: IrysGraphqlResponseNode,
   data: DataUpload
 ): WorkModel {
   return new WorkModel(
@@ -1132,46 +988,6 @@ function convertQueryToProfile(
       (tag) => tag.name == ProfileTagNames.SocialLinkSecondary
     )?.value,
     data
-  );
-}
-
-function convertGqlQueryToProfile(
-  response: IrysGraphqlResponseNode,
-  data: ArrayBuffer | null
-): ProfileModel {
-  return new ProfileModel(
-    response.id,
-    response.timestamp,
-    response.tags.find((tag) => tag.name == ProfileTagNames.UserName)?.value ||
-      "",
-    response.tags.find((tag) => tag.name == ProfileTagNames.FullName)?.value ||
-      "",
-    response.tags.find((tag) => tag.name == ProfileTagNames.Description)
-      ?.value || "",
-    response.tags.find((tag) => tag.name == ProfileTagNames.OwnerAddress)
-      ?.value || "",
-    response.tags.find(
-      (tag) => tag.name == ProfileTagNames.SocialLinkPrimary
-    )?.value,
-    response.tags.find(
-      (tag) => tag.name == ProfileTagNames.SocialLinkSecondary
-    )?.value,
-    data
-  );
-}
-
-function convertGqlQueryToWorkResponse(
-  response: IrysGraphqlResponseNode,
-  data: string | null
-): WorkResponseModel {
-  return new WorkResponseModel(
-    response.id,
-    response.timestamp,
-    response.tags.find((tag) => tag.name == WorkTagNames.WorkId)?.value || "",
-    response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
-    data || "",
-    response.tags.find((tag) => tag.name == WorkResponderTagNames.ResponderId)
-      ?.value || ""
   );
 }
 

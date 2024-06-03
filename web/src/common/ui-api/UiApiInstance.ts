@@ -1,5 +1,5 @@
-import { IApi } from "../api/IApi";
-import { IrysApi } from "../api/IrysApi";
+import { IApi } from "../api/interfaces/IApi";
+import { IrysApi } from "../api/irys/IrysApi";
 import { UiApi } from "./UiApi";
 
 let uiApi: UiApi;

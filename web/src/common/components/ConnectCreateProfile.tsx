@@ -6,7 +6,7 @@ import Notification from "./modals/Notification";
 import { initOrGetUiApi } from "../ui-api/UiApiInstance";
 import { useProfile } from "../zustand/Store";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { IrysApi } from "../api/IrysApi";
+import { IrysApi } from "../api/irys/IrysApi";
 
 export const SMALL_NOTIFICATION_HEIGHT = "170px";
 export const LARGE_NOTIFICATION_HEIGHT = "580px";

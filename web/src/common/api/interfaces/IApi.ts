@@ -7,15 +7,10 @@ import {
   ProfileModel,
   TopicModel,
   WorkWithAuthorModel,
-} from "./ApiModels";
+} from "../irys/ApiModels";
 
 export interface IApi {
   get Address(): string;
-
-  getData(
-    entityTxId: string,
-    isTextData: boolean
-  ): Promise<null | string | ArrayBuffer>;
 
   arbitraryFund(amount: number): Promise<void>;
 
