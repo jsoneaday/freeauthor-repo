@@ -390,7 +390,7 @@ describe("IrysApi Work tests", () => {
     );
 
     const ownersProfile = await api.getOwnersProfile();
-    expect(profile.id).toBe(ownersProfile?.profileModels[0].id);
+    expect(profile.id).toBe(ownersProfile?.id);
   });
 
   it("getWorkResponses returns the expected paged responses", async () => {

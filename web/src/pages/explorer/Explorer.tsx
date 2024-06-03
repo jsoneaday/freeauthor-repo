@@ -103,7 +103,7 @@ export function Explorer() {
       if (priorKeyset === "") {
         works = await api.searchWorksTop(searchTxt, PAGE_SIZE);
       } else {
-        works = await api.searchWorks(searchTxt, priorKeyset, PAGE_SIZE);
+        works = await api.searchWorks(searchTxt, PAGE_SIZE, priorKeyset);
       }
 
       if (!works || works.length === 0) {

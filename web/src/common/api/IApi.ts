@@ -123,7 +123,7 @@ export interface IApi {
   ): Promise<UploadResponse>;
 
   getProfile(profileId: string): Promise<ProfileModel | null>;
-  getOwnersProfile(): Promise<PagedProfileModel | null>;
+  getOwnersProfile(): Promise<ProfileModel | null>;
   getFollowedProfiles(followerId: string): Promise<ProfileModel[] | null>;
   getFollowerProfiles(followedId: string): Promise<ProfileModel[] | null>;
 
@@ -174,7 +174,11 @@ export interface IApi {
     workId: string,
     fund?: boolean
   ): Promise<UploadResponse>;
-  removeWorkTopic(topicId: string, workId: string): Promise<UploadResponse>;
+  removeWorkTopic(
+    topicId: string,
+    workId: string,
+    fund?: boolean
+  ): Promise<UploadResponse>;
 
   addWorkLike(
     workId: string,

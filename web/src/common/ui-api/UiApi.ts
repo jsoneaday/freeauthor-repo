@@ -1,4 +1,4 @@
-import { IApi, TxHashPromise } from "../api/IApi";
+import { IApi } from "../api/IApi";
 import {
   ProfileModel,
   WorkResponseModel,
@@ -8,9 +8,9 @@ import {
   Profile,
   ResponseWithResponder,
   Topic,
-  WorkTopic,
   WorkWithAuthor,
 } from "./UIModels";
+import { UploadResponse } from "@irys/sdk/common/types";
 
 export class UiApi {
   #_api: IApi | null = null;
@@ -45,7 +45,7 @@ export class UiApi {
     content: string,
     authorId: string,
     topicId: string
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     return await this.#Api.addWork(
       title,
       description,
@@ -63,7 +63,7 @@ export class UiApi {
     socialLinkPrimary: string,
     socialLinkSecond: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     return await this.#Api.addProfile(
       userName,
       fullName,
@@ -73,23 +73,26 @@ export class UiApi {
       socialLinkSecond
     );
   }
-  async addFollow(followerId: string, followedId: string): TxHashPromise {
+  async addFollow(
+    followerId: string,
+    followedId: string
+  ): Promise<UploadResponse> {
     return await this.#Api.addFollow(followerId, followedId);
   }
-  async addTopic(name: string): TxHashPromise {
+  async addTopic(name: string): Promise<UploadResponse> {
     return await this.#Api.addTopic(name);
   }
-  async addWorkTopic(topicId: string, workId: string): TxHashPromise {
+  async addWorkTopic(topicId: string, workId: string): Promise<UploadResponse> {
     return await this.#Api.addWorkTopic(topicId, workId);
   }
-  async addWorkLikes(workId: string, likerId: string): TxHashPromise {
+  async addWorkLikes(workId: string, likerId: string): Promise<UploadResponse> {
     return await this.#Api.addWorkLike(workId, likerId);
   }
   async addWorkResponse(
     content: string,
     workId: string,
     responderId: string
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     return await this.#Api.addWorkResponse(content, workId, responderId);
   }
 
@@ -107,7 +110,7 @@ export class UiApi {
     content: string,
     authorId: string,
     topicId: string
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     return this.#Api.updateWork(
       title,
       description,
@@ -127,7 +130,7 @@ export class UiApi {
     socialLinkPrimary: string,
     socialLinkSecond: string,
     fund: boolean = false
-  ): TxHashPromise {
+  ): Promise<UploadResponse> {
     return this.#Api.updateProfile(
       userName,
       fullName,
@@ -178,11 +181,11 @@ export class UiApi {
 
   async searchWorks(
     searchTxt: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.searchWorks(searchTxt, lastKeyset, pageSize);
-    if (works) return this.#getWorkWithAuthors(works);
+    const works = await this.#Api.searchWorks(searchTxt, pageSize, cursor);
+    if (works) return this.#getWorkWithAuthors(works?.workModels || []);
     return null;
   }
 
@@ -371,11 +374,11 @@ export class UiApi {
     return null;
   }
 
-  // async cleanDb(): TxHashPromise {
+  // async cleanDb(): Promise<UploadResponse> {
   //   return await this.#Api.cleanDb();
   // }
 
-  // async setupData(): TxHashPromise {
+  // async setupData(): Promise<UploadResponse> {
   //   return await this.#Api.setupData();
   // }
 

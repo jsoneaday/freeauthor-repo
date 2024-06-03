@@ -28,6 +28,9 @@ import {
   WorkResponseModelWithProfile,
   InputTag,
   WorkTopicTagNames,
+  ActionTagName,
+  ActionTagType,
+  IrysGraphqlEdge,
 } from "./ApiModels";
 import { IApi } from "./IApi";
 import { WebIrys } from "@irys/sdk";
@@ -282,6 +285,80 @@ export class IrysApi implements IApi {
     };
   }
 
+  async #queryGraphQL(
+    variables: IrysGraphqlVariables
+  ): Promise<IrysGraphqlResponse | null> {
+    const query = this.#buildQuery(variables.limit, variables.cursor);
+    const result = await fetch(IRYS_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    if (result.ok) {
+      return await result.json();
+    }
+    return null;
+  }
+
+  #buildQuery(limit?: number, cursor?: string) {
+    let outerVariable = "$tags: [TagFilter!]!";
+    let innerVariable = `
+      tags: $tags      
+      order: DESC 
+    `;
+    if (limit) {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC
+      `;
+    }
+    if (cursor) {
+      outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
+      innerVariable = `
+        tags: $tags
+        limit: $limit
+        order: DESC
+        after: $cursor
+      `;
+    }
+
+    let query = `
+      query Get(${outerVariable}) {
+        transactions(
+          ${innerVariable}          
+        ) {
+          edges {
+            node {
+              id
+              address
+              token
+              receipt {
+                deadlineHeight
+                signature
+                version
+              }
+              tags {
+                name
+                value
+              }
+              timestamp
+            }
+            cursor
+          }
+        }
+      }
+    `;
+    return query;
+  }
+
   async getData(entityTxId: string, isTextData: boolean): Promise<DataUpload> {
     const response = await fetch(`${IRYS_DATA_URL}/${entityTxId}`);
 
@@ -387,80 +464,6 @@ export class IrysApi implements IApi {
       if (a.likes < b.likes) return 1;
       return 0;
     });
-  }
-
-  async #queryGraphQL(
-    variables: IrysGraphqlVariables
-  ): Promise<IrysGraphqlResponse | null> {
-    const query = this.#buildQuery(variables.limit, variables.cursor);
-    const result = await fetch(IRYS_GRAPHQL_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
-    });
-
-    if (result.ok) {
-      return await result.json();
-    }
-    return null;
-  }
-
-  #buildQuery(limit?: number, cursor?: string) {
-    let outerVariable = "$tags: [TagFilter!]!";
-    let innerVariable = `
-      tags: $tags      
-      order: DESC 
-    `;
-    if (limit) {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
-      innerVariable = `
-        tags: $tags
-        limit: $limit
-        order: DESC
-      `;
-    }
-    if (cursor) {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
-      innerVariable = `
-        tags: $tags
-        limit: $limit
-        order: DESC
-        after: $cursor
-      `;
-    }
-
-    let query = `
-      query Get(${outerVariable}) {
-        transactions(
-          ${innerVariable}          
-        ) {
-          edges {
-            node {
-              id
-              address
-              token
-              receipt {
-                deadlineHeight
-                signature
-                version
-              }
-              tags {
-                name
-                value
-              }
-              timestamp
-            }
-            cursor
-          }
-        }
-      }
-    `;
-    return query;
   }
 
   async searchWorks(
@@ -642,7 +645,7 @@ export class IrysApi implements IApi {
     return convertQueryToProfile(result[0], data as ArrayBuffer | null);
   }
 
-  async getOwnersProfile(): Promise<PagedProfileModel | null> {
+  async getOwnersProfile(): Promise<ProfileModel | null> {
     const searchResults = await this.#queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.Profile] },
@@ -651,7 +654,31 @@ export class IrysApi implements IApi {
       limit: 1,
     });
 
-    return await this.#convertGqlResponseToProfile(searchResults);
+    if (!searchResults || searchResults.data.transactions.edges.length === 0)
+      return null;
+    const node = searchResults.data.transactions.edges[0].node;
+    const data = await this.getData(node.id, false);
+    return {
+      id: node.id,
+      updated_at: node.timestamp,
+      username: node.tags.find((tag) => tag.name === ProfileTagNames.UserName)!
+        .value,
+      fullname: node.tags.find((tag) => tag.name === ProfileTagNames.FullName)!
+        .value,
+      description: node.tags.find(
+        (tag) => tag.name === ProfileTagNames.Description
+      )!.value,
+      owner_address: node.tags.find(
+        (tag) => tag.name === ProfileTagNames.OwnerAddress
+      )!.value,
+      social_link_primary: node.tags.find(
+        (tag) => tag.name === ProfileTagNames.SocialLinkPrimary
+      )?.value,
+      social_link_second: node.tags.find(
+        (tag) => tag.name === ProfileTagNames.SocialLinkSecondary
+      )?.value,
+      avatar: data as ArrayBuffer,
+    };
   }
 
   async #getFollowProfiles(profileId: string, getFollowed: boolean) {
@@ -810,6 +837,7 @@ export class IrysApi implements IApi {
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
+      { name: ActionTagName, value: ActionTagType.AddOrUpdate },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
       { name: WorkTopicTagNames.TopicId, value: topicId },
       { name: WorkTopicTagNames.WorkId, value: workId },
@@ -819,10 +847,19 @@ export class IrysApi implements IApi {
   }
 
   async removeWorkTopic(
-    _topicId: string,
-    _workId: string
+    topicId: string,
+    workId: string,
+    fund: boolean = false
   ): Promise<UploadResponse> {
-    throw new Error("Not implemented");
+    const tags = [
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: ActionTagName, value: ActionTagType.Remove },
+      { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
+      { name: WorkTopicTagNames.TopicId, value: topicId },
+      { name: WorkTopicTagNames.WorkId, value: workId },
+    ];
+
+    return await this.#uploadText("", tags, fund);
   }
 
   async addWorkLike(
@@ -895,6 +932,7 @@ export class IrysApi implements IApi {
     const workTopics = convertGqlQueryToWorkTopic(workTopicResponse);
     const topicModels = await this.getAllTopics();
     const topics: TopicModel[] = new Array(workTopics.length);
+    console.log("workTopics", workTopics);
     for (let i = 0; i < workTopics.length; i++) {
       topics[i] = topicModels.find(
         (topic) => topic.id === workTopics[i].topic_id
@@ -905,11 +943,77 @@ export class IrysApi implements IApi {
   }
 }
 
+/// Assumed sort by last inserted record first (i.e. timestamp),
+/// as its possible after a remove a new insert is then done
+function getNonRemovedEdges(sourceEdges: IrysGraphqlEdge[]) {
+  const nonRemovedEdges: IrysGraphqlEdge[] = [];
+
+  // see if each edge is already in final list and add it if not
+  for (let i = 0; i < sourceEdges.length; i++) {
+    const currentEdge = sourceEdges[i];
+
+    if (!containsMatchingEdge(currentEdge, nonRemovedEdges)) {
+      nonRemovedEdges.push(currentEdge);
+    }
+  }
+
+  // after getting list of unique records remove the nodes tagged Remove
+  return nonRemovedEdges.filter(
+    (edge) =>
+      !edge.node.tags.find(
+        (tag) =>
+          tag.name === ActionTagName && tag.value === ActionTagType.Remove
+      )
+  );
+}
+
+/// if all tags have matching names
+function containsMatchingEdge(
+  edgeToCheck: IrysGraphqlEdge,
+  searchEdges: IrysGraphqlEdge[]
+) {
+  const checkTags = edgeToCheck.node.tags;
+  for (const searchEdge of searchEdges) {
+    let matchCount = 0;
+    for (const checkTag of checkTags) {
+      let currentTagMatches = false;
+      for (const searchEdgeTag of searchEdge.node.tags) {
+        if (searchEdgeTag.name === checkTag.name) {
+          currentTagMatches = true;
+          break;
+        }
+      }
+      if (currentTagMatches) {
+        matchCount += 1;
+      }
+    }
+    if (checkTags.length !== matchCount) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function removeDeletedRecords(response: IrysGraphqlResponse | null) {
+  const cleanedList: IrysGraphqlResponse = {
+    data: {
+      transactions: {
+        edges: !response
+          ? []
+          : getNonRemovedEdges(response.data.transactions.edges),
+      },
+    },
+  };
+
+  return cleanedList;
+}
+
 function convertGqlQueryToWorkTopic(response: IrysGraphqlResponse | null) {
-  const count = response?.data.transactions.edges.length || 0;
+  const _response = removeDeletedRecords(response);
+  const count = _response?.data.transactions.edges.length || 0;
   const topics: WorkTopicModel[] = new Array(count);
   for (let i = 0; i < count; i++) {
-    const node = response?.data.transactions.edges[i].node;
+    const node = _response?.data.transactions.edges[i].node;
     if (!node) throw new Error("Topic item is null");
     topics[i] = {
       id: node.id,

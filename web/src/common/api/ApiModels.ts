@@ -7,6 +7,13 @@ export enum AppTagNames {
   EntityType = "Entity-Type",
 }
 
+export const ActionTagName = "ActionTag";
+
+export enum ActionTagType {
+  AddOrUpdate = "AddOrUpdate",
+  Remove = "Remove",
+}
+
 export enum WorkTagNames {
   WorkId = "WorkId",
   Title = "Title",
@@ -137,12 +144,14 @@ export type IrysGraphqlVariables = {
 export type IrysGraphqlResponse = {
   data: {
     transactions: {
-      edges: {
-        node: IrysGraphqlResponseNode;
-        cursor?: string;
-      }[];
+      edges: IrysGraphqlEdge[];
     };
   };
+};
+
+export type IrysGraphqlEdge = {
+  node: IrysGraphqlResponseNode;
+  cursor?: string;
 };
 
 export type IrysGraphqlResponseNode = {
