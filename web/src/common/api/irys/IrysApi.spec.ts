@@ -5,6 +5,7 @@ import { IrysApi } from "./IrysApi";
 import { IApi } from "../interfaces/IApi";
 import { faker } from "@faker-js/faker";
 import { UploadResponse } from "@irys/sdk/common/types";
+import { ActionType } from "./models/ApiModels";
 
 const network = "devnet";
 const token = "solana";
@@ -591,7 +592,8 @@ describe("IrysApi Work tests", () => {
         faker.lorem.sentence(1),
         faker.lorem.paragraph(1),
         profileResp.id,
-        topicaResp.id
+        topicaResp.id,
+        ActionType.Add
       );
 
       await api.addWorkTopic(topicaResp.id, workResp.id);

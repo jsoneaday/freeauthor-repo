@@ -7,9 +7,9 @@ export enum AppTagNames {
   EntityType = "Entity-Type",
 }
 
-export const ActionTagName = "ActionTag";
+export const ActionName = "ActionTag";
 
-export enum ActionTagType {
+export enum ActionType {
   Add = "Add",
   Update = "Update",
   Remove = "Remove",

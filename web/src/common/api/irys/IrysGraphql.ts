@@ -7,8 +7,8 @@ import {
   convertModelsToWorkWithAuthor,
 } from "./models/ApiModelConverters";
 import {
-  ActionTagName,
-  ActionTagType,
+  ActionName,
+  ActionType,
   DataUpload,
   EntityType,
   IrysGraphqlEdge,
@@ -238,8 +238,7 @@ export class IrysGraphql implements IGraphql {
     return nonRemovedEdges.filter(
       (edge) =>
         !edge.node.tags.find(
-          (tag) =>
-            tag.name === ActionTagName && tag.value === ActionTagType.Remove
+          (tag) => tag.name === ActionName && tag.value === ActionType.Remove
         )
     );
   }

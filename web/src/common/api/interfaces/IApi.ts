@@ -1,5 +1,6 @@
 import { UploadResponse } from "@irys/sdk/common/types";
 import {
+  ActionType,
   Avatar,
   PagedWorkResponseModel,
   PagedWorkWithAuthorModel,
@@ -24,6 +25,7 @@ export interface IApi {
     content: string,
     authorId: string,
     topicId: string,
+    action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
 
@@ -99,6 +101,7 @@ export interface IApi {
     userName: string,
     fullName: string,
     description: string,
+    action?: ActionType,
     fund?: boolean,
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
@@ -109,7 +112,6 @@ export interface IApi {
     userName: string,
     fullName: string,
     description: string,
-    priorProfileId: string,
     fund?: boolean,
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
@@ -125,6 +127,7 @@ export interface IApi {
     content: string,
     workId: string,
     responderId: string,
+    action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
 
@@ -156,16 +159,22 @@ export interface IApi {
   addFollow(
     followerId: string,
     followedId: string,
+    action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
   removeFollow(followerId: string, followedId: string): Promise<UploadResponse>;
 
-  addTopic(name: string, fund?: boolean): Promise<UploadResponse>;
+  addTopic(
+    name: string,
+    action?: ActionType,
+    fund?: boolean
+  ): Promise<UploadResponse>;
   removeTopic(name: string): Promise<UploadResponse>;
 
   addWorkTopic(
     topicId: string,
     workId: string,
+    action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
   removeWorkTopic(
@@ -177,6 +186,7 @@ export interface IApi {
   addWorkLike(
     workId: string,
     likerId: string,
+    action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
   removeWorkLike(workId: string, likerId: string): Promise<UploadResponse>;

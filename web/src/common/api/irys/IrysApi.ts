@@ -19,8 +19,8 @@ import {
   PagedWorkResponseModel,
   InputTag,
   WorkTopicTagNames,
-  ActionTagName,
-  ActionTagType,
+  ActionName,
+  ActionType,
 } from "./models/ApiModels";
 import { IApi } from "../interfaces/IApi";
 import { WebIrys } from "@irys/sdk";
@@ -220,6 +220,7 @@ export class IrysApi implements IApi {
     content: string,
     authorId: string,
     topicId: string,
+    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     let _desc = !description
@@ -229,6 +230,7 @@ export class IrysApi implements IApi {
     const tags = [
       { name: AppTagNames.ContentType, value: "text/html" },
       { name: AppTagNames.EntityType, value: EntityType.Work },
+      { name: ActionName, value: action },
       { name: WorkTagNames.Title, value: title },
       { name: WorkTagNames.Description, value: _desc },
       { name: WorkTagNames.AuthorId, value: authorId },
@@ -256,6 +258,7 @@ export class IrysApi implements IApi {
       content,
       authorId,
       topicId,
+      ActionType.Update,
       fund
     );
   }
@@ -412,6 +415,7 @@ export class IrysApi implements IApi {
     userName: string,
     fullName: string,
     description: string,
+    action: ActionType = ActionType.Add,
     fund: boolean = false,
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
@@ -419,11 +423,13 @@ export class IrysApi implements IApi {
   ): Promise<UploadResponse> {
     const tags: Tag[] = [
       { name: AppTagNames.EntityType, value: EntityType.Profile },
+      { name: ActionName, value: action },
       { name: ProfileTagNames.UserName, value: userName },
       { name: ProfileTagNames.FullName, value: fullName },
       { name: ProfileTagNames.Description, value: description },
       { name: ProfileTagNames.OwnerAddress, value: this.Address },
     ];
+
     if (avatar) {
       tags.push({
         name: AppTagNames.ContentType,
@@ -455,7 +461,6 @@ export class IrysApi implements IApi {
     userName: string,
     fullName: string,
     description: string,
-    _priorProfileId: string,
     fund: boolean = false,
     socialLinkPrimary?: string,
     socialLinkSecondary?: string,
@@ -466,6 +471,7 @@ export class IrysApi implements IApi {
       userName,
       fullName,
       description,
+      ActionType.Update,
       fund,
       socialLinkPrimary,
       socialLinkSecondary,
@@ -573,11 +579,13 @@ export class IrysApi implements IApi {
     content: string,
     workId: string,
     responderId: string,
+    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "text/html" },
       { name: AppTagNames.EntityType, value: EntityType.WorkResponse },
+      { name: ActionName, value: action },
       { name: WorkTagNames.WorkId, value: workId },
       { name: WorkResponderTagNames.ResponderId, value: responderId },
     ];
@@ -636,11 +644,13 @@ export class IrysApi implements IApi {
   async addFollow(
     followerId: string,
     followedId: string,
+    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.Follow },
+      { name: ActionName, value: action },
       { name: FollowerTagNames.FollowerId, value: followerId },
       { name: FollowerTagNames.FollowedId, value: followedId },
     ];
@@ -655,10 +665,15 @@ export class IrysApi implements IApi {
     throw new Error("Not implemented");
   }
 
-  async addTopic(name: string, fund: boolean = false): Promise<UploadResponse> {
+  async addTopic(
+    name: string,
+    action: ActionType = ActionType.Add,
+    fund: boolean = false
+  ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.Topic },
+      { name: ActionName, value: action },
       { name: TopicTagNames.TopicName, value: name },
     ];
 
@@ -672,11 +687,12 @@ export class IrysApi implements IApi {
   async addWorkTopic(
     topicId: string,
     workId: string,
+    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
-      { name: ActionTagName, value: ActionTagType.Add },
+      { name: ActionName, value: action },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
       { name: WorkTopicTagNames.TopicId, value: topicId },
       { name: WorkTopicTagNames.WorkId, value: workId },
@@ -692,7 +708,7 @@ export class IrysApi implements IApi {
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
-      { name: ActionTagName, value: ActionTagType.Remove },
+      { name: ActionName, value: ActionType.Remove },
       { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
       { name: WorkTopicTagNames.TopicId, value: topicId },
       { name: WorkTopicTagNames.WorkId, value: workId },
@@ -704,11 +720,13 @@ export class IrysApi implements IApi {
   async addWorkLike(
     workId: string,
     likerId: string,
+    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkLike },
+      { name: ActionName, value: action },
       { name: WorkLikeTagNames.WorkId, value: workId },
       { name: WorkLikeTagNames.LikerId, value: likerId },
     ];
