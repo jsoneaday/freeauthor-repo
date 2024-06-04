@@ -1,7 +1,7 @@
 import { IRYS_GRAPHQL_URL } from "../../Env";
 import { IApi } from "../interfaces/IApi";
 import { IGraphql } from "../interfaces/IGraphql";
-import { IUploadData } from "../interfaces/IUploadData";
+import { ICommonApi } from "../interfaces/ICommonApi";
 import {
   convertModelsToWorkResponseWithAuthor,
   convertModelsToWorkWithAuthor,
@@ -20,7 +20,6 @@ import {
   PagedWorkWithAuthorModel,
   ProfileModel,
   ProfileTagNames,
-  Tag,
   TopicModel,
   TopicTagNames,
   WorkModel,
@@ -34,11 +33,11 @@ import {
 } from "./models/ApiModels";
 
 export class IrysGraphql implements IGraphql {
-  #uploadData: IUploadData;
+  #irysCommon: ICommonApi;
   #irysApi: IApi;
 
-  constructor(uploaddata: IUploadData, irysApi: IApi) {
-    this.#uploadData = uploaddata;
+  constructor(uploaddata: ICommonApi, irysApi: IApi) {
+    this.#irysCommon = uploaddata;
     this.#irysApi = irysApi;
   }
 
@@ -119,7 +118,7 @@ export class IrysGraphql implements IGraphql {
   async convertGqlResponseNodeToWorkResponse(
     gqlResponse: IrysGraphqlResponseNode
   ): Promise<WorkResponseModelWithProfile> {
-    const data = await this.#uploadData.getData(gqlResponse.id, false);
+    const data = await this.#irysCommon.getData(gqlResponse.id, false);
     const workResponse = this.convertGqlQueryToWorkResponse(
       gqlResponse,
       data as string | null
@@ -157,7 +156,7 @@ export class IrysGraphql implements IGraphql {
   }
 
   async convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
-    const data = await this.#uploadData.getData(gqlResponse.id, false);
+    const data = await this.#irysCommon.getData(gqlResponse.id, false);
     return this.convertGqlQueryToProfile(
       gqlResponse,
       data as ArrayBuffer | null
@@ -207,7 +206,7 @@ export class IrysGraphql implements IGraphql {
   async convertGqlResponseNodeToWorkWithAuthor(
     gqlResponse: IrysGraphqlResponseNode
   ): Promise<WorkWithAuthorModel> {
-    const data = await this.#uploadData.getData(gqlResponse.id, true);
+    const data = await this.#irysCommon.getData(gqlResponse.id, true);
     const workModel = this.convertGqlQueryToWork(gqlResponse, data);
     const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
     const profileModel = await this.#irysApi.getProfile(workModel.author_id);
@@ -258,7 +257,11 @@ export class IrysGraphql implements IGraphql {
 
         for (const searchEdgeTag of searchEdge.node.tags) {
           if (
-            this.#tagsMatchByEntityType(entityType, checkTag, searchEdgeTag)
+            this.#irysCommon.tagsMatchByEntityType(
+              entityType,
+              checkTag,
+              searchEdgeTag
+            )
           ) {
             currentTagMatches = true;
             break;
@@ -272,41 +275,6 @@ export class IrysGraphql implements IGraphql {
         return true;
       }
     }
-    return false;
-  }
-
-  #tagsMatchByEntityType(
-    entityType: EntityType,
-    checkTag: Tag,
-    searchTag: Tag
-  ) {
-    if (entityType === EntityType.WorkTopic) {
-      if (
-        checkTag.name === WorkTopicTagNames.WorkId ||
-        checkTag.name === WorkTopicTagNames.TopicId
-      ) {
-        if (
-          checkTag.name === searchTag.name &&
-          checkTag.value === searchTag.value
-        ) {
-          return true;
-        }
-      } else if (checkTag.name === searchTag.name) {
-        return true;
-      }
-    } else if (entityType === EntityType.Topic) {
-      if (checkTag.name === TopicTagNames.TopicName) {
-        if (
-          checkTag.name === searchTag.name &&
-          checkTag.value === searchTag.value
-        ) {
-          return true;
-        }
-      } else if (checkTag.name === searchTag.name) {
-        return true;
-      }
-    }
-
     return false;
   }
 

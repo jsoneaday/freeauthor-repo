@@ -33,8 +33,8 @@ import bs58 from "bs58";
 import { UploadResponse } from "@irys/sdk/common/types";
 import { IGraphql } from "../interfaces/IGraphql";
 import { IrysGraphql } from "./IrysGraphql";
-import { IUploadData } from "../interfaces/IUploadData";
-import { IrysUploadData } from "./IrysUploadData";
+import { ICommonApi } from "../interfaces/ICommonApi";
+import { IrysCommon } from "./IrysCommon";
 import {
   convertModelsToWorkWithAuthor,
   convertQueryToProfile,
@@ -71,10 +71,10 @@ export class IrysApi implements IApi {
     if (!this.#irysGraphql) throw new Error("#irysgraphql is not set yet!");
     return this.#irysGraphql;
   }
-  #uploadData?: IUploadData;
-  get #UploadData() {
-    if (!this.#uploadData) throw new Error("#uploaddata is not set yet!");
-    return this.#uploadData;
+  #irysCommon?: ICommonApi;
+  get #IrysCommon() {
+    if (!this.#irysCommon) throw new Error("#uploaddata is not set yet!");
+    return this.#irysCommon;
   }
 
   constructor(network: string, token: string) {
@@ -127,8 +127,8 @@ export class IrysApi implements IApi {
     this.#address = this.#irys.address;
     this.#query = new Query({ network: this.#network });
 
-    this.#uploadData = new IrysUploadData();
-    this.#irysGraphql = new IrysGraphql(this.#uploadData, this);
+    this.#irysCommon = new IrysCommon();
+    this.#irysGraphql = new IrysGraphql(this.#irysCommon, this);
   }
 
   #getTickerFromToken() {
@@ -192,7 +192,7 @@ export class IrysApi implements IApi {
   }
 
   async #convertQueryToWorkWithModel(queryResp: QueryResponse) {
-    const data = await this.#UploadData.getData(queryResp.id, true);
+    const data = await this.#IrysCommon.getData(queryResp.id, true);
     const workModel = convertQueryToWork(queryResp, data);
     workModel.content = data as string;
     const likeCount = await this.getWorkLikeCount(workModel.id);
@@ -247,7 +247,13 @@ export class IrysApi implements IApi {
         let currentTagMatches = false;
 
         for (const searchTag of searchResponse.tags) {
-          if (this.#tagsMatchByEntityType(entityType, checkTag, searchTag)) {
+          if (
+            this.#IrysCommon.tagsMatchByEntityType(
+              entityType,
+              checkTag,
+              searchTag
+            )
+          ) {
             currentTagMatches = true;
             break;
           }
@@ -260,56 +266,6 @@ export class IrysApi implements IApi {
         return true;
       }
     }
-    return false;
-  }
-
-  #tagsMatchByEntityType(
-    entityType: EntityType,
-    checkTag: Tag,
-    searchTag: Tag
-  ) {
-    if (entityType === EntityType.WorkTopic) {
-      if (
-        checkTag.name === WorkTopicTagNames.WorkId ||
-        checkTag.name === WorkTopicTagNames.TopicId
-      ) {
-        if (
-          checkTag.name === searchTag.name &&
-          checkTag.value === searchTag.value
-        ) {
-          return true;
-        }
-      } else if (checkTag.name === searchTag.name) {
-        return true;
-      }
-    } else if (entityType === EntityType.Topic) {
-      if (checkTag.name === TopicTagNames.TopicName) {
-        if (
-          checkTag.name === searchTag.name &&
-          checkTag.value === searchTag.value
-        ) {
-          return true;
-        }
-      } else if (checkTag.name === searchTag.name) {
-        return true;
-      }
-    } else if (entityType === EntityType.Work) {
-      if (
-        checkTag.name === WorkTagNames.Title ||
-        checkTag.name === WorkTagNames.Description ||
-        checkTag.name === WorkTagNames.AuthorId
-      ) {
-        if (
-          checkTag.name === searchTag.name &&
-          checkTag.value === searchTag.value
-        ) {
-          return true;
-        }
-      } else if (checkTag.name === searchTag.name) {
-        return true;
-      }
-    }
-
     return false;
   }
 
@@ -607,7 +563,7 @@ export class IrysApi implements IApi {
       .ids([profileId])
       .sort(DESC);
 
-    const data = await this.#UploadData.getData(result[0].id, false);
+    const data = await this.#IrysCommon.getData(result[0].id, false);
 
     return convertQueryToProfile(result[0], data as ArrayBuffer | null);
   }
@@ -624,7 +580,7 @@ export class IrysApi implements IApi {
     if (!searchResults || searchResults.data.transactions.edges.length === 0)
       return null;
     const node = searchResults.data.transactions.edges[0].node;
-    const data = await this.#UploadData.getData(node.id, false);
+    const data = await this.#IrysCommon.getData(node.id, false);
     return {
       id: node.id,
       updated_at: node.timestamp,
