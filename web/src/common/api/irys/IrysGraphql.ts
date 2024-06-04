@@ -257,7 +257,9 @@ export class IrysGraphql implements IGraphql {
         let currentTagMatches = false;
 
         for (const searchEdgeTag of searchEdge.node.tags) {
-          if (this.tagsMatchByEntityType(entityType, checkTag, searchEdgeTag)) {
+          if (
+            this.#tagsMatchByEntityType(entityType, checkTag, searchEdgeTag)
+          ) {
             currentTagMatches = true;
             break;
           }
@@ -273,7 +275,11 @@ export class IrysGraphql implements IGraphql {
     return false;
   }
 
-  tagsMatchByEntityType(entityType: EntityType, checkTag: Tag, searchTag: Tag) {
+  #tagsMatchByEntityType(
+    entityType: EntityType,
+    checkTag: Tag,
+    searchTag: Tag
+  ) {
     if (entityType === EntityType.WorkTopic) {
       if (
         checkTag.name === WorkTopicTagNames.WorkId ||
@@ -304,17 +310,22 @@ export class IrysGraphql implements IGraphql {
     return false;
   }
 
+  /// Arweave has no way of actually deleting records
+  /// This set of function will filter for records that have NOT
+  /// been tagged as remove (deleted)
   removeDeletedRecords(
     response: IrysGraphqlResponse | null,
     entityType: EntityType
   ): IrysGraphqlResponse {
-    const edges = !response
-      ? []
-      : this.#getNonRemovedEdges(entityType, response.data.transactions.edges);
     const cleanedList: IrysGraphqlResponse = {
       data: {
         transactions: {
-          edges,
+          edges: !response
+            ? []
+            : this.#getNonRemovedEdges(
+                entityType,
+                response.data.transactions.edges
+              ),
         },
       },
     };
@@ -329,7 +340,8 @@ export class IrysGraphql implements IGraphql {
     return new WorkResponseModel(
       response.id,
       response.timestamp,
-      response.tags.find((tag) => tag.name == WorkTagNames.WorkId)?.value || "",
+      response.tags.find((tag) => tag.name == WorkResponderTagNames.WorkId)
+        ?.value || "",
       response.tags.find((tag) => tag.name == WorkTagNames.Title)?.value || "",
       data || "",
       response.tags.find((tag) => tag.name == WorkResponderTagNames.ResponderId)

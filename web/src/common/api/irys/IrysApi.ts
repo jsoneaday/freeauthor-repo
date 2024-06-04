@@ -66,15 +66,15 @@ export class IrysApi implements IApi {
   #token = "solana";
   #wallet?: { rpcUrl: string; name: string; provider: object };
 
-  #irysgraphql?: IGraphql;
+  #irysGraphql?: IGraphql;
   get #IrysGql() {
-    if (!this.#irysgraphql) throw new Error("#irysgraphql is not set yet!");
-    return this.#irysgraphql;
+    if (!this.#irysGraphql) throw new Error("#irysgraphql is not set yet!");
+    return this.#irysGraphql;
   }
-  #uploaddata?: IUploadData;
+  #uploadData?: IUploadData;
   get #UploadData() {
-    if (!this.#uploaddata) throw new Error("#uploaddata is not set yet!");
-    return this.#uploaddata;
+    if (!this.#uploadData) throw new Error("#uploaddata is not set yet!");
+    return this.#uploadData;
   }
 
   constructor(network: string, token: string) {
@@ -127,8 +127,8 @@ export class IrysApi implements IApi {
     this.#address = this.#irys.address;
     this.#query = new Query({ network: this.#network });
 
-    this.#uploaddata = new IrysUploadData();
-    this.#irysgraphql = new IrysGraphql(this.#uploaddata, this);
+    this.#uploadData = new IrysUploadData();
+    this.#irysGraphql = new IrysGraphql(this.#uploadData, this);
   }
 
   #getTickerFromToken() {
@@ -204,6 +204,125 @@ export class IrysApi implements IApi {
     return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
+  /// Assumed sort by last inserted record first (i.e. timestamp),
+  /// as its possible after a remove a new insert is then done
+  #getNonRemovedResponses(entityType: EntityType, responses: QueryResponse[]) {
+    const nonRemovedResponses: QueryResponse[] = [];
+
+    // see if each response is already in final list and add it if not
+    for (let i = 0; i < responses.length; i++) {
+      const responseToCheck = responses[i];
+
+      if (
+        !this.#containsMatchingResponse(
+          responseToCheck,
+          nonRemovedResponses,
+          entityType
+        )
+      ) {
+        nonRemovedResponses.push(responseToCheck);
+      }
+    }
+
+    // after getting list of unique records remove the nodes tagged Remove
+    return nonRemovedResponses.filter(
+      (resp) =>
+        !resp.tags.find(
+          (tag) => tag.name === ActionName && tag.value === ActionType.Remove
+        )
+    );
+  }
+
+  /// if all tags have matching names
+  #containsMatchingResponse(
+    responseToCheck: QueryResponse,
+    searchResponses: QueryResponse[],
+    entityType: EntityType
+  ) {
+    const checkTags = responseToCheck.tags;
+    for (const searchResponse of searchResponses) {
+      let matchCount = 0;
+
+      for (const checkTag of checkTags) {
+        let currentTagMatches = false;
+
+        for (const searchTag of searchResponse.tags) {
+          if (this.#tagsMatchByEntityType(entityType, checkTag, searchTag)) {
+            currentTagMatches = true;
+            break;
+          }
+        }
+        if (currentTagMatches) {
+          matchCount += 1;
+        }
+      }
+      if (checkTags.length === matchCount) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  #tagsMatchByEntityType(
+    entityType: EntityType,
+    checkTag: Tag,
+    searchTag: Tag
+  ) {
+    if (entityType === EntityType.WorkTopic) {
+      if (
+        checkTag.name === WorkTopicTagNames.WorkId ||
+        checkTag.name === WorkTopicTagNames.TopicId
+      ) {
+        if (
+          checkTag.name === searchTag.name &&
+          checkTag.value === searchTag.value
+        ) {
+          return true;
+        }
+      } else if (checkTag.name === searchTag.name) {
+        return true;
+      }
+    } else if (entityType === EntityType.Topic) {
+      if (checkTag.name === TopicTagNames.TopicName) {
+        if (
+          checkTag.name === searchTag.name &&
+          checkTag.value === searchTag.value
+        ) {
+          return true;
+        }
+      } else if (checkTag.name === searchTag.name) {
+        return true;
+      }
+    } else if (entityType === EntityType.Work) {
+      if (
+        checkTag.name === WorkTagNames.Title ||
+        checkTag.name === WorkTagNames.Description ||
+        checkTag.name === WorkTagNames.AuthorId
+      ) {
+        if (
+          checkTag.name === searchTag.name &&
+          checkTag.value === searchTag.value
+        ) {
+          return true;
+        }
+      } else if (checkTag.name === searchTag.name) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// Arweave has no way of actually deleting records
+  /// This set of function will filter for records that have NOT
+  /// been tagged as remove (deleted)
+  #removeDeletedRecords(
+    response: QueryResponse[] | null,
+    entityType: EntityType
+  ): QueryResponse[] {
+    return !response ? [] : this.#getNonRemovedResponses(entityType, response);
+  }
+
   async arbitraryFund(amount: number): Promise<void> {
     this.#Irys.fund(amount);
   }
@@ -263,7 +382,8 @@ export class IrysApi implements IApi {
     const workQueryResponse = await this.#Query
       .search(SEARCH_TX)
       .ids([workId])
-      .sort(DESC);
+      .sort(DESC)
+      .limit(1);
 
     if (workQueryResponse.length > 0) {
       return this.#convertQueryToWorkWithModel(workQueryResponse[0]);
@@ -286,8 +406,14 @@ export class IrysApi implements IApi {
 
     const works: WorkWithAuthorModel[] = new Array(workResponses.length);
     if (workResponses.length > 0) {
-      for (let i = 0; i < workResponses.length; i++) {
-        works[i] = await this.#convertQueryToWorkWithModel(workResponses[i]);
+      const filteredResponses = this.#removeDeletedRecords(
+        workResponses,
+        EntityType.Work
+      );
+      for (let i = 0; i < filteredResponses.length; i++) {
+        works[i] = await this.#convertQueryToWorkWithModel(
+          filteredResponses[i]
+        );
       }
     }
 
@@ -313,7 +439,7 @@ export class IrysApi implements IApi {
     });
 
     return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
-      searchResults
+      this.#IrysGql.removeDeletedRecords(searchResults, EntityType.Work)
     );
   }
 
@@ -582,7 +708,7 @@ export class IrysApi implements IApi {
       { name: AppTagNames.ContentType, value: "text/html" },
       { name: AppTagNames.EntityType, value: EntityType.WorkResponse },
       { name: ActionName, value: action },
-      { name: WorkTagNames.WorkId, value: workId },
+      { name: WorkResponderTagNames.WorkId, value: workId },
       { name: WorkResponderTagNames.ResponderId, value: responderId },
     ];
 
@@ -597,7 +723,7 @@ export class IrysApi implements IApi {
     const response = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
-        { name: WorkTagNames.WorkId, values: [workId] },
+        { name: WorkResponderTagNames.WorkId, values: [workId] },
       ],
       limit: pageSize,
       cursor,
@@ -740,7 +866,7 @@ export class IrysApi implements IApi {
   async getWorkLikeCount(workId: string): Promise<number> {
     const likes = await this.#Query.search(SEARCH_TX).tags([
       { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
-      { name: WorkTagNames.WorkId, values: [workId] },
+      { name: WorkLikeTagNames.WorkId, values: [workId] },
     ]);
 
     let likeCount = 0;

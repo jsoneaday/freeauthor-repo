@@ -1,5 +1,6 @@
 import {
   DataUpload,
+  EntityType,
   IrysGraphqlResponse,
   IrysGraphqlResponseNode,
   IrysGraphqlVariables,
@@ -16,6 +17,11 @@ import {
 } from "../irys/models/ApiModels";
 
 export interface IGraphql {
+  removeDeletedRecords(
+    response: IrysGraphqlResponse | null,
+    entityType: EntityType
+  ): IrysGraphqlResponse;
+
   queryGraphQL(
     variables: IrysGraphqlVariables
   ): Promise<IrysGraphqlResponse | null>;

@@ -16,7 +16,6 @@ export enum ActionType {
 }
 
 export enum WorkTagNames {
-  WorkId = "WorkId",
   Title = "Title",
   Description = "Description",
   AuthorId = "AuthorId",
@@ -46,6 +45,7 @@ export enum WorkTopicTagNames {
 }
 
 export enum WorkResponderTagNames {
+  WorkId = "WorkId",
   ResponderId = "ResponderId",
 }
 
