@@ -1,6 +1,5 @@
 import {
   DataUpload,
-  EntityType,
   IrysGraphqlResponse,
   IrysGraphqlResponseNode,
   IrysGraphqlVariables,
@@ -63,7 +62,6 @@ export interface IGraphql {
   convertGqlQueryToTopic(response: IrysGraphqlResponse | null): TopicModel[];
 
   convertGqlQueryToWorkTopic(
-    response: IrysGraphqlResponse | null,
-    entityType: EntityType
+    response: IrysGraphqlResponse | null
   ): WorkTopicModel[];
 }

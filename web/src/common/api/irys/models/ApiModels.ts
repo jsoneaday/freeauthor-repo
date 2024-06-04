@@ -37,8 +37,12 @@ export enum WorkLikeTagNames {
 }
 
 export enum TopicTagNames {
-  TopicId = "TopicId",
   TopicName = "TopicName",
+}
+
+export enum WorkTopicTagNames {
+  WorkId = "WorkId",
+  TopicId = "TopicId",
 }
 
 export enum WorkResponderTagNames {
@@ -48,11 +52,6 @@ export enum WorkResponderTagNames {
 export enum FollowerTagNames {
   FollowerId = "FollowerId",
   FollowedId = "FollowedId",
-}
-
-export enum WorkTopicTagNames {
-  WorkId = "WorkId",
-  TopicId = "TopicId",
 }
 
 export enum EntityType {

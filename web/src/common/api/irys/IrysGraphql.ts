@@ -225,12 +225,12 @@ export class IrysGraphql implements IGraphql {
 
     // see if each edge is already in final list and add it if not
     for (let i = 0; i < sourceEdges.length; i++) {
-      const currentEdge = sourceEdges[i];
+      const edgeToCheck = sourceEdges[i];
 
       if (
-        !this.#containsMatchingEdge(currentEdge, nonRemovedEdges, entityType)
+        !this.#containsMatchingEdge(edgeToCheck, nonRemovedEdges, entityType)
       ) {
-        nonRemovedEdges.push(currentEdge);
+        nonRemovedEdges.push(edgeToCheck);
       }
     }
 
@@ -252,12 +252,12 @@ export class IrysGraphql implements IGraphql {
     const checkTags = edgeToCheck.node.tags;
     for (const searchEdge of searchEdges) {
       let matchCount = 0;
+
       for (const checkTag of checkTags) {
         let currentTagMatches = false;
+
         for (const searchEdgeTag of searchEdge.node.tags) {
-          if (
-            this.#checkEqualityByEntityType(entityType, checkTag, searchEdgeTag)
-          ) {
+          if (this.tagsMatchByEntityType(entityType, checkTag, searchEdgeTag)) {
             currentTagMatches = true;
             break;
           }
@@ -266,18 +266,14 @@ export class IrysGraphql implements IGraphql {
           matchCount += 1;
         }
       }
-      if (checkTags.length !== matchCount) {
+      if (checkTags.length === matchCount) {
         return true;
       }
     }
     return false;
   }
 
-  #checkEqualityByEntityType(
-    entityType: EntityType,
-    checkTag: Tag,
-    searchTag: Tag
-  ) {
+  tagsMatchByEntityType(entityType: EntityType, checkTag: Tag, searchTag: Tag) {
     if (entityType === EntityType.WorkTopic) {
       if (
         checkTag.name === WorkTopicTagNames.WorkId ||
@@ -292,23 +288,33 @@ export class IrysGraphql implements IGraphql {
       } else if (checkTag.name === searchTag.name) {
         return true;
       }
+    } else if (entityType === EntityType.Topic) {
+      if (checkTag.name === TopicTagNames.TopicName) {
+        if (
+          checkTag.name === searchTag.name &&
+          checkTag.value === searchTag.value
+        ) {
+          return true;
+        }
+      } else if (checkTag.name === searchTag.name) {
+        return true;
+      }
     }
+
     return false;
   }
 
-  #removeDeletedRecords(
+  removeDeletedRecords(
     response: IrysGraphqlResponse | null,
     entityType: EntityType
   ): IrysGraphqlResponse {
+    const edges = !response
+      ? []
+      : this.#getNonRemovedEdges(entityType, response.data.transactions.edges);
     const cleanedList: IrysGraphqlResponse = {
       data: {
         transactions: {
-          edges: !response
-            ? []
-            : this.#getNonRemovedEdges(
-                entityType,
-                response.data.transactions.edges
-              ),
+          edges,
         },
       },
     };
@@ -372,11 +378,12 @@ export class IrysGraphql implements IGraphql {
   }
 
   convertGqlQueryToTopic(response: IrysGraphqlResponse | null): TopicModel[] {
-    const count = response?.data.transactions.edges.length || 0;
+    const _response = this.removeDeletedRecords(response, EntityType.Topic);
+    const count = _response?.data.transactions.edges.length || 0;
 
     const topics: TopicModel[] = new Array(count);
     for (let i = 0; i < count; i++) {
-      const node = response?.data.transactions.edges[i].node;
+      const node = _response?.data.transactions.edges[i].node;
       if (!node) throw new Error("Topic item is null");
       topics[i] = {
         id: node.id,
@@ -390,10 +397,9 @@ export class IrysGraphql implements IGraphql {
   }
 
   convertGqlQueryToWorkTopic(
-    response: IrysGraphqlResponse | null,
-    entityType: EntityType
+    response: IrysGraphqlResponse | null
   ): WorkTopicModel[] {
-    const _response = this.#removeDeletedRecords(response, entityType);
+    const _response = this.removeDeletedRecords(response, EntityType.WorkTopic);
     const count = _response?.data.transactions.edges.length || 0;
     const topics: WorkTopicModel[] = new Array(count);
     for (let i = 0; i < count; i++) {

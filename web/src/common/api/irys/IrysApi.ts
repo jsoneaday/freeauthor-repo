@@ -219,7 +219,6 @@ export class IrysApi implements IApi {
     description: string | undefined,
     content: string,
     authorId: string,
-    topicId: string,
     action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
@@ -234,7 +233,6 @@ export class IrysApi implements IApi {
       { name: WorkTagNames.Title, value: title },
       { name: WorkTagNames.Description, value: _desc },
       { name: WorkTagNames.AuthorId, value: authorId },
-      { name: TopicTagNames.TopicId, value: topicId },
     ];
 
     return await this.#uploadText(content, tags, fund);
@@ -245,7 +243,6 @@ export class IrysApi implements IApi {
     description: string | undefined,
     content: string,
     authorId: string,
-    topicId: string,
     priorWorkId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
@@ -257,7 +254,6 @@ export class IrysApi implements IApi {
       description,
       content,
       authorId,
-      topicId,
       ActionType.Update,
       fund
     );
@@ -786,10 +782,8 @@ export class IrysApi implements IApi {
       ],
     });
 
-    const workTopics = this.#IrysGql.convertGqlQueryToWorkTopic(
-      workTopicResponse,
-      EntityType.WorkTopic
-    );
+    const workTopics =
+      this.#IrysGql.convertGqlQueryToWorkTopic(workTopicResponse);
     const allTopicModels = await this.getAllTopics();
     const topics: TopicModel[] = new Array(workTopics.length);
 

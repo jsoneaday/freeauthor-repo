@@ -31,8 +31,7 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       faker.lorem.lines(1),
       faker.lorem.paragraph(1),
-      "author123",
-      "topic123"
+      "author123"
     );
 
     expect(work).not.toBeFalsy();
@@ -57,15 +56,8 @@ describe("IrysApi Work tests", () => {
     const description = faker.lorem.lines(1);
     const content = faker.lorem.paragraph(1);
     const authorId = profileResponse.id;
-    const topicId = "topic123";
 
-    const addedWork = await api.addWork(
-      title,
-      description,
-      content,
-      authorId,
-      topicId
-    );
+    const addedWork = await api.addWork(title, description, content, authorId);
 
     const updateAppendage = "123";
     const updatedWork = await api.updateWork(
@@ -73,7 +65,6 @@ describe("IrysApi Work tests", () => {
       description + updateAppendage,
       content + updateAppendage,
       authorId,
-      topicId,
       addedWork.id
     );
     const getResult = await api.getWork(updatedWork.id);
@@ -102,15 +93,8 @@ describe("IrysApi Work tests", () => {
     const description = faker.lorem.lines(1);
     const content = faker.lorem.paragraph(1);
     const authorId = profileResponse.id;
-    const topicId = "topic123";
 
-    const work = await api.addWork(
-      title,
-      description,
-      content,
-      authorId,
-      topicId
-    );
+    const work = await api.addWork(title, description, content, authorId);
 
     const getResult = await api.getWork(work.id);
     expect(getResult?.title).toBe(title);
@@ -123,7 +107,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profile = await api.addProfile(
       faker.internet.userName(),
@@ -135,32 +118,28 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const workb = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const worka = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWorkLike(worka.id, workb.id);
@@ -195,24 +174,21 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      "topic123"
+      profile.id
     );
 
     const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      "topic123"
+      profile.id
     );
 
     const workb = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      "topic123"
+      profile.id
     );
 
     const searchResult = await api.searchWorks(desc, 2);
@@ -224,7 +200,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profile = await api.addProfile(
       faker.internet.userName(),
@@ -236,32 +211,28 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const firstSearchResult = await api.searchWorks(desc, 2);
@@ -278,7 +249,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profile = await api.addProfile(
       faker.internet.userName(),
@@ -290,32 +260,28 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const firstSearchResult = await api.getAuthorWorks(profile.id, 2);
@@ -332,7 +298,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profile = await api.addProfile(
       faker.internet.userName(),
@@ -344,16 +309,14 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
     await api.addWorkLike(workc.id, profile.id);
     await api.addWorkLike(workc.id, profile.id);
@@ -363,8 +326,7 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
     await api.addWorkLike(workb.id, profile.id);
     await api.addWorkLike(workb.id, profile.id);
@@ -373,8 +335,7 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     const searchResult = await api.getAuthorWorksTop(profile.id, 10);
@@ -402,7 +363,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profile = await api.addProfile(
       faker.internet.userName(),
@@ -413,8 +373,7 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWorkResponse("hello a", work.id, profile.id);
@@ -432,7 +391,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profile = await api.addProfile(
       faker.internet.userName(),
@@ -443,8 +401,7 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id,
-      topicId
+      profile.id
     );
 
     await api.addWorkResponse("hello a", work.id, profile.id);
@@ -460,7 +417,6 @@ describe("IrysApi Work tests", () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
     const desc = faker.lorem.lines(1);
-    const topicId = "topic123";
 
     const profileWorkOwner = await api.addProfile(
       faker.internet.userName(),
@@ -476,8 +432,7 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profileWorkOwner.id,
-      topicId
+      profileWorkOwner.id
     );
 
     const responsea = await api.addWorkResponse(
@@ -552,9 +507,9 @@ describe("IrysApi Work tests", () => {
   });
 
   describe("topics related tests", () => {
-    let topicNameA = "";
-    let topicNameB = "";
-    let topicNameC = "";
+    let topicNameA = "Topic A";
+    let topicNameB = "Topic B";
+    let topicNameC = "Topic C";
     let topicaResp: UploadResponse;
     let topicbResp: UploadResponse;
     let topiccResp: UploadResponse;
@@ -564,9 +519,6 @@ describe("IrysApi Work tests", () => {
       api = new IrysApi(network, token);
       await api.connect();
 
-      topicNameA = faker.company.name() + faker.number.int();
-      topicNameB = faker.company.name() + faker.number.int();
-      topicNameC = faker.company.name() + faker.number.int();
       topicaResp = await api.addTopic(topicNameA);
       topicbResp = await api.addTopic(topicNameB);
       topiccResp = await api.addTopic(topicNameC);
@@ -592,7 +544,6 @@ describe("IrysApi Work tests", () => {
         faker.lorem.sentence(1),
         faker.lorem.paragraph(1),
         profileResp.id,
-        topicaResp.id,
         ActionType.Add
       );
 

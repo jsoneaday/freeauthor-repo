@@ -24,7 +24,6 @@ export interface IApi {
     /// should be html
     content: string,
     authorId: string,
-    topicId: string,
     action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
@@ -34,7 +33,6 @@ export interface IApi {
     description: string | undefined,
     content: string,
     authorId: string,
-    topicId: string,
     priorWorkId: string,
     fund?: boolean
   ): Promise<UploadResponse>;
