@@ -1,6 +1,7 @@
 import {
   DataUpload,
   EntityType,
+  FollowModel,
   IrysGraphqlResponse,
   IrysGraphqlResponseNode,
   IrysGraphqlVariables,
@@ -46,28 +47,32 @@ export interface IGraphql {
     searchResults: IrysGraphqlResponse | null
   ): Promise<PagedWorkWithAuthorModel | null>;
 
+  convertGqlResponseToTopic(response: IrysGraphqlResponse | null): TopicModel[];
+
+  convertGqlResponseToWorkTopic(
+    response: IrysGraphqlResponse | null
+  ): WorkTopicModel[];
+
+  convertGqlResponseToFollow(
+    response: IrysGraphqlResponse | null
+  ): FollowModel[];
+
   convertGqlResponseNodeToWorkWithAuthor(
     gqlResponse: IrysGraphqlResponseNode
   ): Promise<WorkWithAuthorModel>;
 
-  convertGqlQueryToWorkResponse(
+  convertGqlNodeToWorkResponse(
     response: IrysGraphqlResponseNode,
     data: string | null
   ): WorkResponseModel;
 
-  convertGqlQueryToProfile(
+  convertGqlNodeToProfile(
     response: IrysGraphqlResponseNode,
     data: ArrayBuffer | null
   ): ProfileModel;
 
-  convertGqlQueryToWork(
+  convertGqlNodeToWork(
     response: IrysGraphqlResponseNode,
     data: DataUpload
   ): WorkModel;
-
-  convertGqlQueryToTopic(response: IrysGraphqlResponse | null): TopicModel[];
-
-  convertGqlQueryToWorkTopic(
-    response: IrysGraphqlResponse | null
-  ): WorkTopicModel[];
 }

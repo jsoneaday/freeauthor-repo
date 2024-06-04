@@ -3,6 +3,7 @@ import { ICommonApi } from "../interfaces/ICommonApi";
 import {
   DataUpload,
   EntityType,
+  FollowerTagNames,
   Tag,
   TopicTagNames,
   WorkTagNames,
@@ -57,6 +58,20 @@ export class IrysCommon implements ICommonApi {
         checkTag.name === WorkTagNames.Title ||
         checkTag.name === WorkTagNames.Description ||
         checkTag.name === WorkTagNames.AuthorId
+      ) {
+        if (
+          checkTag.name === searchTag.name &&
+          checkTag.value === searchTag.value
+        ) {
+          return true;
+        }
+      } else if (checkTag.name === searchTag.name) {
+        return true;
+      }
+    } else if (entityType === EntityType.Follow) {
+      if (
+        checkTag.name === FollowerTagNames.FollowedId ||
+        checkTag.name === FollowerTagNames.FollowerId
       ) {
         if (
           checkTag.name === searchTag.name &&

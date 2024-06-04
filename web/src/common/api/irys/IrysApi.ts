@@ -400,11 +400,35 @@ export class IrysApi implements IApi {
   }
 
   async getWorksByAllFollowed(
-    _followerId: string,
-    _lastKeyset: string,
-    _pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    followerId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    const followsResp = await this.#IrysGql.queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.Follow] },
+        { name: FollowerTagNames.FollowerId, values: [followerId] },
+      ],
+    });
+    const followModels = this.#IrysGql.convertGqlResponseToFollow(followsResp);
+    console.log("followModels", followModels);
+
+    const tags: InputTag[] = new Array(2);
+    tags[0] = { name: AppTagNames.EntityType, values: [EntityType.Work] };
+    tags[1] = {
+      name: WorkTagNames.AuthorId,
+      values: followModels.map((follow) => follow.followed_id),
+    };
+    console.log("tags", tags);
+
+    const worksResp = await this.#IrysGql.queryGraphQL({
+      tags,
+      limit: pageSize,
+      cursor,
+    });
+    console.log("worksResp", worksResp);
+
+    return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(worksResp);
   }
 
   async getWorksByAllFollowedTop(
@@ -853,7 +877,7 @@ export class IrysApi implements IApi {
       tags: [{ name: AppTagNames.EntityType, values: [EntityType.Topic] }],
     });
 
-    return this.#IrysGql.convertGqlQueryToTopic(response) || [];
+    return this.#IrysGql.convertGqlResponseToTopic(response) || [];
   }
 
   async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
@@ -865,7 +889,7 @@ export class IrysApi implements IApi {
     });
 
     const workTopics =
-      this.#IrysGql.convertGqlQueryToWorkTopic(workTopicResponse);
+      this.#IrysGql.convertGqlResponseToWorkTopic(workTopicResponse);
     const allTopicModels = await this.getAllTopics();
     const topics: TopicModel[] = new Array(workTopics.length);
 

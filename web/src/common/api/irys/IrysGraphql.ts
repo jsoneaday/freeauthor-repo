@@ -11,6 +11,8 @@ import {
   ActionType,
   DataUpload,
   EntityType,
+  FollowModel,
+  FollowerTagNames,
   IrysGraphqlEdge,
   IrysGraphqlResponse,
   IrysGraphqlResponseNode,
@@ -115,108 +117,6 @@ export class IrysGraphql implements IGraphql {
     return query;
   }
 
-  async convertGqlResponseNodeToWorkResponse(
-    gqlResponse: IrysGraphqlResponseNode
-  ): Promise<WorkResponseModelWithProfile> {
-    const data = await this.#irysCommon.getData(gqlResponse.id, false);
-    const workResponse = this.convertGqlQueryToWorkResponse(
-      gqlResponse,
-      data as string | null
-    );
-    const profile = await this.#irysApi.getProfile(workResponse.responder_id);
-    if (!profile) {
-      throw new Error(
-        `Responder ${workResponse.responder_id} for work response cannot be found`
-      );
-    }
-    return convertModelsToWorkResponseWithAuthor(workResponse, profile);
-  }
-
-  async convertGqlResponseToWorkResponse(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedWorkResponseModel | null> {
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let workResponseModel: WorkResponseModelWithProfile[] = new Array(
-      edgeLength
-    );
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      workResponseModel[i] = await this.convertGqlResponseNodeToWorkResponse(
-        edge.node
-      );
-    }
-    return {
-      workResponseModels: workResponseModel,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
-  }
-
-  async convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
-    const data = await this.#irysCommon.getData(gqlResponse.id, false);
-    return this.convertGqlQueryToProfile(
-      gqlResponse,
-      data as ArrayBuffer | null
-    );
-  }
-
-  async convertGqlResponseToProfile(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedProfileModel | null> {
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let profileModels: ProfileModel[] = new Array(edgeLength);
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      profileModels[i] = await this.convertGqlResponseNodeToProfile(edge.node);
-    }
-    return {
-      profileModels,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
-  }
-
-  async convertGqlResponseToWorkWithAuthor(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    if (!searchResults) {
-      return null;
-    }
-    const edgeLength = searchResults.data.transactions.edges.length;
-    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
-    for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
-      workModels[i] = await this.convertGqlResponseNodeToWorkWithAuthor(
-        edge.node
-      );
-    }
-    return {
-      workModels,
-      cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
-    };
-  }
-
-  async convertGqlResponseNodeToWorkWithAuthor(
-    gqlResponse: IrysGraphqlResponseNode
-  ): Promise<WorkWithAuthorModel> {
-    const data = await this.#irysCommon.getData(gqlResponse.id, true);
-    const workModel = this.convertGqlQueryToWork(gqlResponse, data);
-    const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
-    const profileModel = await this.#irysApi.getProfile(workModel.author_id);
-
-    if (!profileModel) {
-      throw new Error(`Profile with id ${workModel.author_id} not found!`);
-    }
-    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
-  }
-
   /// Assumed sort by last inserted record first (i.e. timestamp),
   /// as its possible after a remove a new insert is then done
   #getNonRemovedEdges(entityType: EntityType, sourceEdges: IrysGraphqlEdge[]) {
@@ -301,7 +201,175 @@ export class IrysGraphql implements IGraphql {
     return cleanedList;
   }
 
-  convertGqlQueryToWorkResponse(
+  async convertGqlResponseNodeToWorkResponse(
+    gqlResponse: IrysGraphqlResponseNode
+  ): Promise<WorkResponseModelWithProfile> {
+    const data = await this.#irysCommon.getData(gqlResponse.id, false);
+    const workResponse = this.convertGqlNodeToWorkResponse(
+      gqlResponse,
+      data as string | null
+    );
+    const profile = await this.#irysApi.getProfile(workResponse.responder_id);
+    if (!profile) {
+      throw new Error(
+        `Responder ${workResponse.responder_id} for work response cannot be found`
+      );
+    }
+    return convertModelsToWorkResponseWithAuthor(workResponse, profile);
+  }
+
+  async convertGqlResponseToWorkResponse(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedWorkResponseModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workResponseModel: WorkResponseModelWithProfile[] = new Array(
+      edgeLength
+    );
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workResponseModel[i] = await this.convertGqlResponseNodeToWorkResponse(
+        edge.node
+      );
+    }
+    return {
+      workResponseModels: workResponseModel,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async convertGqlResponseNodeToProfile(gqlResponse: IrysGraphqlResponseNode) {
+    const data = await this.#irysCommon.getData(gqlResponse.id, false);
+    return this.convertGqlNodeToProfile(
+      gqlResponse,
+      data as ArrayBuffer | null
+    );
+  }
+
+  async convertGqlResponseToProfile(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedProfileModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let profileModels: ProfileModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      profileModels[i] = await this.convertGqlResponseNodeToProfile(edge.node);
+    }
+    return {
+      profileModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+    };
+  }
+
+  async convertGqlResponseToWorkWithAuthor(
+    searchResults: IrysGraphqlResponse | null
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    if (!searchResults) {
+      return null;
+    }
+    const edgeLength = searchResults.data.transactions.edges.length;
+    let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
+    for (let i = 0; i < edgeLength; i++) {
+      const edge = searchResults?.data.transactions.edges[i];
+      workModels[i] = await this.convertGqlResponseNodeToWorkWithAuthor(
+        edge.node
+      );
+    }
+    return {
+      workModels,
+      cursor:
+        searchResults.data.transactions.edges[edgeLength - 1]?.cursor || "",
+    };
+  }
+
+  async convertGqlResponseNodeToWorkWithAuthor(
+    gqlResponse: IrysGraphqlResponseNode
+  ): Promise<WorkWithAuthorModel> {
+    const data = await this.#irysCommon.getData(gqlResponse.id, true);
+    const workModel = this.convertGqlNodeToWork(gqlResponse, data);
+    const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
+    const profileModel = await this.#irysApi.getProfile(workModel.author_id);
+
+    if (!profileModel) {
+      throw new Error(`Profile with id ${workModel.author_id} not found!`);
+    }
+    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
+  }
+
+  convertGqlResponseToTopic(
+    response: IrysGraphqlResponse | null
+  ): TopicModel[] {
+    const _response = this.removeDeletedRecords(response, EntityType.Topic);
+    const count = _response?.data.transactions.edges.length || 0;
+
+    const topics: TopicModel[] = new Array(count);
+    for (let i = 0; i < count; i++) {
+      const node = _response?.data.transactions.edges[i].node;
+      if (!node) throw new Error("Topic item is null");
+      topics[i] = {
+        id: node.id,
+        updated_at: node.timestamp,
+        name:
+          node.tags.find((tag) => tag.name === TopicTagNames.TopicName)
+            ?.value || "",
+      };
+    }
+    return topics;
+  }
+
+  convertGqlResponseToWorkTopic(
+    response: IrysGraphqlResponse | null
+  ): WorkTopicModel[] {
+    const _response = this.removeDeletedRecords(response, EntityType.WorkTopic);
+    const count = _response?.data.transactions.edges.length || 0;
+    const topics: WorkTopicModel[] = new Array(count);
+    for (let i = 0; i < count; i++) {
+      const node = _response?.data.transactions.edges[i].node;
+      if (!node) throw new Error("Topic item is null");
+      topics[i] = {
+        id: node.id,
+        updated_at: node.timestamp,
+        work_id:
+          node.tags.find((tag) => tag.name === WorkTopicTagNames.WorkId)
+            ?.value || "",
+        topic_id:
+          node.tags.find((tag) => tag.name === WorkTopicTagNames.TopicId)
+            ?.value || "",
+      };
+    }
+    return topics;
+  }
+
+  convertGqlResponseToFollow(
+    response: IrysGraphqlResponse | null
+  ): FollowModel[] {
+    const _responses = this.removeDeletedRecords(response, EntityType.Follow);
+    const count = _responses.data.transactions.edges.length;
+    const follows: FollowModel[] = new Array(count);
+    for (let i = 0; i < count; i++) {
+      const node = _responses.data.transactions.edges[i].node;
+      follows[i] = {
+        id: node.id,
+        updated_at: node.timestamp,
+        follower_id:
+          node.tags.find((tag) => tag.name === FollowerTagNames.FollowerId)
+            ?.value || "",
+        followed_id:
+          node.tags.find((tag) => tag.name === FollowerTagNames.FollowedId)
+            ?.value || "",
+      };
+    }
+    return follows;
+  }
+
+  convertGqlNodeToWorkResponse(
     response: IrysGraphqlResponseNode,
     data: string | null
   ): WorkResponseModel {
@@ -317,7 +385,7 @@ export class IrysGraphql implements IGraphql {
     );
   }
 
-  convertGqlQueryToProfile(
+  convertGqlNodeToProfile(
     response: IrysGraphqlResponseNode,
     data: ArrayBuffer | null
   ): ProfileModel {
@@ -342,7 +410,7 @@ export class IrysGraphql implements IGraphql {
     );
   }
 
-  convertGqlQueryToWork(
+  convertGqlNodeToWork(
     response: IrysGraphqlResponseNode,
     data: DataUpload
   ): WorkModel {
@@ -355,47 +423,5 @@ export class IrysGraphql implements IGraphql {
         "",
       response.tags.find((tag) => tag.name == WorkTagNames.Description)?.value
     );
-  }
-
-  convertGqlQueryToTopic(response: IrysGraphqlResponse | null): TopicModel[] {
-    const _response = this.removeDeletedRecords(response, EntityType.Topic);
-    const count = _response?.data.transactions.edges.length || 0;
-
-    const topics: TopicModel[] = new Array(count);
-    for (let i = 0; i < count; i++) {
-      const node = _response?.data.transactions.edges[i].node;
-      if (!node) throw new Error("Topic item is null");
-      topics[i] = {
-        id: node.id,
-        updated_at: node.timestamp,
-        name:
-          node.tags.find((tag) => tag.name === TopicTagNames.TopicName)
-            ?.value || "",
-      };
-    }
-    return topics;
-  }
-
-  convertGqlQueryToWorkTopic(
-    response: IrysGraphqlResponse | null
-  ): WorkTopicModel[] {
-    const _response = this.removeDeletedRecords(response, EntityType.WorkTopic);
-    const count = _response?.data.transactions.edges.length || 0;
-    const topics: WorkTopicModel[] = new Array(count);
-    for (let i = 0; i < count; i++) {
-      const node = _response?.data.transactions.edges[i].node;
-      if (!node) throw new Error("Topic item is null");
-      topics[i] = {
-        id: node.id,
-        updated_at: node.timestamp,
-        work_id:
-          node.tags.find((tag) => tag.name === WorkTopicTagNames.WorkId)
-            ?.value || "",
-        topic_id:
-          node.tags.find((tag) => tag.name === WorkTopicTagNames.TopicId)
-            ?.value || "",
-      };
-    }
-    return topics;
   }
 }

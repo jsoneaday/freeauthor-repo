@@ -53,9 +53,9 @@ export interface IApi {
 
   getWorksByAllFollowed(
     followerId: string,
-    lastKeyset: string,
-    pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null>;
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByAllFollowedTop(
     followerId: string,

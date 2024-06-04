@@ -5,7 +5,6 @@ import { IrysApi } from "./IrysApi";
 import { IApi } from "../interfaces/IApi";
 import { faker } from "@faker-js/faker";
 import { UploadResponse } from "@irys/sdk/common/types";
-import { ActionType } from "./models/ApiModels";
 
 const network = "devnet";
 const token = "solana";
@@ -344,7 +343,9 @@ describe("IrysApi Work tests", () => {
     expect(worka.id).toBe(searchResult!.workModels[2].id);
     expect(workd.id).toBe(searchResult!.workModels[3].id);
   });
+});
 
+describe("Profile related tests", () => {
   it("getOwnersProfile gets profile of profile just created", async () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
@@ -358,7 +359,9 @@ describe("IrysApi Work tests", () => {
     const ownersProfile = await api.getOwnersProfile();
     expect(profile.id).toBe(ownersProfile?.id);
   });
+});
 
+describe("WorkResponse related tests", () => {
   it("getWorkResponses returns the expected paged responses", async () => {
     const api: IApi = new IrysApi(network, token);
     await api.connect();
@@ -465,7 +468,9 @@ describe("IrysApi Work tests", () => {
     expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
     expect(responsea.id).toBe(workResponses?.workResponseModels[3].id);
   });
+});
 
+describe("follow related tests", () => {
   it("addFollow adds one follow record and getFollowedProfiles retrieves followed profile", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
@@ -484,6 +489,59 @@ describe("IrysApi Work tests", () => {
     await api.addFollow(profile_follower.id, profile_followed.id);
     const followed = await api.getFollowedProfiles(profile_follower.id);
     expect(profile_followed.id).toBe(followed![0].id);
+  });
+
+  it("getWorksByAllFollowed gets correct list of all followed people", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const profileb = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workb = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profileb.id
+    );
+    const profilec = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workc = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilec.id
+    );
+    const profiled = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workd = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profiled.id
+    );
+
+    await api.addFollow(profilea.id, profileb.id);
+    await api.addFollow(profilea.id, profilec.id);
+    await api.addFollow(profilea.id, profiled.id);
+    const works = await api.getWorksByAllFollowed(profilea.id, 4);
+    expect(works!.workModels[0].id).toBe(workd.id);
+    expect(works!.workModels[1].id).toBe(workc.id);
+    expect(works!.workModels[2].id).toBe(workb.id);
   });
 
   it("addFollow adds one follow record and getFollowerProfiles retrieves follower profile", async () => {
@@ -505,52 +563,51 @@ describe("IrysApi Work tests", () => {
     const followers = await api.getFollowerProfiles(profile_followed.id);
     expect(profile_follower.id).toBe(followers![0].id);
   });
+});
 
-  describe("topics related tests", () => {
-    let topicNameA = "Topic A";
-    let topicNameB = "Topic B";
-    let topicNameC = "Topic C";
-    let topicaResp: UploadResponse;
-    let topicbResp: UploadResponse;
-    let topiccResp: UploadResponse;
-    let api: IApi;
+describe("topics related tests", () => {
+  let topicNameA = "Topic A";
+  let topicNameB = "Topic B";
+  let topicNameC = "Topic C";
+  let topicaResp: UploadResponse;
+  let topicbResp: UploadResponse;
+  let topiccResp: UploadResponse;
+  let api: IApi;
 
-    beforeAll(async () => {
-      api = new IrysApi(network, token);
-      await api.connect();
+  beforeAll(async () => {
+    api = new IrysApi(network, token);
+    await api.connect();
 
-      topicaResp = await api.addTopic(topicNameA);
-      topicbResp = await api.addTopic(topicNameB);
-      topiccResp = await api.addTopic(topicNameC);
-    });
+    topicaResp = await api.addTopic(topicNameA);
+    topicbResp = await api.addTopic(topicNameB);
+    topiccResp = await api.addTopic(topicNameC);
+  });
 
-    it("call getAllTopics and confirm complete list of topics is returned", async () => {
-      const topics = await api.getAllTopics();
+  it("call getAllTopics and confirm complete list of topics is returned", async () => {
+    const topics = await api.getAllTopics();
 
-      expect(topics![0].name).toBe(topicNameC);
-      expect(topics![1].name).toBe(topicNameB);
-      expect(topics![2].name).toBe(topicNameA);
-    });
+    expect(topics![0].name).toBe(topicNameC);
+    expect(topics![1].name).toBe(topicNameB);
+    expect(topics![2].name).toBe(topicNameA);
+  });
 
-    it("call getTopicByWork and confirm returned topic", async () => {
-      const profileResp = await api.addProfile(
-        faker.internet.userName(),
-        faker.internet.displayName(),
-        faker.lorem.sentence(1)
-      );
+  it("call getTopicByWork and confirm returned topic", async () => {
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
 
-      const workResp = await api.addWork(
-        faker.lorem.words(3),
-        faker.lorem.sentence(1),
-        faker.lorem.paragraph(1),
-        profileResp.id,
-        ActionType.Add
-      );
+    const workResp = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profileResp.id
+    );
 
-      await api.addWorkTopic(topicaResp.id, workResp.id);
+    await api.addWorkTopic(topicaResp.id, workResp.id);
 
-      const topics = await api.getTopicsByWork(workResp.id);
-      expect(topics![0].name).toBe(topicNameA);
-    });
+    const topics = await api.getTopicsByWork(workResp.id);
+    expect(topics![0].name).toBe(topicNameA);
   });
 });
