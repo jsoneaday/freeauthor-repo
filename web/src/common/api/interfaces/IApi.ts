@@ -84,8 +84,8 @@ export interface IApi {
 
   getWorksByTopic(
     topicId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthorModel[] | null>;
 
   getWorksByTopicTop(

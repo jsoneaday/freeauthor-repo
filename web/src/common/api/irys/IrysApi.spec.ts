@@ -397,7 +397,7 @@ describe("IrysApi Work tests", () => {
     expect(works!.workModels[2].id).toBe(workb.id);
   });
 
-  it.only("getWorksByAllFollowedTop gets correct works list of all 20 followed people", async () => {
+  it("getWorksByAllFollowedTop gets correct works list of all 20 followed people", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
 
@@ -467,6 +467,53 @@ describe("IrysApi Work tests", () => {
     const works = await api.getWorksByOneFollowed(profileb.id, 10);
     expect(works!.workModels.length).toBe(1);
     expect(works!.workModels[0].id).toBe(workb.id);
+  });
+
+  it.only("getWorksByTopic gets works by a topic", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const worka = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilea.id
+    );
+    const workb = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilea.id
+    );
+    const workc = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilea.id
+    );
+
+    const existingTopics = await api.getAllTopics();
+    let topicaRespId: string;
+    if (existingTopics.length === 0) {
+      topicaRespId = (await api.addTopic(faker.company.name())).id;
+    } else {
+      topicaRespId = existingTopics[0].id;
+    }
+
+    await api.addWorkTopic(topicaRespId, worka.id);
+    await api.addWorkTopic(topicaRespId, workb.id);
+    await api.addWorkTopic(topicaRespId, workc.id);
+
+    const works = await api.getWorksByTopic(topicaRespId, 2);
+    expect(works!.length).toBe(2);
+    expect(works![0].id).toBe(workc.id);
+    expect(works![1].id).toBe(workb.id);
   });
 });
 
@@ -641,18 +688,25 @@ describe("topics related tests", () => {
   let topicNameA = "Topic A";
   let topicNameB = "Topic B";
   let topicNameC = "Topic C";
+  let topicNameD = "Topic D";
   let topicaResp: UploadResponse;
   let topicbResp: UploadResponse;
   let topiccResp: UploadResponse;
+  let topicdResp: UploadResponse;
   let api: IApi;
 
   beforeAll(async () => {
     api = new IrysApi(network, token);
     await api.connect();
 
-    topicaResp = await api.addTopic(topicNameA);
-    topicbResp = await api.addTopic(topicNameB);
-    topiccResp = await api.addTopic(topicNameC);
+    const existingTopics = await api.getAllTopics();
+
+    if (existingTopics.length === 0) {
+      topicaResp = await api.addTopic(topicNameA);
+      topicbResp = await api.addTopic(topicNameB);
+      topiccResp = await api.addTopic(topicNameC);
+      topicdResp = await api.addTopic(topicNameD);
+    }
   });
 
   it("call getAllTopics and confirm complete list of topics is returned", async () => {

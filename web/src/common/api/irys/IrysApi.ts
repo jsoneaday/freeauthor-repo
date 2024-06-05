@@ -517,11 +517,29 @@ export class IrysApi implements IApi {
   }
 
   async getWorksByTopic(
-    _topicId: string,
-    _lastKeyset: string,
-    _pageSize: number
+    topicId: string,
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    const workTopicResponse = await this.#IrysGql.queryGraphQL({
+      tags: [
+        { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
+        { name: WorkTopicTagNames.TopicId, values: [topicId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
+
+    const workTopics =
+      this.#IrysGql.convertGqlResponseToWorkTopic(workTopicResponse);
+
+    const worksResponse = await this.#Query
+      .search(SEARCH_TX)
+      .ids(workTopics.map((wt) => wt.work_id))
+      .sort(DESC)
+      .limit(pageSize);
+
+    return await this.#convertQueryToWorkWithAuthors(worksResponse);
   }
 
   async getWorksByTopicTop(
