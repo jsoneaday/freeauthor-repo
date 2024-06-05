@@ -58,15 +58,14 @@ export interface IApi {
   ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByAllFollowedTop(
-    followerId: string,
-    pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null>;
+    followerId: string
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByOneFollowed(
     followedId: string,
-    lastKeyset: string,
-    pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null>;
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByOneFollowedTop(
     followedId: string,

@@ -343,6 +343,117 @@ describe("IrysApi Work tests", () => {
     expect(worka.id).toBe(searchResult!.workModels[2].id);
     expect(workd.id).toBe(searchResult!.workModels[3].id);
   });
+
+  it("getWorksByAllFollowed gets correct works list of all followed people", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const profileb = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workb = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profileb.id
+    );
+    const profilec = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workc = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilec.id
+    );
+    const profiled = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workd = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profiled.id
+    );
+
+    await api.addFollow(profilea.id, profileb.id);
+    await api.addFollow(profilea.id, profilec.id);
+    await api.addFollow(profilea.id, profiled.id);
+    const works = await api.getWorksByAllFollowed(profilea.id, 4);
+    expect(works!.workModels[0].id).toBe(workd.id);
+    expect(works!.workModels[1].id).toBe(workc.id);
+    expect(works!.workModels[2].id).toBe(workb.id);
+  });
+
+  it("getWorksByAllFollowedTop gets correct works list of all followed people", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const followedWorks: UploadResponse[] = new Array(20);
+    for (let i = 0; i < 20; i++) {
+      const profile = await api.addProfile(
+        faker.internet.userName(),
+        faker.internet.displayName(),
+        faker.lorem.sentence(1)
+      );
+      followedWorks[i] = await api.addWork(
+        faker.lorem.words(3),
+        faker.lorem.sentence(1),
+        faker.lorem.paragraph(1),
+        profile.id
+      );
+      await api.addFollow(profilea.id, profile.id);
+    }
+
+    const works = await api.getWorksByAllFollowedTop(profilea.id);
+    expect(works!.workModels.length).toBe(followedWorks.length);
+  });
+
+  it.only("getWorksByOneFollowed gets the one work of followed profile", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const profileb = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const workb = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profileb.id
+    );
+    await api.addFollow(profilea.id, profileb.id);
+
+    const works = await api.getWorksByOneFollowed(profileb.id, 10);
+    expect(works!.workModels.length).toBe(1);
+    expect(works!.workModels[0].id).toBe(workb.id);
+  });
 });
 
 describe("Profile related tests", () => {
@@ -358,6 +469,46 @@ describe("Profile related tests", () => {
 
     const ownersProfile = await api.getOwnersProfile();
     expect(profile.id).toBe(ownersProfile?.id);
+  });
+
+  it("addFollow adds one follow record and getFollowedProfiles retrieves followed profile", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profile_follower = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile_followed = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    await api.addFollow(profile_follower.id, profile_followed.id);
+    const followed = await api.getFollowedProfiles(profile_follower.id);
+    expect(profile_followed.id).toBe(followed![0].id);
+  });
+
+  it("addFollow adds one follow record and getFollowerProfiles retrieves follower profile", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profile_follower = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile_followed = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    await api.addFollow(profile_follower.id, profile_followed.id);
+    const followers = await api.getFollowerProfiles(profile_followed.id);
+    expect(profile_follower.id).toBe(followers![0].id);
   });
 });
 
@@ -470,100 +621,7 @@ describe("WorkResponse related tests", () => {
   });
 });
 
-describe("follow related tests", () => {
-  it("addFollow adds one follow record and getFollowedProfiles retrieves followed profile", async () => {
-    const api = new IrysApi(network, token);
-    await api.connect();
-
-    const profile_follower = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-    const profile_followed = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-
-    await api.addFollow(profile_follower.id, profile_followed.id);
-    const followed = await api.getFollowedProfiles(profile_follower.id);
-    expect(profile_followed.id).toBe(followed![0].id);
-  });
-
-  it("getWorksByAllFollowed gets correct list of all followed people", async () => {
-    const api = new IrysApi(network, token);
-    await api.connect();
-
-    const profilea = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-
-    const profileb = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-    const workb = await api.addWork(
-      faker.lorem.words(3),
-      faker.lorem.sentence(1),
-      faker.lorem.paragraph(1),
-      profileb.id
-    );
-    const profilec = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-    const workc = await api.addWork(
-      faker.lorem.words(3),
-      faker.lorem.sentence(1),
-      faker.lorem.paragraph(1),
-      profilec.id
-    );
-    const profiled = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-    const workd = await api.addWork(
-      faker.lorem.words(3),
-      faker.lorem.sentence(1),
-      faker.lorem.paragraph(1),
-      profiled.id
-    );
-
-    await api.addFollow(profilea.id, profileb.id);
-    await api.addFollow(profilea.id, profilec.id);
-    await api.addFollow(profilea.id, profiled.id);
-    const works = await api.getWorksByAllFollowed(profilea.id, 4);
-    expect(works!.workModels[0].id).toBe(workd.id);
-    expect(works!.workModels[1].id).toBe(workc.id);
-    expect(works!.workModels[2].id).toBe(workb.id);
-  });
-
-  it("addFollow adds one follow record and getFollowerProfiles retrieves follower profile", async () => {
-    const api = new IrysApi(network, token);
-    await api.connect();
-
-    const profile_follower = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-    const profile_followed = await api.addProfile(
-      faker.internet.userName(),
-      faker.internet.displayName(),
-      faker.lorem.sentence(1)
-    );
-
-    await api.addFollow(profile_follower.id, profile_followed.id);
-    const followers = await api.getFollowerProfiles(profile_followed.id);
-    expect(profile_follower.id).toBe(followers![0].id);
-  });
-});
+describe("follow related tests", () => {});
 
 describe("topics related tests", () => {
   let topicNameA = "Topic A";
