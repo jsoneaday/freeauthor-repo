@@ -397,7 +397,7 @@ describe("IrysApi Work tests", () => {
     expect(works!.workModels[2].id).toBe(workb.id);
   });
 
-  it("getWorksByAllFollowedTop gets correct works list of all followed people", async () => {
+  it.only("getWorksByAllFollowedTop gets correct works list of all 20 followed people", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
 
@@ -423,11 +423,25 @@ describe("IrysApi Work tests", () => {
       await api.addFollow(profilea.id, profile.id);
     }
 
+    // the list should return the first followedWork and the last followed work as first and second elements
+    await api.addWorkLike(followedWorks[0].id, profilea.id);
+    await api.addWorkLike(
+      followedWorks[followedWorks.length - 1].id,
+      profilea.id
+    );
+
     const works = await api.getWorksByAllFollowedTop(profilea.id);
     expect(works!.workModels.length).toBe(followedWorks.length);
+    console.log("first", works!.workModels[0]);
+    console.log("second", works!.workModels[1]);
+
+    expect(works!.workModels[0].id).toBe(
+      followedWorks[followedWorks.length - 1].id
+    );
+    expect(works!.workModels[1].id).toBe(followedWorks[0].id);
   });
 
-  it.only("getWorksByOneFollowed gets the one work of followed profile", async () => {
+  it("getWorksByOneFollowed gets the one work of followed profile", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
 

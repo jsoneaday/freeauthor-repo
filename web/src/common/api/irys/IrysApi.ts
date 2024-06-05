@@ -435,7 +435,13 @@ export class IrysApi implements IApi {
   async getWorksByAllFollowedTop(
     followerId: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    return await this.getWorksByAllFollowed(followerId, 20);
+    let works = await this.getWorksByAllFollowed(followerId, 20);
+    works?.workModels.sort((a, b) => {
+      if (a.likes > b.likes) return -1;
+      if (a.likes < b.likes) return 1;
+      return 0;
+    });
+    return works;
   }
 
   async getWorksByOneFollowed(
@@ -460,10 +466,9 @@ export class IrysApi implements IApi {
   }
 
   async getWorksByOneFollowedTop(
-    _followedId: string,
-    _pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    followedId: string
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    return await this.getWorksByOneFollowed(followedId, 20);
   }
 
   async getAuthorWorks(
