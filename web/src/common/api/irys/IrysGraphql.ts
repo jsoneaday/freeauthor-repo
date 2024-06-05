@@ -274,10 +274,15 @@ export class IrysGraphql implements IGraphql {
     if (!searchResults) {
       return null;
     }
-    const edgeLength = searchResults.data.transactions.edges.length;
+
+    const _searchResults = this.removeDeletedRecords(
+      searchResults,
+      EntityType.Work
+    );
+    const edgeLength = _searchResults.data.transactions.edges.length;
     let workModels: WorkWithAuthorModel[] = new Array(edgeLength);
     for (let i = 0; i < edgeLength; i++) {
-      const edge = searchResults?.data.transactions.edges[i];
+      const edge = _searchResults?.data.transactions.edges[i];
       workModels[i] = await this.convertGqlResponseNodeToWorkWithAuthor(
         edge.node
       );
@@ -285,7 +290,7 @@ export class IrysGraphql implements IGraphql {
     return {
       workModels,
       cursor:
-        searchResults.data.transactions.edges[edgeLength - 1]?.cursor || "",
+        _searchResults.data.transactions.edges[edgeLength - 1]?.cursor || "",
     };
   }
 

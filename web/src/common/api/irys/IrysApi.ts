@@ -191,7 +191,21 @@ export class IrysApi implements IApi {
     return false;
   }
 
-  async #convertQueryToWorkWithModel(queryResp: QueryResponse) {
+  async #convertQueryToWorkWithAuthors(queryResponse: QueryResponse[]) {
+    const _queryResp = this.#removeDeletedRecords(
+      queryResponse,
+      EntityType.Work
+    );
+    const workWithAuthors: WorkWithAuthorModel[] = new Array(_queryResp.length);
+    for (let i = 0; i < _queryResp.length; i++) {
+      workWithAuthors[i] = await this.#convertQueryToWorkWithAuthor(
+        _queryResp[i]
+      );
+    }
+    return workWithAuthors;
+  }
+
+  async #convertQueryToWorkWithAuthor(queryResp: QueryResponse) {
     const data = await this.#IrysCommon.getData(queryResp.id, true);
     const workModel = convertQueryToWork(queryResp, data);
     workModel.content = data as string;
@@ -342,7 +356,7 @@ export class IrysApi implements IApi {
       .limit(1);
 
     if (workQueryResponse.length > 0) {
-      return this.#convertQueryToWorkWithModel(workQueryResponse[0]);
+      return this.#convertQueryToWorkWithAuthor(workQueryResponse[0]);
     }
     return null;
   }
@@ -360,18 +374,8 @@ export class IrysApi implements IApi {
       .sort(DESC)
       .limit(pageSize);
 
-    const works: WorkWithAuthorModel[] = new Array(workResponses.length);
-    if (workResponses.length > 0) {
-      const filteredResponses = this.#removeDeletedRecords(
-        workResponses,
-        EntityType.Work
-      );
-      for (let i = 0; i < filteredResponses.length; i++) {
-        works[i] = await this.#convertQueryToWorkWithModel(
-          filteredResponses[i]
-        );
-      }
-    }
+    const works: WorkWithAuthorModel[] =
+      await this.#convertQueryToWorkWithAuthors(workResponses);
 
     return works.sort((a, b) => {
       if (a.likes > b.likes) return -1;
@@ -395,7 +399,7 @@ export class IrysApi implements IApi {
     });
 
     return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
-      this.#IrysGql.removeDeletedRecords(searchResults, EntityType.Work)
+      searchResults
     );
   }
 
