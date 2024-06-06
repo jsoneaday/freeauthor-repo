@@ -189,7 +189,11 @@ export interface IApi {
     action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
-  removeWorkLike(workId: string, likerId: string): Promise<UploadResponse>;
+  removeWorkLike(
+    workId: string,
+    likerId: string,
+    fund?: boolean
+  ): Promise<UploadResponse>;
 
   /// Used to wait for tx completion and then get entity id
   // waitAndGetId(

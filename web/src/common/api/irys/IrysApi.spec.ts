@@ -769,7 +769,6 @@ describe("topics related tests", () => {
   let topicNameA = "Topic A";
   let topicNameB = "Topic B";
   let topicNameC = "Topic C";
-  let topicNameD = "Topic D";
 
   it("call getAllTopics and confirm complete list of topics is returned", async () => {
     const api = new IrysApi(network, token);
@@ -791,7 +790,7 @@ describe("topics related tests", () => {
       faker.lorem.sentence(1)
     );
 
-    const workResp = await api.addWork(
+    await api.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
@@ -804,5 +803,31 @@ describe("topics related tests", () => {
     const allTopics = await api.getAllTopics();
 
     expect(allTopics.find((t) => t.id === topic.id)).toBeUndefined();
+  });
+});
+
+describe("WorkLike related tests", () => {
+  it.only("call removeWorkLike and confirm WorkLIke removed", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profileResp = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const workResp = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profileResp.id
+    );
+
+    await api.addWorkLike(workResp.id, profileResp.id);
+
+    await api.removeWorkLike(workResp.id, profileResp.id);
+    let count = await api.getWorkLikeCount(workResp.id);
+    expect(count).toBe(0);
   });
 });

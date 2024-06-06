@@ -226,7 +226,7 @@ export class IrysApi implements IApi {
     // see if each response is already in final list and add it if not
     for (let i = 0; i < responses.length; i++) {
       const responseToCheck = responses[i];
-      console.log("responseToCheck", responseToCheck);
+
       if (
         !this.#containsMatchingResponse(
           responseToCheck,
@@ -896,6 +896,9 @@ export class IrysApi implements IApi {
     action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
+    console.log("current action", action);
+    console.log("workId", workId);
+    console.log("likerId", likerId);
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkLike },
@@ -908,25 +911,25 @@ export class IrysApi implements IApi {
   }
 
   async removeWorkLike(
-    _workId: string,
-    _likerId: string
+    workId: string,
+    likerId: string,
+    fund: boolean = false
   ): Promise<UploadResponse> {
-    throw new Error("Not implemented");
+    return await this.addWorkLike(workId, likerId, ActionType.Remove, fund);
   }
 
   async getWorkLikeCount(workId: string): Promise<number> {
-    const likes = await this.#IrysQuery.search(SEARCH_TX).tags([
-      { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
-      { name: WorkLikeTagNames.WorkId, values: [workId] },
-    ]);
+    const likesResp = await this.#IrysQuery
+      .search(SEARCH_TX)
+      .tags([
+        { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
+        { name: WorkLikeTagNames.WorkId, values: [workId] },
+      ])
+      .sort(DESC);
 
-    let likeCount = 0;
-    if (likes.length > 0) {
-      for (let i = 0; i < likes.length; i++) {
-        likeCount += 1;
-      }
-    }
-    return likeCount;
+    const likes = this.#removeDeletedRecords(likesResp, EntityType.WorkLike);
+
+    return likes.length;
   }
 
   async getWorkResponseCount(workId: string): Promise<number> {

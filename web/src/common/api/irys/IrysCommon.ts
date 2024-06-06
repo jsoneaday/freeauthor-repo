@@ -6,6 +6,7 @@ import {
   FollowerTagNames,
   Tag,
   TopicTagNames,
+  WorkLikeTagNames,
   WorkTagNames,
   WorkTopicTagNames,
 } from "./models/ApiModels";
@@ -72,6 +73,20 @@ export class IrysCommon implements ICommonApi {
       if (
         checkTag.name === FollowerTagNames.FollowedId ||
         checkTag.name === FollowerTagNames.FollowerId
+      ) {
+        if (
+          checkTag.name === searchTag.name &&
+          checkTag.value === searchTag.value
+        ) {
+          return true;
+        }
+      } else if (checkTag.name === searchTag.name) {
+        return true;
+      }
+    } else if (entityType === EntityType.WorkLike) {
+      if (
+        checkTag.name === WorkLikeTagNames.WorkId ||
+        checkTag.name === WorkLikeTagNames.LikerId
       ) {
         if (
           checkTag.name === searchTag.name &&
