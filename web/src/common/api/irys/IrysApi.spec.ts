@@ -781,7 +781,7 @@ describe("topics related tests", () => {
     expect(topics![2].name).toBe(topicNameA);
   });
 
-  it("call getTopicByWork and confirm returned topic", async () => {
+  it("removeTopic and confirm topic removed", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
 
@@ -798,10 +798,11 @@ describe("topics related tests", () => {
       profileResp.id
     );
 
+    const topicName = faker.company.name();
+    const topic = await api.addTopic(topicName);
+    await api.removeTopic(topicName);
     const allTopics = await api.getAllTopics();
-    await api.addWorkTopic(allTopics[0].id, workResp.id);
 
-    const topics = await api.getTopicsByWork(workResp.id);
-    expect(topics![0].name).toBe(allTopics[0].name);
+    expect(allTopics.find((t) => t.id === topic.id)).toBeUndefined();
   });
 });

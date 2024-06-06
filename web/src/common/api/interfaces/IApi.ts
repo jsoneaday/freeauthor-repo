@@ -169,7 +169,7 @@ export interface IApi {
     action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
-  removeTopic(name: string): Promise<UploadResponse>;
+  removeTopic(name: string, fund?: boolean): Promise<UploadResponse>;
 
   addWorkTopic(
     topicId: string,

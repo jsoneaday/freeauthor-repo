@@ -843,8 +843,18 @@ export class IrysApi implements IApi {
     return await this.#uploadText("", tags, fund);
   }
 
-  async removeTopic(_name: string): Promise<UploadResponse> {
-    throw new Error("Not implemented");
+  async removeTopic(
+    name: string,
+    fund: boolean = false
+  ): Promise<UploadResponse> {
+    const tags = [
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: AppTagNames.EntityType, value: EntityType.Topic },
+      { name: ActionName, value: ActionType.Remove },
+      { name: TopicTagNames.TopicName, value: name },
+    ];
+
+    return await this.#uploadText("", tags, fund);
   }
 
   async addWorkTopic(
