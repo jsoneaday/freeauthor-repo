@@ -737,6 +737,34 @@ describe("WorkResponse related tests", () => {
   });
 });
 
+describe("follow related topics", () => {
+  it("removeFollow marks follow entries as remove and subsequently prevents getting previously added follows", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profileb = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    await api.addFollow(profilea.id, profileb.id);
+    await api.removeFollow(profilea.id, profileb.id);
+
+    const followed = await api.getFollowedProfiles(profilea.id);
+    console.log("followed", followed);
+    const follower = await api.getFollowerProfiles(profileb.id);
+
+    expect(followed?.length).toBe(0);
+    expect(follower?.length).toBe(0);
+  });
+});
+
 describe("topics related tests", () => {
   let topicNameA = "Topic A";
   let topicNameB = "Topic B";

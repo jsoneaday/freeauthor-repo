@@ -158,7 +158,11 @@ export interface IApi {
     action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
-  removeFollow(followerId: string, followedId: string): Promise<UploadResponse>;
+  removeFollow(
+    followerId: string,
+    followedId: string,
+    fund?: boolean
+  ): Promise<UploadResponse>;
 
   addTopic(
     name: string,

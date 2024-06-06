@@ -226,7 +226,7 @@ export class IrysApi implements IApi {
     // see if each response is already in final list and add it if not
     for (let i = 0; i < responses.length; i++) {
       const responseToCheck = responses[i];
-
+      console.log("responseToCheck", responseToCheck);
       if (
         !this.#containsMatchingResponse(
           responseToCheck,
@@ -673,6 +673,7 @@ export class IrysApi implements IApi {
     };
   }
 
+  /// getFollowed decides whether to return a list of followed or follower
   async #getFollowProfiles(profileId: string, getFollowed: boolean) {
     const searchTags: InputTag[] = [
       { name: AppTagNames.EntityType, values: [EntityType.Follow] },
@@ -688,9 +689,15 @@ export class IrysApi implements IApi {
         values: [profileId],
       });
     }
-    const responses: QueryResponse[] = await this.#IrysQuery
+    let responses: QueryResponse[] = await this.#IrysQuery
       .search(SEARCH_TX)
-      .tags(searchTags);
+      .tags(searchTags)
+      .sort(DESC);
+    responses = this.#removeDeletedRecords(responses, EntityType.Follow);
+    console.log(
+      "responses",
+      responses.map((res) => res.tags)
+    );
 
     const follow: ProfileModel[] = new Array(responses.length);
     let filterTagValue = FollowerTagNames.FollowedId;
@@ -806,10 +813,19 @@ export class IrysApi implements IApi {
   }
 
   async removeFollow(
-    _followerId: string,
-    _followedId: string
+    followerId: string,
+    followedId: string,
+    fund: boolean = false
   ): Promise<UploadResponse> {
-    throw new Error("Not implemented");
+    const tags = [
+      { name: AppTagNames.ContentType, value: "empty" },
+      { name: AppTagNames.EntityType, value: EntityType.Follow },
+      { name: ActionName, value: ActionType.Remove },
+      { name: FollowerTagNames.FollowerId, value: followerId },
+      { name: FollowerTagNames.FollowedId, value: followedId },
+    ];
+
+    return await this.#uploadText("", tags, fund);
   }
 
   async addTopic(
