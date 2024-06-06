@@ -90,7 +90,7 @@ export interface IApi {
 
   getWorksByTopicTop(
     topicId: string,
-    pageSize: number
+    pageSize?: number
   ): Promise<WorkWithAuthorModel[] | null>;
 
   addProfile(

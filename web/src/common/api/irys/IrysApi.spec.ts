@@ -432,8 +432,6 @@ describe("IrysApi Work tests", () => {
 
     const works = await api.getWorksByAllFollowedTop(profilea.id);
     expect(works!.workModels.length).toBe(followedWorks.length);
-    console.log("first", works!.workModels[0]);
-    console.log("second", works!.workModels[1]);
 
     expect(works!.workModels[0].id).toBe(
       followedWorks[followedWorks.length - 1].id
@@ -469,7 +467,7 @@ describe("IrysApi Work tests", () => {
     expect(works!.workModels[0].id).toBe(workb.id);
   });
 
-  it.only("getWorksByTopic gets works by a topic", async () => {
+  it("getWorksByTopic gets works by a topic", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
 
@@ -514,6 +512,63 @@ describe("IrysApi Work tests", () => {
     expect(works!.length).toBe(2);
     expect(works![0].id).toBe(workc.id);
     expect(works![1].id).toBe(workb.id);
+  });
+
+  it("getWorksByTopicTop gets works by a topic sorted by likes desc", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
+    const profilea = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profileb = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const worka = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilea.id
+    );
+    await api.addWorkLike(worka.id, profilea.id);
+
+    const workb = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilea.id
+    );
+    await api.addWorkLike(workb.id, profilea.id);
+    await api.addWorkLike(workb.id, profileb.id);
+
+    const workc = await api.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profilea.id
+    );
+
+    const existingTopics = await api.getAllTopics();
+    let topicaRespId: string;
+    if (existingTopics.length === 0) {
+      topicaRespId = (await api.addTopic(faker.company.name())).id;
+    } else {
+      topicaRespId = existingTopics[0].id;
+    }
+
+    await api.addWorkTopic(topicaRespId, worka.id);
+    await api.addWorkTopic(topicaRespId, workb.id);
+    await api.addWorkTopic(topicaRespId, workc.id);
+
+    const works = await api.getWorksByTopicTop(topicaRespId);
+    expect(works!.length).toBe(20);
+    expect(works!.find((work) => work.id === workb.id)?.likes).toBe(2);
+    expect(works!.find((work) => work.id === worka.id)?.likes).toBe(1);
   });
 });
 
@@ -682,34 +737,15 @@ describe("WorkResponse related tests", () => {
   });
 });
 
-describe("follow related tests", () => {});
-
 describe("topics related tests", () => {
   let topicNameA = "Topic A";
   let topicNameB = "Topic B";
   let topicNameC = "Topic C";
   let topicNameD = "Topic D";
-  let topicaResp: UploadResponse;
-  let topicbResp: UploadResponse;
-  let topiccResp: UploadResponse;
-  let topicdResp: UploadResponse;
-  let api: IApi;
-
-  beforeAll(async () => {
-    api = new IrysApi(network, token);
-    await api.connect();
-
-    const existingTopics = await api.getAllTopics();
-
-    if (existingTopics.length === 0) {
-      topicaResp = await api.addTopic(topicNameA);
-      topicbResp = await api.addTopic(topicNameB);
-      topiccResp = await api.addTopic(topicNameC);
-      topicdResp = await api.addTopic(topicNameD);
-    }
-  });
 
   it("call getAllTopics and confirm complete list of topics is returned", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
     const topics = await api.getAllTopics();
 
     expect(topics![0].name).toBe(topicNameC);
@@ -718,6 +754,9 @@ describe("topics related tests", () => {
   });
 
   it("call getTopicByWork and confirm returned topic", async () => {
+    const api = new IrysApi(network, token);
+    await api.connect();
+
     const profileResp = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
@@ -731,9 +770,10 @@ describe("topics related tests", () => {
       profileResp.id
     );
 
-    await api.addWorkTopic(topicaResp.id, workResp.id);
+    const allTopics = await api.getAllTopics();
+    await api.addWorkTopic(allTopics[0].id, workResp.id);
 
     const topics = await api.getTopicsByWork(workResp.id);
-    expect(topics![0].name).toBe(topicNameA);
+    expect(topics![0].name).toBe(allTopics[0].name);
   });
 });

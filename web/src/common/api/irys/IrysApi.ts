@@ -52,10 +52,10 @@ export class IrysApi implements IApi {
     if (!this.#irys) throw new Error("#webIrys is not set yet!");
     return this.#irys;
   }
-  #query?: Query;
-  get #Query() {
-    if (!this.#query) throw new Error("#query is not set yet!");
-    return this.#query;
+  #irysQuery?: Query;
+  get #IrysQuery() {
+    if (!this.#irysQuery) throw new Error("#query is not set yet!");
+    return this.#irysQuery;
   }
   #address?: string;
   get Address() {
@@ -125,7 +125,7 @@ export class IrysApi implements IApi {
     }
 
     this.#address = this.#irys.address;
-    this.#query = new Query({ network: this.#network });
+    this.#irysQuery = new Query({ network: this.#network });
 
     this.#irysCommon = new IrysCommon();
     this.#irysGraphql = new IrysGraphql(this.#irysCommon, this);
@@ -349,7 +349,7 @@ export class IrysApi implements IApi {
   }
 
   async getWork(workId: string): Promise<WorkWithAuthorModel | null> {
-    const workQueryResponse = await this.#Query
+    const workQueryResponse = await this.#IrysQuery
       .search(SEARCH_TX)
       .ids([workId])
       .sort(DESC)
@@ -365,7 +365,7 @@ export class IrysApi implements IApi {
     searchTxt: string,
     pageSize: number
   ): Promise<WorkWithAuthorModel[] | null> {
-    const workResponses: QueryResponse[] = await this.#Query
+    const workResponses: QueryResponse[] = await this.#IrysQuery
       .search(SEARCH_TX)
       .tags([
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
@@ -533,7 +533,7 @@ export class IrysApi implements IApi {
     const workTopics =
       this.#IrysGql.convertGqlResponseToWorkTopic(workTopicResponse);
 
-    const worksResponse = await this.#Query
+    const worksResponse = await this.#IrysQuery
       .search(SEARCH_TX)
       .ids(workTopics.map((wt) => wt.work_id))
       .sort(DESC)
@@ -543,10 +543,19 @@ export class IrysApi implements IApi {
   }
 
   async getWorksByTopicTop(
-    _topicId: string,
-    _pageSize: number
+    topicId: string,
+    pageSize?: number
   ): Promise<WorkWithAuthorModel[] | null> {
-    throw new Error("Not implemented");
+    const response = await this.getWorksByTopic(
+      topicId,
+      pageSize ? pageSize : 20
+    );
+    response?.sort((a, b) => {
+      if (a.likes > b.likes) return -1;
+      if (a.likes < b.likes) return 1;
+      return 0;
+    });
+    return response;
   }
 
   async addProfile(
@@ -618,7 +627,7 @@ export class IrysApi implements IApi {
   }
 
   async getProfile(profileId: string): Promise<ProfileModel | null> {
-    const result = await this.#Query
+    const result = await this.#IrysQuery
       .search(SEARCH_TX)
       .ids([profileId])
       .sort(DESC);
@@ -679,7 +688,7 @@ export class IrysApi implements IApi {
         values: [profileId],
       });
     }
-    const responses: QueryResponse[] = await this.#Query
+    const responses: QueryResponse[] = await this.#IrysQuery
       .search(SEARCH_TX)
       .tags(searchTags);
 
@@ -880,7 +889,7 @@ export class IrysApi implements IApi {
   }
 
   async getWorkLikeCount(workId: string): Promise<number> {
-    const likes = await this.#Query.search(SEARCH_TX).tags([
+    const likes = await this.#IrysQuery.search(SEARCH_TX).tags([
       { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
       { name: WorkLikeTagNames.WorkId, values: [workId] },
     ]);
