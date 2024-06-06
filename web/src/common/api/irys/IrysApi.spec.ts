@@ -298,7 +298,22 @@ describe("IrysApi Work tests", () => {
     await api.connect();
     const desc = faker.lorem.lines(1);
 
-    const profile = await api.addProfile(
+    const profile1 = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile2 = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile3 = await api.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+    const profile4 = await api.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
@@ -308,36 +323,36 @@ describe("IrysApi Work tests", () => {
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id
+      profile1.id
     );
 
     const workc = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id
+      profile1.id
     );
-    await api.addWorkLike(workc.id, profile.id);
-    await api.addWorkLike(workc.id, profile.id);
-    await api.addWorkLike(workc.id, profile.id);
+    await api.addWorkLike(workc.id, profile2.id);
+    await api.addWorkLike(workc.id, profile3.id);
+    await api.addWorkLike(workc.id, profile4.id);
 
     const workb = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id
+      profile1.id
     );
-    await api.addWorkLike(workb.id, profile.id);
-    await api.addWorkLike(workb.id, profile.id);
+    await api.addWorkLike(workb.id, profile2.id);
+    await api.addWorkLike(workb.id, profile3.id);
 
     const worka = await api.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
-      profile.id
+      profile1.id
     );
 
-    const searchResult = await api.getAuthorWorksTop(profile.id, 10);
+    const searchResult = await api.getAuthorWorksTop(profile1.id, 10);
     expect(workc.id).toBe(searchResult!.workModels[0].id);
     expect(workb.id).toBe(searchResult!.workModels[1].id);
     expect(worka.id).toBe(searchResult!.workModels[2].id);
@@ -757,7 +772,6 @@ describe("follow related topics", () => {
     await api.removeFollow(profilea.id, profileb.id);
 
     const followed = await api.getFollowedProfiles(profilea.id);
-    console.log("followed", followed);
     const follower = await api.getFollowerProfiles(profileb.id);
 
     expect(followed?.length).toBe(0);
@@ -807,7 +821,7 @@ describe("topics related tests", () => {
 });
 
 describe("WorkLike related tests", () => {
-  it.only("call removeWorkLike and confirm WorkLIke removed", async () => {
+  it("call removeWorkLike and confirm WorkLIke removed", async () => {
     const api = new IrysApi(network, token);
     await api.connect();
 

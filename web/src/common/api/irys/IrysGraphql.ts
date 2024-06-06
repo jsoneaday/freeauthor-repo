@@ -299,7 +299,9 @@ export class IrysGraphql implements IGraphql {
   ): Promise<WorkWithAuthorModel> {
     const data = await this.#irysCommon.getData(gqlResponse.id, true);
     const workModel = this.convertGqlNodeToWork(gqlResponse, data);
+    console.log("workId to get likes", workModel.id);
     const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
+    console.log("like count", likeCount);
     const profileModel = await this.#irysApi.getProfile(workModel.author_id);
 
     if (!profileModel) {

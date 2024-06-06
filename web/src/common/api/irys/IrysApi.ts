@@ -141,7 +141,7 @@ export class IrysApi implements IApi {
   async #fundText(content: string) {
     const contentSize = this.#getByteSizeOfString(content);
     const fundingAmount = await this.#Irys.getPrice(contentSize);
-    console.log("funding needed:", fundingAmount);
+
     await this.#Irys.fund(fundingAmount);
   }
 
@@ -694,10 +694,6 @@ export class IrysApi implements IApi {
       .tags(searchTags)
       .sort(DESC);
     responses = this.#removeDeletedRecords(responses, EntityType.Follow);
-    console.log(
-      "responses",
-      responses.map((res) => res.tags)
-    );
 
     const follow: ProfileModel[] = new Array(responses.length);
     let filterTagValue = FollowerTagNames.FollowedId;
@@ -896,9 +892,6 @@ export class IrysApi implements IApi {
     action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    console.log("current action", action);
-    console.log("workId", workId);
-    console.log("likerId", likerId);
     const tags = [
       { name: AppTagNames.ContentType, value: "empty" },
       { name: AppTagNames.EntityType, value: EntityType.WorkLike },
@@ -919,17 +912,19 @@ export class IrysApi implements IApi {
   }
 
   async getWorkLikeCount(workId: string): Promise<number> {
-    const likesResp = await this.#IrysQuery
-      .search(SEARCH_TX)
-      .tags([
+    const likesResp = await this.#IrysGql.queryGraphQL({
+      tags: [
         { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
         { name: WorkLikeTagNames.WorkId, values: [workId] },
-      ])
-      .sort(DESC);
+      ],
+    });
 
-    const likes = this.#removeDeletedRecords(likesResp, EntityType.WorkLike);
+    const likes = this.#IrysGql.removeDeletedRecords(
+      likesResp,
+      EntityType.WorkLike
+    );
 
-    return likes.length;
+    return likes.data.transactions.edges.length;
   }
 
   async getWorkResponseCount(workId: string): Promise<number> {
