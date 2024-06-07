@@ -207,7 +207,7 @@ export class IrysGraphql implements IGraphql {
             ? []
             : this.#getNonRemovedEdges(
                 entityType,
-                response.data.transactions.edges
+                response.data.transactions?.edges || []
               ),
         },
       },

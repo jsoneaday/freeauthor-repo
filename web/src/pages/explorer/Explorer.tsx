@@ -33,7 +33,8 @@ export function Explorer() {
   const { topic_id } = useParams<{ topic_id: string | undefined }>();
   const [refreshWorksData, setRefreshWorksData] = useState(false);
   const [validationMsg, setValidationMsg] = useState("");
-  const api = useApi(useWallet());
+  const wallet = useWallet();
+  const api = useApi(wallet);
 
   const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();

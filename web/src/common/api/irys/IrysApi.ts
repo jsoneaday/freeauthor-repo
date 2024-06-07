@@ -50,12 +50,14 @@ const SEARCH_TX = "irys:transactions";
 export class IrysApi implements IApi {
   #irys?: WebIrys | BaseWebIrys;
   get #Irys() {
-    if (!this.#irys) throw new Error("#webIrys is not set yet!");
+    if (!this.#irys) throw new Error("#irys is not set yet!");
     return this.#irys;
   }
   #irysQuery?: Query;
   get #IrysQuery() {
-    if (!this.#irysQuery) throw new Error("#query is not set yet!");
+    if (!this.#irysQuery) {
+      this.#irysQuery = new Query({ network: this.#network });
+    }
     return this.#irysQuery;
   }
   #address?: string;
@@ -69,12 +71,16 @@ export class IrysApi implements IApi {
 
   #irysGraphql?: IGraphql;
   get #IrysGql() {
-    if (!this.#irysGraphql) throw new Error("#irysgraphql is not set yet!");
+    if (!this.#irysGraphql) {
+      this.#irysGraphql = new IrysGraphql(this.#IrysCommon, this);
+    }
     return this.#irysGraphql;
   }
   #irysCommon?: ICommonApi;
   get #IrysCommon() {
-    if (!this.#irysCommon) throw new Error("#uploaddata is not set yet!");
+    if (!this.#irysCommon) {
+      this.#irysCommon = new IrysCommon();
+    }
     return this.#irysCommon;
   }
 
@@ -126,10 +132,6 @@ export class IrysApi implements IApi {
     }
 
     this.#address = this.#irys.address;
-    this.#irysQuery = new Query({ network: this.#network });
-
-    this.#irysCommon = new IrysCommon();
-    this.#irysGraphql = new IrysGraphql(this.#irysCommon, this);
   }
 
   #getTickerFromToken() {
@@ -190,6 +192,24 @@ export class IrysApi implements IApi {
       return txMeta.address === verificationAddress;
     }
     return false;
+  }
+
+  async #convertQueryToTopics(queryResponse: QueryResponse[]) {
+    const _queryResp = this.#removeDeletedRecords(
+      queryResponse,
+      EntityType.Topic
+    );
+    const topics: TopicModel[] = new Array(_queryResp.length);
+    for (let i = 0; i < _queryResp.length; i++) {
+      topics[i] = {
+        id: _queryResp[i].id,
+        updated_at: _queryResp[i].timestamp,
+        name:
+          _queryResp[i].tags.find((tag) => tag.name === TopicTagNames.TopicName)
+            ?.value || "",
+      };
+    }
+    return topics;
   }
 
   async #convertQueryToWorkWithAuthors(queryResponse: QueryResponse[]) {
@@ -928,11 +948,13 @@ export class IrysApi implements IApi {
   }
 
   async getAllTopics(): Promise<TopicModel[]> {
-    const response = await this.#IrysGql.queryGraphQL({
-      tags: [{ name: AppTagNames.EntityType, values: [EntityType.Topic] }],
-    });
+    const response = await this.#IrysQuery
+      .search(SEARCH_TX)
+      .tags([{ name: AppTagNames.EntityType, values: [EntityType.Topic] }])
+      .sort(DESC)
+      .limit(PAGE_SIZE);
 
-    return this.#IrysGql.convertGqlResponseToTopic(response) || [];
+    return this.#convertQueryToTopics(response) || [];
   }
 
   async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
