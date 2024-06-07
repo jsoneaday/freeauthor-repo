@@ -28,7 +28,8 @@ export class ResponseWithResponder implements UiEntity {
     public responderId: string,
     public userName: string,
     public fullName: string,
-    public profileDesc: string
+    public profileDesc: string,
+    public cursor?: string
   ) {}
 }
 

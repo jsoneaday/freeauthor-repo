@@ -3,7 +3,7 @@ import {
   ActionType,
   Avatar,
   ProfileModel,
-  WorkResponseModel,
+  WorkResponseModelWithProfile,
   WorkWithAuthorModel,
 } from "../api/irys/models/ApiModels";
 import {
@@ -258,7 +258,7 @@ export class UiApi {
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
     const works = await this.#Api.getWorksByTopic(topicId, pageSize, cursor);
-    if (works) return this.#getWorkWithAuthors(works);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
@@ -267,7 +267,7 @@ export class UiApi {
     pageSize: number
   ): Promise<WorkWithAuthor[] | null> {
     const works = await this.#Api.getWorksByTopicTop(topicId, pageSize);
-    if (works) return this.#getWorkWithAuthors(works);
+    if (works) return this.#getWorkWithAuthors(works.workModels);
     return null;
   }
 
@@ -277,15 +277,19 @@ export class UiApi {
 
   async getWorkResponses(
     workId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<ResponseWithResponder[] | null> {
     const responses = await this.#Api.getWorkResponses(
       workId,
-      lastKeyset,
-      pageSize
+      pageSize,
+      cursor
     );
-    if (responses) return this.#getResponseWithResponders(responses);
+    if (responses)
+      return this.#getResponseWithResponders(
+        responses.workResponseModels,
+        responses.cursor
+      );
     return null;
   }
 
@@ -294,21 +298,29 @@ export class UiApi {
     pageSize: number
   ): Promise<ResponseWithResponder[] | null> {
     const responses = await this.#Api.getWorkResponsesTop(workId, pageSize);
-    if (responses) return this.#getResponseWithResponders(responses);
+    if (responses)
+      return this.#getResponseWithResponders(
+        responses.workResponseModels,
+        responses.cursor
+      );
     return null;
   }
 
   async getWorkResponsesByProfile(
     profileId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<ResponseWithResponder[] | null> {
     const responses = await this.#Api.getWorkResponsesByProfile(
       profileId,
-      lastKeyset,
-      pageSize
+      pageSize,
+      cursor
     );
-    if (responses) return this.#getResponseWithResponders(responses);
+    if (responses)
+      return this.#getResponseWithResponders(
+        responses.workResponseModels,
+        responses.cursor
+      );
     return null;
   }
 
@@ -320,7 +332,11 @@ export class UiApi {
       profileId,
       pageSize
     );
-    if (responses) return this.#getResponseWithResponders(responses);
+    if (responses)
+      return this.#getResponseWithResponders(
+        responses.workResponseModels,
+        responses.cursor
+      );
     return null;
   }
 
@@ -346,16 +362,15 @@ export class UiApi {
     );
   }
 
-  async getTopicByWork(workId: string): Promise<Topic | null> {
-    const topic = await this.#Api.getTopicsByWork(workId);
-    if (topic) {
-      return {
+  async getTopicByWork(workId: string): Promise<Topic[] | null> {
+    const topics = await this.#Api.getTopicsByWork(workId);
+    return (
+      topics?.map((topic) => ({
         id: topic.id,
         updatedAt: topic.updated_at.toString(),
         name: topic.name,
-      };
-    }
-    return null;
+      })) || null
+    );
   }
 
   // async cleanDb(): Promise<UploadResponse> {
@@ -366,12 +381,15 @@ export class UiApi {
   //   return await this.#Api.setupData();
   // }
 
-  #getResponseWithResponders(responses: WorkResponseModel[]) {
+  #getResponseWithResponders(
+    responses: WorkResponseModelWithProfile[],
+    cursor?: string
+  ) {
     const responsesWithResponder: ResponseWithResponder[] = [];
     for (let i = 0; i < responses.length; i++) {
       if (responses[i]) {
         responsesWithResponder.push(
-          this.#getResponseWithResponder(responses[i])
+          this.#getResponseWithResponder(responses[i], cursor)
         );
       }
     }
@@ -379,7 +397,8 @@ export class UiApi {
   }
 
   #getResponseWithResponder(
-    response: WorkResponseModel
+    response: WorkResponseModelWithProfile,
+    cursor?: string
   ): ResponseWithResponder {
     return {
       id: response.id,
@@ -391,6 +410,7 @@ export class UiApi {
       fullName: response.fullname,
       userName: response.username,
       profileDesc: response.profileDesc,
+      cursor,
     };
   }
 
@@ -398,7 +418,7 @@ export class UiApi {
     const worksWithAuthor: WorkWithAuthor[] = [];
     for (let i = 0; i < works.length; i++) {
       if (works[i]) {
-        const work = this.#getWorkWithAuthor(works[i]);
+        const work = this.#getWorkWithAuthor(works[i], cursor);
         work && worksWithAuthor.push(work);
       }
     }
