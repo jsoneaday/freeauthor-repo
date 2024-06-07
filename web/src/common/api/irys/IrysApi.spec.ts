@@ -1,6 +1,6 @@
 // import { render, waitFor, screen } from "@testing-library/react";
 // import UserEvent from "@testing-library/user-event";
-import { describe, it, expect, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { IrysApi } from "./IrysApi";
 import { IApi } from "../interfaces/IApi";
 import { faker } from "@faker-js/faker";
@@ -524,9 +524,9 @@ describe("IrysApi Work tests", () => {
     await api.addWorkTopic(topicaRespId, workc.id);
 
     const works = await api.getWorksByTopic(topicaRespId, 2);
-    expect(works!.length).toBe(2);
-    expect(works![0].id).toBe(workc.id);
-    expect(works![1].id).toBe(workb.id);
+    expect(works!.workModels.length).toBe(2);
+    expect(works!.workModels[0].id).toBe(workc.id);
+    expect(works!.workModels[1].id).toBe(workb.id);
   });
 
   it("getWorksByTopicTop gets works by a topic sorted by likes desc", async () => {
@@ -581,9 +581,13 @@ describe("IrysApi Work tests", () => {
     await api.addWorkTopic(topicaRespId, workc.id);
 
     const works = await api.getWorksByTopicTop(topicaRespId);
-    expect(works!.length).toBe(20);
-    expect(works!.find((work) => work.id === workb.id)?.likes).toBe(2);
-    expect(works!.find((work) => work.id === worka.id)?.likes).toBe(1);
+    expect(works!.workModels.length).toBe(20);
+    expect(works!.workModels.find((work) => work.id === workb.id)?.likes).toBe(
+      2
+    );
+    expect(works!.workModels.find((work) => work.id === worka.id)?.likes).toBe(
+      1
+    );
   });
 });
 

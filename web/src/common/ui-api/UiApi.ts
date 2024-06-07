@@ -1,5 +1,7 @@
 import { IApi } from "../api/interfaces/IApi";
 import {
+  ActionType,
+  Avatar,
   ProfileModel,
   WorkResponseModel,
   WorkWithAuthorModel,
@@ -44,33 +46,38 @@ export class UiApi {
     description: string | undefined,
     content: string,
     authorId: string,
-    topicId: string
+    action: ActionType = ActionType.Add,
+    fund: boolean = false
   ): Promise<UploadResponse> {
     return await this.#Api.addWork(
       title,
       description,
       content,
       authorId,
-      topicId
+      action,
+      fund
     );
   }
 
-  // todo: add avatar
   async addProfile(
     userName: string,
     fullName: string,
     description: string,
-    socialLinkPrimary: string,
-    socialLinkSecond: string,
+    socialLinkPrimary?: string,
+    socialLinkSecond?: string,
+    avatar?: Avatar,
+    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     return await this.#Api.addProfile(
       userName,
       fullName,
       description,
+      action,
       fund,
       socialLinkPrimary,
-      socialLinkSecond
+      socialLinkSecond,
+      avatar
     );
   }
   async addFollow(
@@ -96,28 +103,21 @@ export class UiApi {
     return await this.#Api.addWorkResponse(content, workId, responderId);
   }
 
-  // async waitAndGetId(
-  //   tx: string | null | undefined,
-  //   entityType?: string
-  // ): Promise<number> {
-  //   return await this.#Api.waitAndGetId(tx, entityType);
-  // }
-
   async updateWork(
     workId: string,
     title: string,
     description: string | undefined,
     content: string,
     authorId: string,
-    topicId: string
+    fund: boolean = false
   ): Promise<UploadResponse> {
     return this.#Api.updateWork(
       title,
       description,
       content,
       authorId,
-      topicId,
-      workId
+      workId,
+      fund
     );
   }
 
@@ -127,15 +127,15 @@ export class UiApi {
     userName: string,
     fullName: string,
     description: string,
-    socialLinkPrimary: string,
-    socialLinkSecond: string,
+    socialLinkPrimary?: string,
+    socialLinkSecond?: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
     return this.#Api.updateProfile(
+      profileId,
       userName,
       fullName,
       description,
-      profileId,
       fund,
       socialLinkPrimary,
       socialLinkSecond
@@ -185,73 +185,61 @@ export class UiApi {
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
     const works = await this.#Api.searchWorks(searchTxt, pageSize, cursor);
-    if (works) return this.#getWorkWithAuthors(works?.workModels || []);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
   async getWorksByAllFollowed(
     followerId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
     const works = await this.#Api.getWorksByAllFollowed(
       followerId,
-      lastKeyset,
-      pageSize
+      pageSize,
+      cursor
     );
-    if (works) return this.#getWorkWithAuthors(works);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
   async getWorksByAllFollowedTop(
-    followerId: string,
-    pageSize: number
+    followerId: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByAllFollowedTop(
-      followerId,
-      pageSize
-    );
-    if (works) return this.#getWorkWithAuthors(works);
+    const works = await this.#Api.getWorksByAllFollowedTop(followerId);
+    if (works) return this.#getWorkWithAuthors(works.workModels);
     return null;
   }
 
   async getWorksByOneFollowed(
     followedId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
     const works = await this.#Api.getWorksByOneFollowed(
       followedId,
-      lastKeyset,
-      pageSize
+      pageSize,
+      cursor
     );
-    if (works) return this.#getWorkWithAuthors(works);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
   async getWorksByOneFollowedTop(
-    followedId: string,
-    pageSize: number
+    followedId: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByOneFollowedTop(
-      followedId,
-      pageSize
-    );
-    if (works) return this.#getWorkWithAuthors(works);
+    const works = await this.#Api.getWorksByOneFollowedTop(followedId);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
   async getAuthorWorks(
     authorId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getAuthorWorks(
-      authorId,
-      lastKeyset,
-      pageSize
-    );
-    if (works) return this.#getWorkWithAuthors(works);
+    const works = await this.#Api.getAuthorWorks(authorId, pageSize, cursor);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
@@ -260,20 +248,16 @@ export class UiApi {
     pageSize: number
   ): Promise<WorkWithAuthor[] | null> {
     const works = await this.#Api.getAuthorWorksTop(authorId, pageSize);
-    if (works) return this.#getWorkWithAuthors(works);
+    if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
 
   async getWorksByTopic(
     topicId: string,
-    lastKeyset: string,
-    pageSize: number
+    pageSize: number,
+    cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByTopic(
-      topicId,
-      lastKeyset,
-      pageSize
-    );
+    const works = await this.#Api.getWorksByTopic(topicId, pageSize, cursor);
     if (works) return this.#getWorkWithAuthors(works);
     return null;
   }
@@ -410,7 +394,7 @@ export class UiApi {
     };
   }
 
-  #getWorkWithAuthors(works: WorkWithAuthorModel[]) {
+  #getWorkWithAuthors(works: WorkWithAuthorModel[], cursor?: string) {
     const worksWithAuthor: WorkWithAuthor[] = [];
     for (let i = 0; i < works.length; i++) {
       if (works[i]) {
@@ -421,7 +405,10 @@ export class UiApi {
     return worksWithAuthor;
   }
 
-  #getWorkWithAuthor(work: WorkWithAuthorModel | null): WorkWithAuthor | null {
+  #getWorkWithAuthor(
+    work: WorkWithAuthorModel | null,
+    cursor?: string
+  ): WorkWithAuthor | null {
     if (!work) return null;
 
     return {
@@ -434,6 +421,7 @@ export class UiApi {
       fullName: work.fullname,
       userName: work.username,
       profileDesc: work.profileDesc,
+      cursor,
     };
   }
 

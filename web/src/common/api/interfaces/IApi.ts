@@ -86,12 +86,12 @@ export interface IApi {
     topicId: string,
     pageSize: number,
     cursor?: string
-  ): Promise<WorkWithAuthorModel[] | null>;
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getWorksByTopicTop(
     topicId: string,
     pageSize?: number
-  ): Promise<WorkWithAuthorModel[] | null>;
+  ): Promise<PagedWorkWithAuthorModel | null>;
 
   addProfile(
     userName: string,
@@ -105,6 +105,7 @@ export interface IApi {
   ): Promise<UploadResponse>;
 
   updateProfile(
+    profileId: string,
     userName: string,
     fullName: string,
     description: string,

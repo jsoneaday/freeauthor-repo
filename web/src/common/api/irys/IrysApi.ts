@@ -28,7 +28,7 @@ import SolanaConfig from "@irys/sdk/node/tokens/solana";
 import { BaseWebIrys } from "@irys/sdk/web/base";
 import { type WebToken } from "@irys/sdk/web/types";
 import Query from "@irys/query";
-import { RPC_URL, TOKEN, TX_METADATA_URL } from "../../Env";
+import { RPC_URL, TOKEN, NETWORK, TX_METADATA_URL } from "../../Env";
 import bs58 from "bs58";
 import { UploadResponse } from "@irys/sdk/common/types";
 import { IGraphql } from "../interfaces/IGraphql";
@@ -40,6 +40,7 @@ import {
   convertQueryToProfile,
   convertQueryToWork,
 } from "./models/ApiModelConverters";
+import { PAGE_SIZE } from "../../utils/StandardValues";
 
 const DESC = "DESC";
 //const ASC = "ASC";
@@ -62,8 +63,8 @@ export class IrysApi implements IApi {
     if (!this.#address) throw new Error("#address is not set yet!");
     return this.#address;
   }
-  #network = "devnet";
-  #token = "solana";
+  #network = NETWORK;
+  #token = TOKEN;
   #wallet?: { rpcUrl: string; name: string; provider: object };
 
   #irysGraphql?: IGraphql;
@@ -435,7 +436,7 @@ export class IrysApi implements IApi {
   async getWorksByAllFollowedTop(
     followerId: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    let works = await this.getWorksByAllFollowed(followerId, 20);
+    let works = await this.getWorksByAllFollowed(followerId, PAGE_SIZE);
     works?.workModels.sort((a, b) => {
       if (a.likes > b.likes) return -1;
       if (a.likes < b.likes) return 1;
@@ -468,7 +469,7 @@ export class IrysApi implements IApi {
   async getWorksByOneFollowedTop(
     followedId: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    return await this.getWorksByOneFollowed(followedId, 20);
+    return await this.getWorksByOneFollowed(followedId, PAGE_SIZE);
   }
 
   async getAuthorWorks(
@@ -520,7 +521,7 @@ export class IrysApi implements IApi {
     topicId: string,
     pageSize: number,
     cursor?: string
-  ): Promise<WorkWithAuthorModel[] | null> {
+  ): Promise<PagedWorkWithAuthorModel | null> {
     const workTopicResponse = await this.#IrysGql.queryGraphQL({
       tags: [
         { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
@@ -533,24 +534,25 @@ export class IrysApi implements IApi {
     const workTopics =
       this.#IrysGql.convertGqlResponseToWorkTopic(workTopicResponse);
 
-    const worksResponse = await this.#IrysQuery
-      .search(SEARCH_TX)
-      .ids(workTopics.map((wt) => wt.work_id))
-      .sort(DESC)
-      .limit(pageSize);
+    const worksResponse = await this.#IrysGql.queryGraphQL({
+      ids: workTopics.map((wt) => wt.work_id),
+      limit: pageSize,
+    });
 
-    return await this.#convertQueryToWorkWithAuthors(worksResponse);
+    return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
+      worksResponse
+    );
   }
 
   async getWorksByTopicTop(
     topicId: string,
     pageSize?: number
-  ): Promise<WorkWithAuthorModel[] | null> {
+  ): Promise<PagedWorkWithAuthorModel | null> {
     const response = await this.getWorksByTopic(
       topicId,
-      pageSize ? pageSize : 20
+      pageSize ? pageSize : PAGE_SIZE
     );
-    response?.sort((a, b) => {
+    response?.workModels.sort((a, b) => {
       if (a.likes > b.likes) return -1;
       if (a.likes < b.likes) return 1;
       return 0;
@@ -605,6 +607,7 @@ export class IrysApi implements IApi {
   }
 
   async updateProfile(
+    profileId: string,
     userName: string,
     fullName: string,
     description: string,
@@ -613,7 +616,9 @@ export class IrysApi implements IApi {
     socialLinkSecondary?: string,
     avatar?: Avatar
   ): Promise<UploadResponse> {
-    // todo: find immediate prior profile and match tx id and owner address
+    if (!(await this.#isEntityOwner(profileId, this.Address))) {
+      throw new Error("This user is not the original entity creator and owner");
+    }
     return await this.addProfile(
       userName,
       fullName,
@@ -813,15 +818,12 @@ export class IrysApi implements IApi {
     followedId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    const tags = [
-      { name: AppTagNames.ContentType, value: "empty" },
-      { name: AppTagNames.EntityType, value: EntityType.Follow },
-      { name: ActionName, value: ActionType.Remove },
-      { name: FollowerTagNames.FollowerId, value: followerId },
-      { name: FollowerTagNames.FollowedId, value: followedId },
-    ];
-
-    return await this.#uploadText("", tags, fund);
+    return await this.addFollow(
+      followerId,
+      followedId,
+      ActionType.Remove,
+      fund
+    );
   }
 
   async addTopic(
@@ -843,14 +845,7 @@ export class IrysApi implements IApi {
     name: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    const tags = [
-      { name: AppTagNames.ContentType, value: "empty" },
-      { name: AppTagNames.EntityType, value: EntityType.Topic },
-      { name: ActionName, value: ActionType.Remove },
-      { name: TopicTagNames.TopicName, value: name },
-    ];
-
-    return await this.#uploadText("", tags, fund);
+    return await this.addTopic(name, ActionType.Remove, fund);
   }
 
   async addWorkTopic(
@@ -875,15 +870,7 @@ export class IrysApi implements IApi {
     workId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    const tags = [
-      { name: AppTagNames.ContentType, value: "empty" },
-      { name: ActionName, value: ActionType.Remove },
-      { name: AppTagNames.EntityType, value: EntityType.WorkTopic },
-      { name: WorkTopicTagNames.TopicId, value: topicId },
-      { name: WorkTopicTagNames.WorkId, value: workId },
-    ];
-
-    return await this.#uploadText("", tags, fund);
+    return await this.addWorkTopic(topicId, workId, ActionType.Remove, fund);
   }
 
   async addWorkLike(

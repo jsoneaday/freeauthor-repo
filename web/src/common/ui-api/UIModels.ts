@@ -13,7 +13,8 @@ export class WorkWithAuthor implements UiEntity {
     public authorId: string,
     public fullName: string,
     public userName: string,
-    public profileDesc: string
+    public profileDesc: string,
+    public cursor?: string
   ) {}
 }
 

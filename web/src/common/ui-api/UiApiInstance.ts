@@ -1,3 +1,4 @@
+import { NETWORK, TOKEN } from "../Env";
 import { IApi } from "../api/interfaces/IApi";
 import { IrysApi } from "../api/irys/IrysApi";
 import { UiApi } from "./UiApi";
@@ -13,5 +14,5 @@ export function initOrGetUiApi(apiObj: IApi, walletProvider: object) {
 }
 
 export function useApi(walletProvider: object) {
-  return initOrGetUiApi(new IrysApi(), walletProvider);
+  return initOrGetUiApi(new IrysApi(NETWORK, TOKEN), walletProvider);
 }

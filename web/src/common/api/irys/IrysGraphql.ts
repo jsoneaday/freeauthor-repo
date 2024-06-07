@@ -46,7 +46,7 @@ export class IrysGraphql implements IGraphql {
   async queryGraphQL(
     variables: IrysGraphqlVariables
   ): Promise<IrysGraphqlResponse | null> {
-    const query = this.#buildQuery(variables.limit, variables.cursor);
+    const query = this.#buildQuery(variables);
     const result = await fetch(IRYS_GRAPHQL_URL, {
       method: "POST",
       headers: {
@@ -64,27 +64,42 @@ export class IrysGraphql implements IGraphql {
     return null;
   }
 
-  #buildQuery(limit?: number, cursor?: string) {
-    let outerVariable = "$tags: [TagFilter!]!";
-    let innerVariable = `
-      tags: $tags      
-      order: DESC 
-    `;
-    if (limit) {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!";
+  #buildQuery(variables: IrysGraphqlVariables) {
+    let outerVariable = "";
+    let innerVariable = "";
+
+    if (variables.tags) {
+      outerVariable = "$tags: [TagFilter!]!";
       innerVariable = `
-        tags: $tags
-        limit: $limit
-        order: DESC
+        tags: $tags        
       `;
     }
-    if (cursor) {
-      outerVariable = "$tags: [TagFilter!]!, $limit: Int!, $cursor: String!";
-      innerVariable = `
-        tags: $tags
+    if (variables.ids) {
+      outerVariable += ", $ids: [String!]!";
+      innerVariable += `
+        ids: $ids
+      `;
+    }
+    if (variables.limit) {
+      outerVariable += ", $limit: Int!";
+      innerVariable += `
         limit: $limit
-        order: DESC
+      `;
+    }
+    if (variables.cursor) {
+      outerVariable += ", $cursor: String!";
+      innerVariable += `
         after: $cursor
+      `;
+    }
+    // sorting is always by timestamp
+    if (variables.order) {
+      innerVariable += `
+        order: ${variables.order} 
+      `;
+    } else {
+      innerVariable += `
+        order: DESC 
       `;
     }
 
@@ -299,9 +314,7 @@ export class IrysGraphql implements IGraphql {
   ): Promise<WorkWithAuthorModel> {
     const data = await this.#irysCommon.getData(gqlResponse.id, true);
     const workModel = this.convertGqlNodeToWork(gqlResponse, data);
-    console.log("workId to get likes", workModel.id);
     const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
-    console.log("like count", likeCount);
     const profileModel = await this.#irysApi.getProfile(workModel.author_id);
 
     if (!profileModel) {
