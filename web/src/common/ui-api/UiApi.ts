@@ -41,22 +41,25 @@ export class UiApi {
     await this.#Api.connect(walletProvider);
   }
 
-  async addWork(
+  /// Works can have more than one topic but adding a default topic upon creation
+  async addWorkWithTopic(
     title: string,
     description: string | undefined,
     content: string,
     authorId: string,
-    action: ActionType = ActionType.Add,
+    topicId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    return await this.#Api.addWork(
+    const work = await this.#Api.addWork(
       title,
       description,
       content,
       authorId,
-      action,
+      ActionType.Add,
       fund
     );
+    await this.addWorkTopic(topicId, work.id);
+    return work;
   }
 
   async addProfile(
@@ -66,14 +69,13 @@ export class UiApi {
     socialLinkPrimary?: string,
     socialLinkSecond?: string,
     avatar?: Avatar,
-    action: ActionType = ActionType.Add,
     fund: boolean = false
   ): Promise<UploadResponse> {
     return await this.#Api.addProfile(
       userName,
       fullName,
       description,
-      action,
+      ActionType.Add,
       fund,
       socialLinkPrimary,
       socialLinkSecond,
@@ -103,15 +105,16 @@ export class UiApi {
     return await this.#Api.addWorkResponse(content, workId, responderId);
   }
 
-  async updateWork(
+  async updateWorkWithTopic(
     workId: string,
     title: string,
     description: string | undefined,
     content: string,
     authorId: string,
+    topicId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    return this.#Api.updateWork(
+    const updatedWork = await this.#Api.updateWork(
       title,
       description,
       content,
@@ -119,6 +122,9 @@ export class UiApi {
       workId,
       fund
     );
+    await this.#Api.removeWorkTopic(topicId, updatedWork.id);
+    await this.addWorkTopic(topicId, updatedWork.id);
+    return updatedWork;
   }
 
   // todo: add avatar later
@@ -129,6 +135,7 @@ export class UiApi {
     description: string,
     socialLinkPrimary?: string,
     socialLinkSecond?: string,
+    avatar?: Avatar,
     fund: boolean = false
   ): Promise<UploadResponse> {
     return this.#Api.updateProfile(
@@ -138,13 +145,13 @@ export class UiApi {
       description,
       fund,
       socialLinkPrimary,
-      socialLinkSecond
+      socialLinkSecond,
+      avatar
     );
   }
 
   async getProfile(profileId: string): Promise<Profile | null> {
-    const profile = await this.#Api.getProfile(profileId);
-    return this.#getProfile(profile);
+    return this.#getProfile(await this.#Api.getProfile(profileId));
   }
 
   async getOwnersProfile(): Promise<Profile | null> {
@@ -170,11 +177,8 @@ export class UiApi {
     return this.#getWorkWithAuthor(work);
   }
 
-  async searchWorksTop(
-    searchTxt: string,
-    pageSize: number
-  ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.searchWorksTop(searchTxt, pageSize);
+  async searchWorksTop(searchTxt: string): Promise<WorkWithAuthor[] | null> {
+    const works = await this.#Api.searchWorksTop(searchTxt);
     if (works) return this.#getWorkWithAuthors(works);
     return null;
   }

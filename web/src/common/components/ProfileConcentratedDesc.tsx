@@ -55,7 +55,6 @@ export function ProfileConcentractedDesc({
 
             if (profile) {
               await api.addFollow(profile.id, profileId);
-              //await api.waitAndGetId(tx, "follows");
               await confirmFollowed();
             } else {
               console.log("Cannot follow not logged in!");

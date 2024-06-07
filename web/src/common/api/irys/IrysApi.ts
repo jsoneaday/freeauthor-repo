@@ -363,8 +363,7 @@ export class IrysApi implements IApi {
   }
 
   async searchWorksTop(
-    searchTxt: string,
-    pageSize: number
+    searchTxt: string
   ): Promise<WorkWithAuthorModel[] | null> {
     const workResponses: QueryResponse[] = await this.#IrysQuery
       .search(SEARCH_TX)
@@ -373,7 +372,7 @@ export class IrysApi implements IApi {
         { name: WorkTagNames.Description, values: [searchTxt] },
       ])
       .sort(DESC)
-      .limit(pageSize);
+      .limit(PAGE_SIZE);
 
     const works: WorkWithAuthorModel[] =
       await this.#convertQueryToWorkWithAuthors(workResponses);

@@ -101,7 +101,7 @@ export function Explorer() {
 
       let works: WorkWithAuthor[] | null;
       if (priorKeyset === "") {
-        works = await api.searchWorksTop(searchTxt, PAGE_SIZE);
+        works = await api.searchWorksTop(searchTxt);
       } else {
         works = await api.searchWorks(searchTxt, PAGE_SIZE, priorKeyset);
       }
@@ -118,8 +118,8 @@ export function Explorer() {
       } else {
         works = await api.getWorksByTopic(
           topic_id || "",
-          priorKeyset,
-          PAGE_SIZE
+          PAGE_SIZE,
+          priorKeyset
         );
       }
 

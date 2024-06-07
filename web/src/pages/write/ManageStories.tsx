@@ -25,7 +25,7 @@ export function ManageStories() {
     if (priorKeyset === "") {
       works = await api.getAuthorWorksTop(profile.id, PAGE_SIZE);
     } else {
-      works = await api.getAuthorWorks(profile.id, priorKeyset, PAGE_SIZE);
+      works = await api.getAuthorWorks(profile.id, PAGE_SIZE, priorKeyset);
     }
     if (!works) {
       return null;

@@ -65,12 +65,14 @@ export function ReadStory() {
   const getData = async (priorKeyset: string) => {
     let responses: ResponseWithResponder[] | null;
     if (priorKeyset === "") {
-      responses = await api.getWorkResponsesTop(work_id || "", PAGE_SIZE);
+      if (!work_id)
+        throw new Error("Work id is undefined, cannot get top responses");
+      responses = await api.getWorkResponsesTop(work_id, PAGE_SIZE);
     } else {
       responses = await api.getWorkResponses(
         work_id || "",
-        priorKeyset,
-        PAGE_SIZE
+        PAGE_SIZE,
+        priorKeyset
       );
     }
     if (!responses || responses.length === 0) {
@@ -104,8 +106,9 @@ export function ReadStory() {
       return;
     }
 
-    await api.addWorkResponse(value, work_id || "", profile.id || "");
-    //await api.waitAndGetId(tx);
+    if (!work_id || !profile.id)
+      throw new Error("Work id is undefined, cannot add response");
+    await api.addWorkResponse(value, work_id || "", profile.id);
     setRefreshWorksData(true);
   };
 

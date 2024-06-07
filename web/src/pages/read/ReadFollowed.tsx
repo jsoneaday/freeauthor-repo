@@ -33,12 +33,12 @@ export function ReadFollowed() {
     if (currentFollowedId === "") {
       let works: WorkWithAuthor[] | null;
       if (priorKeyset === "") {
-        works = await api.getWorksByAllFollowedTop(profile.id, PAGE_SIZE);
+        works = await api.getWorksByAllFollowedTop(profile.id);
       } else {
         works = await api.getWorksByAllFollowed(
           profile.id,
-          priorKeyset,
-          PAGE_SIZE
+          PAGE_SIZE,
+          priorKeyset
         );
       }
 
@@ -50,15 +50,12 @@ export function ReadFollowed() {
     } else {
       let works: WorkWithAuthor[] | null;
       if (priorKeyset === "") {
-        works = await api.getWorksByOneFollowedTop(
-          currentFollowedId,
-          PAGE_SIZE
-        );
+        works = await api.getWorksByOneFollowedTop(currentFollowedId);
       } else {
         works = await api.getWorksByOneFollowed(
           currentFollowedId || "",
-          priorKeyset,
-          PAGE_SIZE
+          PAGE_SIZE,
+          priorKeyset
         );
       }
 

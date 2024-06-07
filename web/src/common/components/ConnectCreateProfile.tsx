@@ -3,10 +3,9 @@ import { NotificationType } from "./modals/Notification";
 import { PrimaryButton } from "./Buttons";
 import { ProfileForm } from "./ProfileForm";
 import Notification from "./modals/Notification";
-import { initOrGetUiApi } from "../ui-api/UiApiInstance";
+import { useApi } from "../ui-api/UiApiInstance";
 import { useProfile } from "../zustand/Store";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { IrysApi } from "../api/irys/IrysApi";
 
 export const SMALL_NOTIFICATION_HEIGHT = "170px";
 export const LARGE_NOTIFICATION_HEIGHT = "580px";
@@ -28,12 +27,12 @@ export function ConnectCreateProfile({
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [connectValidationMsg, setConnectValidationMsg] = useState("");
   const wallet = useWallet();
+  const api = useApi(wallet);
 
   const onClickConnectWallet = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     if (!profile) {
-      const api = initOrGetUiApi(new IrysApi(), wallet);
       const ownersProfile = await api.getOwnersProfile();
       if (!ownersProfile) {
         setShowProfileForm(true);

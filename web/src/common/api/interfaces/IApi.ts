@@ -40,10 +40,7 @@ export interface IApi {
   /// workId is transaction id
   getWork(workId: string): Promise<WorkWithAuthorModel | null>;
 
-  searchWorksTop(
-    searchTxt: string,
-    pageSize: number
-  ): Promise<WorkWithAuthorModel[] | null>;
+  searchWorksTop(searchTxt: string): Promise<WorkWithAuthorModel[] | null>;
 
   searchWorks(
     searchTxt: string,

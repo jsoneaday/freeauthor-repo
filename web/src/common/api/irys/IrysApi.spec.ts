@@ -150,7 +150,7 @@ describe("IrysApi Work tests", () => {
 
     await api.addWorkLike(workc.id, workd.id);
 
-    const searchResults = await api.searchWorksTop(desc, 10);
+    const searchResults = await api.searchWorksTop(desc);
 
     expect(worka.id).toBe(searchResults![0].id);
     expect(workb.id).toBe(searchResults![1].id);

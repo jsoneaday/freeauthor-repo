@@ -58,8 +58,8 @@ export function Profile() {
     } else {
       works = await api.getAuthorWorks(
         profile_id || "",
-        priorKeyset,
-        PAGE_SIZE
+        PAGE_SIZE,
+        priorKeyset
       );
     }
     if (!works || works.length === 0) return null;
@@ -78,8 +78,8 @@ export function Profile() {
     } else {
       workResponses = await api.getWorkResponsesByProfile(
         profile_id || "",
-        priorKeyset,
-        PAGE_SIZE
+        PAGE_SIZE,
+        priorKeyset
       );
     }
     if (!workResponses || workResponses.length === 0) return null;

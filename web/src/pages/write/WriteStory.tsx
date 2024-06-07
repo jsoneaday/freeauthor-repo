@@ -89,7 +89,7 @@ export function WriteStory() {
             setDescription(work.description);
             mdRef.current?.setMarkdown(work.content);
             setValidationMsg(validation_msg || "");
-            setSelectedTopicId(topic?.id || "");
+            setSelectedTopicId(topic ? topic[0].id : "");
           })
           .catch((e: any) => console.log(e));
       });
@@ -108,7 +108,7 @@ export function WriteStory() {
     try {
       setIsSubmitBtnDisabled(true);
 
-      const tx = await api.addWork(
+      const tx = await api.addWorkWithTopic(
         title,
         description,
         mdRef.current?.getMarkdown() || "",
@@ -117,7 +117,6 @@ export function WriteStory() {
       );
       // todo: remove when ready for prod
       console.log("addWork tx", tx);
-      //id = await api.waitAndGetId(tx, "works");
       console.log("addWork id", id);
     } catch (e) {
       console.log(e);
@@ -142,7 +141,7 @@ export function WriteStory() {
 
     try {
       setIsSubmitBtnDisabled(true);
-      const tx = await api.updateWork(
+      const tx = await api.updateWorkWithTopic(
         work_id || "",
         title,
         description,
