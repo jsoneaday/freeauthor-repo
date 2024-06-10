@@ -24,7 +24,13 @@ import {
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import {
+  WalletDisconnectButton,
+  WalletModalProvider,
+  WalletMultiButton,
+} from "@solana/wallet-adapter-react-ui";
+
+import "@solana/wallet-adapter-react-ui/styles.css";
 
 const network = WalletAdapterNetwork.Devnet;
 const endpoint = clusterApiUrl(network);

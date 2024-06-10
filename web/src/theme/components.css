@@ -1,3 +1,12 @@
+.push-away {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  height: 100px;
+}
+
 .primary-btn {
   justify-content: center;
   color: var(--primary-btn-cl);
@@ -257,7 +266,7 @@ select {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: space-between;
   z-index: 100;
 }
 

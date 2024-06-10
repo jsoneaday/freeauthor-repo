@@ -61,13 +61,11 @@ export function Explorer() {
 
   useEffect(() => {
     api.getAllTopics().then((topics) => {
-      console.log("topics", topics);
       setTopics(topics);
     });
   }, []);
 
   useEffect(() => {
-    console.log("topic_id", topic_id);
     if (!topics) return;
 
     setTopicName(

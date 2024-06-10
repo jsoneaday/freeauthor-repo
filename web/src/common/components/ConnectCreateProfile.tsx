@@ -1,11 +1,15 @@
 import { MouseEvent, useState } from "react";
 import { NotificationType } from "./modals/Notification";
-import { PrimaryButton } from "./Buttons";
 import { ProfileForm } from "./ProfileForm";
 import Notification from "./modals/Notification";
 import { useApi } from "../ui-api/UiApiInstance";
 import { useProfile } from "../zustand/Store";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import {
+  WalletDisconnectButton,
+  WalletMultiButton,
+} from "@solana/wallet-adapter-react-ui";
+import { primaryButton } from "../../theme/solana-overrides";
 
 export const SMALL_NOTIFICATION_HEIGHT = "170px";
 export const LARGE_NOTIFICATION_HEIGHT = "580px";
@@ -26,12 +30,13 @@ export function ConnectCreateProfile({
   );
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [connectValidationMsg, setConnectValidationMsg] = useState("");
+  const { connection } = useConnection();
   const wallet = useWallet();
   const api = useApi(wallet);
 
   const onClickConnectWallet = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-
+    console.log("profile", profile);
     if (!profile) {
       const ownersProfile = await api.getOwnersProfile();
       if (!ownersProfile) {
@@ -69,24 +74,30 @@ export function ConnectCreateProfile({
       width="25%"
       height={notificationHeight}
     >
-      <span className="standard-header">
-        Please connect your wallet {/* todo: need supported wallets button */}
-      </span>
-      <span className="btn-span-align" style={{ marginTop: "1em" }}>
-        <div style={{ marginTop: "1.25em", color: "var(--warning-cl)" }}>
-          {connectValidationMsg}
-        </div>
-        <PrimaryButton
-          label="Connect"
-          style={{ marginTop: "1em" }}
-          onClick={onClickConnectWallet}
-        />
-      </span>
-      {showProfileForm ? (
-        <div className="profile-form-parent">
-          <ProfileForm profileCreatedCallback={toggleNotificationState} />
-        </div>
-      ) : null}
+      <div className="push-away">
+        <span className="standard-header">
+          {wallet.connected ? null : <span>Please connect your wallet</span>}
+        </span>
+        <span className="btn-span-align" style={{ marginTop: "1em" }}>
+          <div style={{ marginTop: "1.25em", color: "var(--warning-cl)" }}>
+            {connectValidationMsg}
+          </div>
+          {wallet.connected ? (
+            <span>
+              <WalletDisconnectButton style={primaryButton} />
+            </span>
+          ) : (
+            <span>
+              <WalletMultiButton style={primaryButton} />
+            </span>
+          )}
+        </span>
+        {showProfileForm ? (
+          <div className="profile-form-parent">
+            <ProfileForm profileCreatedCallback={toggleNotificationState} />
+          </div>
+        ) : null}
+      </div>
     </Notification>
   );
 }
