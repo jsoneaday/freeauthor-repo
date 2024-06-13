@@ -16,7 +16,6 @@ export default function UiApiProvider({ children }: UiApiProps) {
   const setupUiApi = async () => {
     const _uiApi = await initOrGetUiApi(wallet);
     setUiApi(_uiApi);
-    console.log("_uiApi set", _uiApi);
   };
 
   useEffect(() => {

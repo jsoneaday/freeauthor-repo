@@ -30,39 +30,38 @@ export function ConnectCreateProfile({
   const api = useUiApi();
 
   useEffect(() => {
-    console.log("useEffect api", api);
     handleConnect();
   }, [api]);
 
   const handleConnect = async () => {
-    console.log("handleConnect api", api);
     if (api) {
-      startTransition(async () => {
+      startTransition(() => {
         if (!profile) {
-          const ownersProfile = await api.getOwnersProfile();
-          if (!ownersProfile) {
-            setShowProfileForm(true);
-            setNotificationHeight(LARGE_NOTIFICATION_HEIGHT);
-            setConnectValidationMsg(
-              "You must create a profile before you can create content"
-            );
-          } else {
-            // if profile already exists just allow writing
-            toggleNotificationState();
-            setProfile({
-              id: ownersProfile?.id,
-              updatedAt: ownersProfile.updatedAt,
-              username: ownersProfile.userName,
-              fullname: ownersProfile.fullName,
-              description: ownersProfile.description,
-              ownerAddress: ownersProfile.ownerAddress,
-              socialLinkPrimary: ownersProfile.socialLinkPrimary || "",
-              socialLinkSecond: ownersProfile.socialLinkSecond || "",
-            });
-            setShowProfileForm(false);
-            setNotificationHeight(SMALL_NOTIFICATION_HEIGHT);
-            setConnectValidationMsg("");
-          }
+          api.getOwnersProfile().then((ownersProfile) => {
+            if (!ownersProfile) {
+              setShowProfileForm(true);
+              setNotificationHeight(LARGE_NOTIFICATION_HEIGHT);
+              setConnectValidationMsg(
+                "You must create a profile before you can create content"
+              );
+            } else {
+              // if profile already exists just allow writing
+              toggleNotificationState();
+              setProfile({
+                id: ownersProfile?.id,
+                updatedAt: ownersProfile.updatedAt,
+                username: ownersProfile.userName,
+                fullname: ownersProfile.fullName,
+                description: ownersProfile.description,
+                ownerAddress: ownersProfile.ownerAddress,
+                socialLinkPrimary: ownersProfile.socialLinkPrimary || "",
+                socialLinkSecond: ownersProfile.socialLinkSecond || "",
+              });
+              setShowProfileForm(false);
+              setNotificationHeight(SMALL_NOTIFICATION_HEIGHT);
+              setConnectValidationMsg("");
+            }
+          });
         }
       });
     }
@@ -72,7 +71,7 @@ export function ConnectCreateProfile({
     e.preventDefault();
 
     setConnectValidationMsg("Waiting for wallet connection ...");
-    console.log("is wallet null", solflareWallet);
+
     await solflareWallet?.connect();
   };
 

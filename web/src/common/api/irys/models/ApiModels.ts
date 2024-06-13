@@ -223,7 +223,7 @@ export class ProfileModel implements Entity {
 }
 
 export type PagedProfileModel = { profileModels: ProfileModel[] } & {
-  cursor: string;
+  cursor?: string;
 };
 
 /// Profile follower and the Profile being followed
@@ -301,4 +301,4 @@ export class WorkResponseModelWithProfile implements WorkResponseModel {
 
 export type PagedWorkResponseModel = {
   workResponseModels: WorkResponseModelWithProfile[];
-} & { cursor: string };
+} & { cursor?: string };

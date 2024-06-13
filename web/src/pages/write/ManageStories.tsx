@@ -18,8 +18,6 @@ export function ManageStories() {
   const getData = async (priorKeyset: string) => {
     if (!profile) return null;
 
-    console.log("getAuthorWorks", profile.id, priorKeyset, PAGE_SIZE);
-
     let works: WorkWithAuthor[] | null | undefined;
     if (priorKeyset === "") {
       works = await api?.getAuthorWorksTop(profile.id, PAGE_SIZE);

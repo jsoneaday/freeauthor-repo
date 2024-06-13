@@ -240,6 +240,7 @@ export class IrysGraphql implements IGraphql {
       return null;
     }
     const edgeLength = searchResults.data.transactions.edges.length;
+    console.log("edgeLength", edgeLength);
     let workResponseModel: WorkResponseModelWithProfile[] = new Array(
       edgeLength
     );
@@ -252,7 +253,9 @@ export class IrysGraphql implements IGraphql {
     return {
       workResponseModels: workResponseModel,
       cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+        edgeLength > 0
+          ? searchResults.data.transactions.edges[edgeLength - 1].cursor || ""
+          : undefined,
     };
   }
 
@@ -279,7 +282,9 @@ export class IrysGraphql implements IGraphql {
     return {
       profileModels,
       cursor:
-        searchResults.data.transactions.edges[edgeLength - 1].cursor || "",
+        edgeLength > 0
+          ? searchResults.data.transactions.edges[edgeLength - 1].cursor || ""
+          : undefined,
     };
   }
 
