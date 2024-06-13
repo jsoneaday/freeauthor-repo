@@ -21,6 +21,7 @@ import {
   WorkTopicTagNames,
   ActionName,
   ActionType,
+  BaseQueryTags,
 } from "./models/ApiModels";
 import { IApi } from "../interfaces/IApi";
 import { WebIrys } from "@irys/sdk";
@@ -133,7 +134,6 @@ export class IrysApi implements IApi {
     }
 
     this.#address = this.#irys.address;
-    console.log("set address", this.#address);
   }
 
   #getTickerFromToken() {
@@ -390,6 +390,7 @@ export class IrysApi implements IApi {
     const workResponses: QueryResponse[] = await this.#IrysQuery
       .search(SEARCH_TX)
       .tags([
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.Description, values: [searchTxt] },
       ])
@@ -413,6 +414,7 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkWithAuthorModel | null> {
     const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.Description, values: [searchTxt] },
       ],
@@ -432,18 +434,21 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkWithAuthorModel | null> {
     const followsResp = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Follow] },
         { name: FollowerTagNames.FollowerId, values: [followerId] },
       ],
     });
     const followModels = this.#IrysGql.convertGqlResponseToFollow(followsResp);
 
-    const tags: InputTag[] = new Array(2);
+    const tags: InputTag[] = new Array(4);
     tags[0] = { name: AppTagNames.EntityType, values: [EntityType.Work] };
     tags[1] = {
       name: WorkTagNames.AuthorId,
       values: followModels.map((follow) => follow.followed_id),
     };
+    tags[2] = BaseQueryTags[0];
+    tags[3] = BaseQueryTags[1];
 
     const worksResp = await this.#IrysGql.queryGraphQL({
       tags,
@@ -471,12 +476,14 @@ export class IrysApi implements IApi {
     pageSize: number,
     cursor?: string
   ): Promise<PagedWorkWithAuthorModel | null> {
-    const tags: InputTag[] = new Array(2);
+    const tags: InputTag[] = new Array(4);
     tags[0] = { name: AppTagNames.EntityType, values: [EntityType.Work] };
     tags[1] = {
       name: WorkTagNames.AuthorId,
       values: [followedId],
     };
+    tags[2] = BaseQueryTags[0];
+    tags[3] = BaseQueryTags[1];
 
     const worksResp = await this.#IrysGql.queryGraphQL({
       tags,
@@ -500,6 +507,7 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkWithAuthorModel | null> {
     const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.AuthorId, values: [authorId] },
       ],
@@ -518,6 +526,7 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkWithAuthorModel | null> {
     const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Work] },
         { name: WorkTagNames.AuthorId, values: [authorId] },
       ],
@@ -545,6 +554,7 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkWithAuthorModel | null> {
     const workTopicResponse = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
         { name: WorkTopicTagNames.TopicId, values: [topicId] },
       ],
@@ -666,6 +676,7 @@ export class IrysApi implements IApi {
   async getOwnersProfile(): Promise<ProfileModel | null> {
     const searchResults = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Profile] },
         { name: ProfileTagNames.OwnerAddress, values: [this.Address] },
       ],
@@ -702,6 +713,7 @@ export class IrysApi implements IApi {
   /// getFollowed decides whether to return a list of followed or follower
   async #getFollowProfiles(profileId: string, getFollowed: boolean) {
     const searchTags: InputTag[] = [
+      ...BaseQueryTags,
       { name: AppTagNames.EntityType, values: [EntityType.Follow] },
     ];
     if (getFollowed) {
@@ -776,6 +788,7 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkResponseModel | null> {
     const response = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
         { name: WorkResponderTagNames.WorkId, values: [workId] },
       ],
@@ -800,6 +813,7 @@ export class IrysApi implements IApi {
   ): Promise<PagedWorkResponseModel | null> {
     const response = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
         { name: WorkResponderTagNames.ResponderId, values: [profileId] },
       ],
@@ -922,6 +936,7 @@ export class IrysApi implements IApi {
   async getWorkLikeCount(workId: string): Promise<number> {
     const likesResp = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.WorkLike] },
         { name: WorkLikeTagNames.WorkId, values: [workId] },
       ],
@@ -952,7 +967,10 @@ export class IrysApi implements IApi {
   async getAllTopics(): Promise<TopicModel[]> {
     const response = await this.#IrysQuery
       .search(SEARCH_TX)
-      .tags([{ name: AppTagNames.EntityType, values: [EntityType.Topic] }])
+      .tags([
+        ...BaseQueryTags,
+        { name: AppTagNames.EntityType, values: [EntityType.Topic] },
+      ])
       .sort(DESC)
       .limit(PAGE_SIZE);
 
@@ -962,6 +980,7 @@ export class IrysApi implements IApi {
   async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
     const workTopicResponse = await this.#IrysGql.queryGraphQL({
       tags: [
+        ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
         { name: WorkTopicTagNames.WorkId, values: [workId] },
       ],

@@ -69,6 +69,11 @@ export const BaseTags = [
   { name: AppTagNames.Version, value: "1.0" },
 ];
 
+export const BaseQueryTags = [
+  { name: AppTagNames.App, values: ["FreeAuth"] },
+  { name: AppTagNames.Version, values: ["1.0"] },
+];
+
 /// This type includes example values
 export type TxValidationMetadata = {
   id: string; // 'rSRGhJcUhdvEdF278JAYb45GHf1MYm0573pFLO0FbEs',
