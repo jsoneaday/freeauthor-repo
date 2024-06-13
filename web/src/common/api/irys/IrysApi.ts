@@ -85,7 +85,6 @@ export class IrysApi implements IApi {
   }
 
   constructor(network: string, token: string) {
-    console.log("construct IrysApi");
     this.#network = network;
     this.#token = token;
   }
@@ -109,7 +108,6 @@ export class IrysApi implements IApi {
         wallet: this.#wallet,
       });
       this.#irys = await webIrys.ready();
-      console.log("#irys", this.#irys);
     } else {
       const keyBuffer = Uint8Array.from(
         JSON.parse(import.meta.env.VITE_SOLANA_KEY)
@@ -132,7 +130,6 @@ export class IrysApi implements IApi {
           }) as unknown as WebToken,
       });
       this.#irys = await irys.ready();
-      console.log("#irys", this.#irys);
     }
 
     this.#address = this.#irys.address;

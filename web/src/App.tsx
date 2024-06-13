@@ -13,28 +13,8 @@ import { Write } from "./pages/write/Write";
 import { ReadFollowed } from "./pages/read/ReadFollowed";
 import { ReadStory } from "./pages/read/ReadStory";
 import { Profile } from "./pages/Profile";
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from "@solana/wallet-adapter-react";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import {
-  CoinbaseWalletAdapter,
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl } from "@solana/web3.js";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-
-import "@solana/wallet-adapter-react-ui/styles.css";
-
-const network = WalletAdapterNetwork.Devnet;
-const endpoint = clusterApiUrl(network);
-const wallets = [
-  new PhantomWalletAdapter(),
-  new SolflareWalletAdapter(),
-  new CoinbaseWalletAdapter(),
-];
+import SolflareProvider from "./common/context/SolflareContext";
+import UiApiProvider from "./common/context/UiApiContext";
 
 const router = createBrowserRouter([
   {
@@ -79,9 +59,11 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <RouterProvider router={router} />
-    </ConnectionProvider>
+    <SolflareProvider>
+      <UiApiProvider>
+        <RouterProvider router={router} />
+      </UiApiProvider>
+    </SolflareProvider>
   );
 }
 

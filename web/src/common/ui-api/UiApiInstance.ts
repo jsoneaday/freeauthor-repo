@@ -13,7 +13,6 @@ export async function initOrGetUiApi(
     uiApi = new UiApi(new IrysApi(NETWORK, TOKEN));
     await uiApi.connect(walletProvider);
   }
-  console.log("uiApi", uiApi);
   return uiApi;
 }
 

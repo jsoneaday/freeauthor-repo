@@ -1,17 +1,19 @@
-import { useEffect, useState, useTransition } from "react";
+import {
+  useContext,
+  useEffect,
+  useState,
+  useTransition,
+  MouseEvent,
+} from "react";
 import { NotificationType } from "./modals/Notification";
 import { ProfileForm } from "./ProfileForm";
 import Notification from "./modals/Notification";
-import { initOrGetUiApi } from "../ui-api/UiApiInstance";
 import { useProfile } from "../zustand/Store";
-import Solflare from "@solflare-wallet/sdk";
-import { WalletItem } from "./wallets/WalletItem";
-import { UiApi } from "../ui-api/UiApi";
+import { SolflareContext } from "../context/SolflareContext";
+import { UiApiContext } from "../context/UiApiContext";
 
 export const SMALL_NOTIFICATION_HEIGHT = "170px";
 export const LARGE_NOTIFICATION_HEIGHT = "580px";
-
-const solflareWallet = new Solflare();
 
 interface ConnectCreateProfileProps {
   notificationState: boolean;
@@ -30,51 +32,54 @@ export function ConnectCreateProfile({
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [connectValidationMsg, setConnectValidationMsg] = useState("");
   const [_isPending, startTransition] = useTransition();
-  let api: UiApi | undefined;
+  const solflareWallet = useContext(SolflareContext);
+  const api = useContext(UiApiContext);
 
   useEffect(() => {
-    solflareWallet.on("connect", handleConnect);
-
-    return () => {
-      solflareWallet.off("connect", () => handleConnect);
-    };
-  }, []);
+    console.log("useEffect api", api);
+    handleConnect();
+  }, [api]);
 
   const handleConnect = async () => {
-    startTransition(async () => {
-      api = await initOrGetUiApi(solflareWallet);
-      if (!profile) {
-        const ownersProfile = await api.getOwnersProfile();
-        if (!ownersProfile) {
-          setShowProfileForm(true);
-          setNotificationHeight(LARGE_NOTIFICATION_HEIGHT);
-          setConnectValidationMsg(
-            "You must create a profile before you can create content"
-          );
-        } else {
-          // if profile already exists just allow writing
-          toggleNotificationState();
-          setProfile({
-            id: ownersProfile?.id,
-            updatedAt: ownersProfile.updatedAt,
-            username: ownersProfile.userName,
-            fullname: ownersProfile.fullName,
-            description: ownersProfile.description,
-            ownerAddress: ownersProfile.ownerAddress,
-            socialLinkPrimary: ownersProfile.socialLinkPrimary || "",
-            socialLinkSecond: ownersProfile.socialLinkSecond || "",
-          });
-          setShowProfileForm(false);
-          setNotificationHeight(SMALL_NOTIFICATION_HEIGHT);
-          setConnectValidationMsg("");
+    console.log("handleConnect api", api);
+    if (api) {
+      startTransition(async () => {
+        if (!profile) {
+          const ownersProfile = await api.getOwnersProfile();
+          if (!ownersProfile) {
+            setShowProfileForm(true);
+            setNotificationHeight(LARGE_NOTIFICATION_HEIGHT);
+            setConnectValidationMsg(
+              "You must create a profile before you can create content"
+            );
+          } else {
+            // if profile already exists just allow writing
+            toggleNotificationState();
+            setProfile({
+              id: ownersProfile?.id,
+              updatedAt: ownersProfile.updatedAt,
+              username: ownersProfile.userName,
+              fullname: ownersProfile.fullName,
+              description: ownersProfile.description,
+              ownerAddress: ownersProfile.ownerAddress,
+              socialLinkPrimary: ownersProfile.socialLinkPrimary || "",
+              socialLinkSecond: ownersProfile.socialLinkSecond || "",
+            });
+            setShowProfileForm(false);
+            setNotificationHeight(SMALL_NOTIFICATION_HEIGHT);
+            setConnectValidationMsg("");
+          }
         }
-      }
-    });
+      });
+    }
   };
 
-  const afterConnect = async () => {
+  const afterConnect = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
     setConnectValidationMsg("Waiting for wallet connection ...");
-    await solflareWallet.connect();
+    console.log("is wallet null", solflareWallet);
+    await solflareWallet?.connect();
   };
 
   return (
@@ -88,7 +93,7 @@ export function ConnectCreateProfile({
     >
       <div className="push-away">
         <span className="standard-header">
-          {solflareWallet.connected ? null : (
+          {solflareWallet?.connected ? null : (
             <span>Please connect your wallet</span>
           )}
         </span>
@@ -96,10 +101,12 @@ export function ConnectCreateProfile({
           <div style={{ color: "var(--warning-cl)" }}>
             {connectValidationMsg}
           </div>
-          {solflareWallet.connected ? (
+          {solflareWallet?.connected ? (
             <button className="primary-btn">Disconnect</button>
           ) : (
-            <WalletItem onClickWallet={afterConnect} />
+            <button className="primary-btn" onClick={afterConnect}>
+              Connect
+            </button>
           )}
         </span>
         {showProfileForm ? (
