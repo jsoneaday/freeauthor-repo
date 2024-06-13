@@ -22,18 +22,16 @@
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.91.8",
     "@solflare-wallet/sdk": "^1.4.2",
-    "@types/react": "npm:types-react@rc",
-    "@types/react-dom": "npm:types-react-dom@rc",
     "bignumber.js": "^9.1.2",
     "bs58": "^5.0.0",
     "crypto-browserify": "^3.12.0",
     "date-fns": "^3.3.1",
     "dotenv": "^16.4.5",
     "ethers": "^6.12.1",
-    "react": "^19.0.0-rc-34d0c5e357-20240607",
-    "react-dom": "^19.0.0-rc-34d0c5e357-20240607",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-modal": "^3.16.1",
-    "react-router-dom": "^6.22.1",
+    "react-router-dom": "^6.23.1",
     "rehype-sanitize": "^6.0.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "unified": "^11.0.4",
@@ -42,6 +40,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@types/react-modal": "^3.16.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
@@ -54,9 +54,5 @@
     "typescript": "^5.2.2",
     "vite": "^5.2.11",
     "vitest": "^1.6.0"
-  },
-  "overrides": {
-    "@types/react": "npm:types-react@rc",
-    "@types/react-dom": "npm:types-react-dom@rc"
   }
 }
