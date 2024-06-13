@@ -34,6 +34,10 @@ export class UiApi {
     return await this.#Api?.isConnected();
   }
 
+  async connect(walletProvider?: object | null): Promise<void> {
+    await this.#Api.connect(walletProvider);
+  }
+
   /// Works can have more than one topic but adding a default topic upon creation
   async addWorkWithTopic(
     title: string,

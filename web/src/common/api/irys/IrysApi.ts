@@ -84,17 +84,17 @@ export class IrysApi implements IApi {
     return this.#irysCommon;
   }
 
-  constructor(network: string, token: string, walletProvider?: object | null) {
+  constructor(network: string, token: string) {
     console.log("construct IrysApi");
     this.#network = network;
     this.#token = token;
-    this.connect(walletProvider);
   }
 
   async isConnected(): Promise<boolean> {
     return this.#irys ? true : false;
   }
 
+  /// notice call is async and therefore cannot be run validly from constructor
   /// if no walletProvider assumed wallet coming from file
   async connect(walletProvider?: object | null): Promise<void> {
     if (walletProvider) {
@@ -136,6 +136,7 @@ export class IrysApi implements IApi {
     }
 
     this.#address = this.#irys.address;
+    console.log("set address", this.#address);
   }
 
   #getTickerFromToken() {

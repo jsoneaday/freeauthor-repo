@@ -80,11 +80,7 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <RouterProvider router={router} />
-        </WalletModalProvider>
-      </WalletProvider>
+      <RouterProvider router={router} />
     </ConnectionProvider>
   );
 }

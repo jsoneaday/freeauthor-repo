@@ -5,6 +5,7 @@ import { NavAnchor } from "./NavAnchor";
 import { ConnectCreateProfile } from "./ConnectCreateProfile";
 import { useNotification } from "../zustand/Store";
 import { Link } from "react-router-dom";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 export interface LayoutProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ export function Layout({ children }: LayoutProps) {
   const toggleNotification = useNotification(
     (state) => state.toggleNotification
   );
+  const wallet = useWallet();
 
   const toggleNotificationState = () => {
     toggleNotification();
@@ -45,7 +47,9 @@ export function Layout({ children }: LayoutProps) {
             </Link>
           ) : (
             <>
-              <button onClick={onClickConnect}>CONNECT</button>
+              <button onClick={onClickConnect}>
+                {wallet.connected ? "DISCONNECT" : "CONNECT"}
+              </button>
               <ConnectCreateProfile
                 notificationState={notificationIsOpen}
                 toggleNotificationState={toggleNotificationState}
