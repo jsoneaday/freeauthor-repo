@@ -1,6 +1,7 @@
 import {
   CSSProperties,
   Children,
+  JSX,
   ReactNode,
   cloneElement,
   memo,

@@ -4,7 +4,6 @@ import { ProfileForm } from "../common/components/ProfileForm";
 import { Layout } from "../common/components/Layout";
 import { RandomImg } from "../common/components/RandomImage";
 import { useParams } from "react-router-dom";
-import { useApi } from "../common/ui-api/UiApiInstance";
 import { PAGE_SIZE } from "../common/utils/StandardValues";
 import { WorkElements } from "../common/components/display-elements/WorkElements";
 import { useProfile } from "../common/zustand/Store";
@@ -15,7 +14,7 @@ import {
   ResponseWithResponder,
   WorkWithAuthor,
 } from "../common/ui-api/UIModels";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../common/context/UiApiContext";
 
 /// Register by creating a profile with optional avatar/image
 export function Profile() {
@@ -26,7 +25,7 @@ export function Profile() {
     page_sec_id: string | undefined;
   }>();
   const profile = useProfile((state) => state.profile);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     if (page_sec_id) {
@@ -52,11 +51,11 @@ export function Profile() {
   };
 
   const getStories = async (priorKeyset: string) => {
-    let works: WorkWithAuthor[] | null;
+    let works: WorkWithAuthor[] | null | undefined;
     if (priorKeyset === "") {
-      works = await api.getAuthorWorksTop(profile_id || "", PAGE_SIZE);
+      works = await api?.getAuthorWorksTop(profile_id || "", PAGE_SIZE);
     } else {
-      works = await api.getAuthorWorks(
+      works = await api?.getAuthorWorks(
         profile_id || "",
         PAGE_SIZE,
         priorKeyset
@@ -69,14 +68,14 @@ export function Profile() {
   };
 
   const getResponses = async (priorKeyset: string) => {
-    let workResponses: ResponseWithResponder[] | null;
+    let workResponses: ResponseWithResponder[] | null | undefined;
     if (priorKeyset === "") {
-      workResponses = await api.getWorkResponsesByProfileTop(
+      workResponses = await api?.getWorkResponsesByProfileTop(
         profile_id || "",
         PAGE_SIZE
       );
     } else {
-      workResponses = await api.getWorkResponsesByProfile(
+      workResponses = await api?.getWorkResponsesByProfile(
         profile_id || "",
         PAGE_SIZE,
         priorKeyset
@@ -89,7 +88,7 @@ export function Profile() {
   };
 
   const getFollowing = async () => {
-    const following = await api.getFollowedProfiles(profile_id || "");
+    const following = await api?.getFollowedProfiles(profile_id || "");
     if (!following || following.length === 0) return null;
 
     console.log("following", following);
@@ -97,7 +96,7 @@ export function Profile() {
   };
 
   const getFollower = async () => {
-    const follower = await api.getFollowerProfiles(profile_id || "");
+    const follower = await api?.getFollowerProfiles(profile_id || "");
     if (!follower || follower.length === 0) return null;
 
     console.log("follower", follower);

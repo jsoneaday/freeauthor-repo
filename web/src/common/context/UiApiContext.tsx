@@ -31,3 +31,7 @@ export default function UiApiProvider({ children }: UiApiProps) {
     <UiApiContext.Provider value={uiApi}>{children}</UiApiContext.Provider>
   );
 }
+
+export function useUiApi() {
+  return useContext(UiApiContext);
+}

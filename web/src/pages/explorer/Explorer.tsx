@@ -8,7 +8,6 @@ import {
   JSX,
 } from "react";
 import { Layout } from "../../common/components/Layout";
-import { useApi } from "../../common/ui-api/UiApiInstance";
 import { TopicElement } from "../../common/components/TopicElement";
 import searchIcon from "../../theme/assets/app-icons/search1.png";
 import { PAGE_SIZE } from "../../common/utils/StandardValues";
@@ -18,7 +17,7 @@ import { PagedWorkElements } from "../../common/components/display-elements/Page
 import { TabHeader } from "../../common/components/TabHeader";
 import { WorkElements } from "../../common/components/display-elements/WorkElements";
 import { Topic, WorkWithAuthor } from "../../common/ui-api/UIModels";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../../common/context/UiApiContext";
 
 enum ValidationStates {
   SearchTxtTooShort = "Search string must be at least 3 characters",
@@ -34,8 +33,7 @@ export function Explorer() {
   const { topic_id } = useParams<{ topic_id: string | undefined }>();
   const [refreshWorksData, setRefreshWorksData] = useState(false);
   const [validationMsg, setValidationMsg] = useState("");
-  const wallet = useWallet();
-  const api = useApi(wallet);
+  const api = useUiApi();
 
   const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();

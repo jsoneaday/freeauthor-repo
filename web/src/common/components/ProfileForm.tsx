@@ -1,9 +1,8 @@
 import { ChangeEvent, useState, MouseEvent, useEffect } from "react";
-import { useApi } from "../ui-api/UiApiInstance";
 import { useProfile } from "../zustand/Store";
 import { PrimaryButton } from "./Buttons";
 import { ValidationAndProgressMsg } from "./ValidationProgressMsg";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../context/UiApiContext";
 
 enum ValidationStates {
   UsernameTooLong = "Username cannot be greater than 50 characters",
@@ -45,12 +44,12 @@ export function ProfileForm({
   const setProfile = useProfile((state) => state.setProfile);
   const [submitProfileBtnDisabled, setSubmitCreateProfileBtnDisabled] =
     useState(true);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     if (profileId) {
       api
-        .getProfile(profileId)
+        ?.getProfile(profileId)
         .then((profile) => {
           if (!profile)
             throw new Error(`Failed to get Profile with id: ${profileId}`);
@@ -206,23 +205,22 @@ export function ProfileForm({
     try {
       setSubmitCreateProfileBtnDisabled(true);
 
-      const existingProfile = await api.getOwnersProfile();
+      const existingProfile = await api?.getOwnersProfile();
       if (existingProfile) {
         setValidationMsg(
           "A wallet with that address already exists. Please use a different wallet address to create a profile"
         );
         return;
       }
-      await api.addProfile(
+      await api?.addProfile(
         username,
         fullname,
         description,
         socialPrimary,
         socialSecondary
       );
-      //await api.waitAndGetId(tx, "profiles");
 
-      const profile = await api.getOwnersProfile();
+      const profile = await api?.getOwnersProfile();
       if (!profile) throw new Error("Profile has not been created!");
 
       setProfile({
@@ -258,13 +256,13 @@ export function ProfileForm({
 
     try {
       setSubmitCreateProfileBtnDisabled(true);
-      const existingProfile = await api.getOwnersProfile();
+      const existingProfile = await api?.getOwnersProfile();
       if (!existingProfile) {
-        setValidationMsg(`No profile with the address ${api.Address} exists`);
+        setValidationMsg(`No profile with the address ${api?.Address} exists`);
         return;
       }
 
-      await api.updateProfile(
+      await api?.updateProfile(
         profileId,
         username,
         fullname,
@@ -274,7 +272,7 @@ export function ProfileForm({
       );
       //await api.waitAndGetId(tx, "profiles");
 
-      const profile = await api.getOwnersProfile();
+      const profile = await api?.getOwnersProfile();
       if (!profile) throw new Error("Error profile has not been updated!");
 
       setProfile({

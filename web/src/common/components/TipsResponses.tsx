@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { formatLikeCount } from "../utils/DetailInfoFormatter";
 import tipJar from "../../theme/assets/app-icons/save-money.png";
 import response from "../../theme/assets/app-icons/l-resend-100.png";
-import { useApi } from "../ui-api/UiApiInstance";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../context/UiApiContext";
 
 interface TipsAndResponsesProps {
   workId: string;
@@ -14,18 +13,18 @@ interface TipsAndResponsesProps {
 export function TipsResponses({ workId }: TipsAndResponsesProps) {
   const [likeCount, setLikeCount] = useState(0);
   const [responseCount, setResponseCount] = useState(0);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     api
-      .getWorkLikeCount(workId)
+      ?.getWorkLikeCount(workId)
       .then((count) => {
         setLikeCount(count);
       })
       .catch((e) => console.log(e));
 
     api
-      .getWorkResponseCount(workId)
+      ?.getWorkResponseCount(workId)
       .then((count) => {
         setResponseCount(count);
       })

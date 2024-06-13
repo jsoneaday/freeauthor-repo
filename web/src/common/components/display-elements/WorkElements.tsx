@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { JSX, memo, useEffect, useState } from "react";
 import { MarkdownEditor } from "../MarkdownEditor";
 import { WorkWithAuthor } from "../../ui-api/UIModels";
 import { RandomImg } from "../RandomImage";

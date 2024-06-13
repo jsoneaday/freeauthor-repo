@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useApi } from "../../common/ui-api/UiApiInstance";
 import { PAGE_SIZE } from "../../common/utils/StandardValues";
 import { useProfile } from "../../common/zustand/Store";
 import { PagedWorkElements } from "../../common/components/display-elements/PagedWorkElements";
@@ -7,13 +6,13 @@ import { Layout } from "../../common/components/Layout";
 import { FollowedList } from "../../common/components/FollowedList";
 import { WorkElements } from "../../common/components/display-elements/WorkElements";
 import { WorkWithAuthor } from "../../common/ui-api/UIModels";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../../common/context/UiApiContext";
 
 export function ReadFollowed() {
   const profile = useProfile((state) => state.profile);
   const [currentFollowedId, setCurrentFollowedId] = useState(""); // 0 means all
   const [refreshWorksData, setRefreshWorksData] = useState(false);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     console.log("profile, currentFollowedId, priorKeyset updated, run getData");
@@ -31,11 +30,11 @@ export function ReadFollowed() {
 
     // todo: need to test these calls each
     if (currentFollowedId === "") {
-      let works: WorkWithAuthor[] | null;
+      let works: WorkWithAuthor[] | null | undefined;
       if (priorKeyset === "") {
-        works = await api.getWorksByAllFollowedTop(profile.id);
+        works = await api?.getWorksByAllFollowedTop(profile.id);
       } else {
-        works = await api.getWorksByAllFollowed(
+        works = await api?.getWorksByAllFollowed(
           profile.id,
           PAGE_SIZE,
           priorKeyset
@@ -48,11 +47,11 @@ export function ReadFollowed() {
 
       return works;
     } else {
-      let works: WorkWithAuthor[] | null;
+      let works: WorkWithAuthor[] | null | undefined;
       if (priorKeyset === "") {
-        works = await api.getWorksByOneFollowedTop(currentFollowedId);
+        works = await api?.getWorksByOneFollowedTop(currentFollowedId);
       } else {
-        works = await api.getWorksByOneFollowed(
+        works = await api?.getWorksByOneFollowed(
           currentFollowedId || "",
           PAGE_SIZE,
           priorKeyset

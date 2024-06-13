@@ -1,13 +1,12 @@
 import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import { useProfile } from "../../common/zustand/Store";
-import { useApi } from "../../common/ui-api/UiApiInstance";
 import { PrimaryButton } from "../../common/components/Buttons";
 import { MDXEditorMethods } from "@mdxeditor/editor";
 import { MarkdownEditor } from "../../common/components/MarkdownEditor";
 import { ValidationAndProgressMsg } from "../../common/components/ValidationProgressMsg";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import DropDown, { OptionType } from "../../common/components/DropDown";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../../common/context/UiApiContext";
 
 enum WriteValidation {
   TitleTooLong = "Title must be less than 100 characters",
@@ -43,11 +42,11 @@ export function WriteStory() {
   }>();
   const [selectedTopicId, setSelectedTopicId] = useState("1"); //todo: replace this with a real id
   const [topics, setTopics] = useState<OptionType[]>([]);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     api
-      .getAllTopics()
+      ?.getAllTopics()
       .then((topics) => {
         if (!topics || topics.length === 0) {
           setTopics([]);
@@ -78,7 +77,7 @@ export function WriteStory() {
   useEffect(() => {
     if (work_id) {
       console.log("work_id", work_id);
-      api.getWork(work_id).then((work) => {
+      api?.getWork(work_id).then((work) => {
         if (!work) throw new Error("Work item cannot be found trying to edit");
         console.log("getTopicByWork work", work);
         api
@@ -108,7 +107,7 @@ export function WriteStory() {
     try {
       setIsSubmitBtnDisabled(true);
 
-      const tx = await api.addWorkWithTopic(
+      const tx = await api?.addWorkWithTopic(
         title,
         description,
         mdRef.current?.getMarkdown() || "",
@@ -141,7 +140,7 @@ export function WriteStory() {
 
     try {
       setIsSubmitBtnDisabled(true);
-      const tx = await api.updateWorkWithTopic(
+      const tx = await api?.updateWorkWithTopic(
         work_id || "",
         title,
         description,

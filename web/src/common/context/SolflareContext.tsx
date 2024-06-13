@@ -1,5 +1,5 @@
 import Solflare from "@solflare-wallet/sdk";
-import { createContext } from "react";
+import { createContext, useContext } from "react";
 
 export const SolflareContext = createContext<Solflare | null>(null);
 
@@ -13,4 +13,8 @@ export default function SolflareProvider({ children }: SolflareProviderProps) {
       {children}
     </SolflareContext.Provider>
   );
+}
+
+export function useWallet() {
+  return useContext(SolflareContext);
 }

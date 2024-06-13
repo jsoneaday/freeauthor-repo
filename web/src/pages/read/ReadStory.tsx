@@ -5,7 +5,6 @@ import {
   WorkWithAuthor,
 } from "../../common/ui-api/UIModels";
 import { useParams } from "react-router-dom";
-import { useApi } from "../../common/ui-api/UiApiInstance";
 import { AuthorWorkDetail } from "../../common/components/AuthorWorkDetail";
 import { Layout } from "../../common/components/Layout";
 import { ResponseElements } from "../../common/components/display-elements/ResponseElements";
@@ -14,7 +13,7 @@ import { PAGE_SIZE } from "../../common/utils/StandardValues";
 import { TabHeader } from "../../common/components/TabHeader";
 import { ReturnEnabledInput } from "../../common/components/ReturnEnabledInput";
 import { useProfile } from "../../common/zustand/Store";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../../common/context/UiApiContext";
 
 enum ValidationStates {
   ResponseValueIsEmpty = "Response must have a value",
@@ -35,7 +34,7 @@ export function ReadStory() {
     ValidationStates.FieldIsValid
   );
   const profile = useProfile((state) => state.profile);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     if (work) setRefreshWorksData(true);
@@ -44,7 +43,7 @@ export function ReadStory() {
   useEffect(() => {
     console.log("work_id", work_id);
     api
-      .getWork(work_id || "")
+      ?.getWork(work_id || "")
       .then((work) => {
         if (!work) {
           setWork(null);
@@ -63,13 +62,13 @@ export function ReadStory() {
   };
 
   const getData = async (priorKeyset: string) => {
-    let responses: ResponseWithResponder[] | null;
+    let responses: ResponseWithResponder[] | null | undefined;
     if (priorKeyset === "") {
       if (!work_id)
         throw new Error("Work id is undefined, cannot get top responses");
-      responses = await api.getWorkResponsesTop(work_id, PAGE_SIZE);
+      responses = await api?.getWorkResponsesTop(work_id, PAGE_SIZE);
     } else {
-      responses = await api.getWorkResponses(
+      responses = await api?.getWorkResponses(
         work_id || "",
         PAGE_SIZE,
         priorKeyset
@@ -108,7 +107,7 @@ export function ReadStory() {
 
     if (!work_id || !profile.id)
       throw new Error("Work id is undefined, cannot add response");
-    await api.addWorkResponse(value, work_id || "", profile.id);
+    await api?.addWorkResponse(value, work_id || "", profile.id);
     setRefreshWorksData(true);
   };
 

@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { useApi } from "../../common/ui-api/UiApiInstance";
 import { useProfile } from "../../common/zustand/Store";
 import { PAGE_SIZE } from "../../common/utils/StandardValues";
 import { PagedWorkElements } from "../../common/components/display-elements/PagedWorkElements";
 import { WorkElements } from "../../common/components/display-elements/WorkElements";
 import { WorkWithAuthor } from "../../common/ui-api/UIModels";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUiApi } from "../../common/context/UiApiContext";
 
 export function ManageStories() {
   const profile = useProfile((state) => state.profile);
   const [refreshWorksData, setRefreshWorksData] = useState(false);
-  const api = useApi(useWallet());
+  const api = useUiApi();
 
   useEffect(() => {
     if (profile) setRefreshWorksData(true);
@@ -21,11 +20,11 @@ export function ManageStories() {
 
     console.log("getAuthorWorks", profile.id, priorKeyset, PAGE_SIZE);
 
-    let works: WorkWithAuthor[] | null;
+    let works: WorkWithAuthor[] | null | undefined;
     if (priorKeyset === "") {
-      works = await api.getAuthorWorksTop(profile.id, PAGE_SIZE);
+      works = await api?.getAuthorWorksTop(profile.id, PAGE_SIZE);
     } else {
-      works = await api.getAuthorWorks(profile.id, PAGE_SIZE, priorKeyset);
+      works = await api?.getAuthorWorks(profile.id, PAGE_SIZE, priorKeyset);
     }
     if (!works) {
       return null;

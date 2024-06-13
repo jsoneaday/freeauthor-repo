@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { JSX, memo, useEffect, useState } from "react";
 /// @ts-ignore
 import { v4 as uuidv4 } from "uuid";
 import { Profile } from "../../ui-api/UIModels";

@@ -1,16 +1,10 @@
-import {
-  useContext,
-  useEffect,
-  useState,
-  useTransition,
-  MouseEvent,
-} from "react";
+import { useEffect, useState, useTransition, MouseEvent } from "react";
 import { NotificationType } from "./modals/Notification";
 import { ProfileForm } from "./ProfileForm";
 import Notification from "./modals/Notification";
 import { useProfile } from "../zustand/Store";
-import { SolflareContext } from "../context/SolflareContext";
-import { UiApiContext } from "../context/UiApiContext";
+import { useWallet } from "../context/SolflareContext";
+import { useUiApi } from "../context/UiApiContext";
 
 export const SMALL_NOTIFICATION_HEIGHT = "170px";
 export const LARGE_NOTIFICATION_HEIGHT = "580px";
@@ -32,8 +26,8 @@ export function ConnectCreateProfile({
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [connectValidationMsg, setConnectValidationMsg] = useState("");
   const [_isPending, startTransition] = useTransition();
-  const solflareWallet = useContext(SolflareContext);
-  const api = useContext(UiApiContext);
+  const solflareWallet = useWallet();
+  const api = useUiApi();
 
   useEffect(() => {
     console.log("useEffect api", api);

@@ -15,10 +15,3 @@ export async function initOrGetUiApi(
   }
   return uiApi;
 }
-
-export function useApi(walletProvider: Solflare | null | undefined) {
-  if (walletProvider?.connected) {
-    return initOrGetUiApi(walletProvider);
-  }
-  return null;
-}
