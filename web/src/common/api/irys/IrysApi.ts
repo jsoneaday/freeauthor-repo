@@ -84,9 +84,11 @@ export class IrysApi implements IApi {
     return this.#irysCommon;
   }
 
-  constructor(network: string, token: string) {
+  constructor(network: string, token: string, walletProvider?: object | null) {
+    console.log("construct IrysApi");
     this.#network = network;
     this.#token = token;
+    this.connect(walletProvider);
   }
 
   async isConnected(): Promise<boolean> {
@@ -94,7 +96,7 @@ export class IrysApi implements IApi {
   }
 
   /// if no walletProvider assumed wallet coming from file
-  async connect(walletProvider?: object): Promise<void> {
+  async connect(walletProvider?: object | null): Promise<void> {
     if (walletProvider) {
       this.#wallet = {
         rpcUrl: RPC_URL,
@@ -107,6 +109,7 @@ export class IrysApi implements IApi {
         wallet: this.#wallet,
       });
       this.#irys = await webIrys.ready();
+      console.log("#irys", this.#irys);
     } else {
       const keyBuffer = Uint8Array.from(
         JSON.parse(import.meta.env.VITE_SOLANA_KEY)
@@ -129,6 +132,7 @@ export class IrysApi implements IApi {
           }) as unknown as WebToken,
       });
       this.#irys = await irys.ready();
+      console.log("#irys", this.#irys);
     }
 
     this.#address = this.#irys.address;

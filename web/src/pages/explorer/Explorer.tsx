@@ -5,6 +5,7 @@ import {
   KeyboardEvent,
   FocusEvent,
   MouseEvent,
+  JSX,
 } from "react";
 import { Layout } from "../../common/components/Layout";
 import { useApi } from "../../common/ui-api/UiApiInstance";
@@ -60,7 +61,7 @@ export function Explorer() {
   };
 
   useEffect(() => {
-    api.getAllTopics().then((topics) => {
+    api?.getAllTopics().then((topics) => {
       setTopics(topics);
     });
   }, []);
@@ -98,11 +99,11 @@ export function Explorer() {
         return null;
       }
 
-      let works: WorkWithAuthor[] | null;
+      let works: WorkWithAuthor[] | null | undefined;
       if (priorKeyset === "") {
-        works = await api.searchWorksTop(searchTxt);
+        works = await api?.searchWorksTop(searchTxt);
       } else {
-        works = await api.searchWorks(searchTxt, PAGE_SIZE, priorKeyset);
+        works = await api?.searchWorks(searchTxt, PAGE_SIZE, priorKeyset);
       }
 
       if (!works || works.length === 0) {
@@ -111,11 +112,11 @@ export function Explorer() {
 
       return works;
     } else {
-      let works: WorkWithAuthor[] | null;
+      let works: WorkWithAuthor[] | null | undefined;
       if (priorKeyset === "") {
-        works = await api.getWorksByTopicTop(topic_id || "", PAGE_SIZE);
+        works = await api?.getWorksByTopicTop(topic_id || "", PAGE_SIZE);
       } else {
-        works = await api.getWorksByTopic(
+        works = await api?.getWorksByTopic(
           topic_id || "",
           PAGE_SIZE,
           priorKeyset

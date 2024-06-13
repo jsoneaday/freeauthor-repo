@@ -148,7 +148,7 @@ export interface IApi {
   ): Promise<PagedWorkResponseModel | null>;
 
   isConnected(): Promise<boolean>;
-  connect(walletProvider?: object): Promise<void>;
+  connect(walletProvider?: object | null): Promise<void>;
 
   addFollow(
     followerId: string,

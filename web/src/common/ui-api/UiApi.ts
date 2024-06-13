@@ -26,19 +26,12 @@ export class UiApi {
 
   /// Pass api instance here
   /// e.g. new FakeApi("0xE7DCCAE2d95A1cB1E30E07477207065A9EDf6D38")
-  constructor(apiObj: IApi, walletProvider: object) {
+  constructor(apiObj: IApi) {
     this.#api = apiObj;
-    if (!this.isConnected()) {
-      this.connect(walletProvider);
-    }
   }
 
   async isConnected(): Promise<boolean> {
     return await this.#Api?.isConnected();
-  }
-
-  async connect(walletProvider: object) {
-    await this.#Api.connect(walletProvider);
   }
 
   /// Works can have more than one topic but adding a default topic upon creation

@@ -597,3 +597,7 @@ select {
   width: 100%;
   background-color: var(--bg-cl);
 }
+
+.wallet-item {
+  cursor: pointer;
+}
