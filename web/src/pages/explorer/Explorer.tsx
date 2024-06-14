@@ -59,7 +59,6 @@ export function Explorer() {
   };
 
   useEffect(() => {
-    console.log("api", api);
     api?.getAllTopics().then((topics) => {
       setTopics(topics);
     });
@@ -91,8 +90,8 @@ export function Explorer() {
     setRefreshWorksData(true);
   }, [topic_id, topics]);
 
-  const getData = async (priorKeyset: string) => {
-    console.log("searchTxt", searchTxt);
+  const getNextData = async (priorKeyset: string) => {
+    console.log("searchTxt:", searchTxt);
     if (searchTxt && searchTxt.length > 0) {
       if (validateSearchTxt(searchTxt) !== ValidationStates.FieldIsValid) {
         setValidationMsg(validateSearchTxt(searchTxt));
@@ -112,7 +111,7 @@ export function Explorer() {
 
       return works;
     } else {
-      console.log("priorKeyset", priorKeyset, topic_id);
+      console.log("priorKeyset:", priorKeyset);
       let works: WorkWithAuthor[] | null | undefined;
       if (priorKeyset === "") {
         works = await api?.getWorksByTopicTop(topic_id || "", PAGE_SIZE);
@@ -192,7 +191,7 @@ export function Explorer() {
           />
 
           <PagedWorkElements
-            getNextData={getData}
+            getNextData={getNextData}
             refreshWorksData={refreshWorksData}
             setRefreshWorksData={setRefreshWorksData}
             payload={{

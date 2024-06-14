@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { UiApi } from "../ui-api/UiApi";
 import { initOrGetUiApi } from "../ui-api/UiApiInstance";
-import { SolflareContext } from "./SolflareContext";
+import { useWallet } from "./SolflareContext";
 
 export const UiApiContext = createContext<UiApi | null>(null);
 
@@ -10,28 +10,30 @@ interface UiApiProps {
 }
 
 export default function UiApiProvider({ children }: UiApiProps) {
-  const wallet = useContext(SolflareContext);
+  const walletState = useWallet();
   const [uiApi, setUiApi] = useState<UiApi | null>(null);
 
   const connectUiApi = async () => {
-    console.log("connect wallet to irys");
-    uiApi?.connect(wallet);
+    const _uiApi = await initOrGetUiApi();
+    await _uiApi.connect(walletState!.walletObject!.wallet);
+    walletState!.setWalletObject({
+      ...walletState!.walletObject!,
+      isConnected: true,
+    });
   };
 
   useEffect(() => {
-    console.log("wallet", wallet);
-
-    if (wallet) {
+    if (walletState) {
       initOrGetUiApi().then((_uiApi) => {
         setUiApi(_uiApi);
       });
     }
-    wallet?.on("connect", connectUiApi);
+    walletState?.walletObject?.wallet.on("connect", connectUiApi);
 
     return () => {
-      wallet?.off("connect", connectUiApi);
+      walletState?.walletObject?.wallet.off("connect", connectUiApi);
     };
-  }, [wallet]);
+  }, [walletState]);
 
   return (
     <UiApiContext.Provider value={uiApi}>{children}</UiApiContext.Provider>

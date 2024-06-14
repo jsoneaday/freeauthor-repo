@@ -1,6 +1,7 @@
 export interface UiEntity {
   id: string;
   updatedAt: string;
+  cursor?: string;
 }
 
 export class WorkWithAuthor implements UiEntity {

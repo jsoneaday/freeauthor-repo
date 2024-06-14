@@ -77,6 +77,11 @@ export class IrysWriteApi implements IWriteApi {
     return this.#irys ? true : false;
   }
 
+  async disconnect() {
+    this.#irys = undefined;
+    this.#address = undefined;
+  }
+
   /// notice call is async and therefore cannot be run validly from constructor
   /// if no walletProvider assumed wallet coming from file
   async connect(walletProvider?: object | null): Promise<void> {

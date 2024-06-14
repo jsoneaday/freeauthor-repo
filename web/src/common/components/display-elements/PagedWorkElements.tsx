@@ -93,8 +93,10 @@ function PagedWorkElementsComponent<T extends Object, E extends UiEntity>({
     }
   };
 
+  /// sets paged data and next paging cursor
   const setData = async (priorKeyset: string, pagingState: PagingState) => {
     const works = await getNextData(priorKeyset);
+    console.log("getNextData works", works);
     // use current paging state to determine whether to append or start fresh
     if (pagingState === PagingState.Start) {
       const worksNotNull = works || [];
@@ -107,7 +109,7 @@ function PagedWorkElementsComponent<T extends Object, E extends UiEntity>({
       setPagedWorks([...pagedWorksNotNull, ...worksNotNull]);
     }
 
-    // once data is set reset the paging state to correct new value
+    // once data is set, reset the paging state to correct new value
     if (!works || works.length === 0) {
       console.log("no more works data, state Finished");
       setCurrentPagingState(PagingState.Finish);
@@ -120,7 +122,8 @@ function PagedWorkElementsComponent<T extends Object, E extends UiEntity>({
     }
 
     if (works && works.length > 0) {
-      setPriorKeyset(works[works.length - 1].id);
+      console.log("cursor", works[works.length - 1].cursor);
+      setPriorKeyset(works[works.length - 1].cursor || "");
     }
 
     setRefreshWorksData(false);

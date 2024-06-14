@@ -26,18 +26,18 @@ export function ConnectCreateProfile({
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [connectValidationMsg, setConnectValidationMsg] = useState("");
   const [_isPending, startTransition] = useTransition();
-  const solflareWallet = useWallet();
+  const walletState = useWallet();
   const api = useUiApi();
 
   useEffect(() => {
     handleConnect();
-  }, [api]);
+  }, [api, walletState]);
 
   const handleConnect = async () => {
     if (api) {
       startTransition(() => {
         if (!profile) {
-          if (!solflareWallet?.isConnected) {
+          if (!walletState?.walletObject?.isConnected) {
             return;
           }
           api.getOwnersProfile().then((ownersProfile) => {
@@ -75,7 +75,7 @@ export function ConnectCreateProfile({
 
     setConnectValidationMsg("Waiting for wallet connection ...");
 
-    await solflareWallet?.connect();
+    await walletState?.walletObject?.wallet.connect();
   };
 
   return (
@@ -89,7 +89,7 @@ export function ConnectCreateProfile({
     >
       <div className="push-away">
         <span className="standard-header">
-          {solflareWallet?.connected ? null : (
+          {walletState?.walletObject?.wallet?.connected ? null : (
             <span>Please connect your wallet</span>
           )}
         </span>
@@ -97,7 +97,7 @@ export function ConnectCreateProfile({
           <div style={{ color: "var(--warning-cl)" }}>
             {connectValidationMsg}
           </div>
-          {solflareWallet?.connected ? (
+          {walletState?.walletObject?.wallet?.connected ? (
             <button className="primary-btn">Disconnect</button>
           ) : (
             <button className="primary-btn" onClick={afterConnect}>
