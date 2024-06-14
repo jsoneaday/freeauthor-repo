@@ -148,7 +148,7 @@ export class UiApi {
   }
 
   async getProfile(profileId: string): Promise<Profile | null> {
-    return this.#getProfile(await this.#writeApi.getProfile(profileId));
+    return this.#getProfile(await this.#readApi.getProfile(profileId));
   }
 
   async getOwnersProfile(): Promise<Profile | null> {
@@ -262,7 +262,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getWorksByTopic(
+    const works = await this.#readApi.getWorksByTopic(
       topicId,
       pageSize,
       cursor
@@ -275,13 +275,13 @@ export class UiApi {
     topicId: string,
     pageSize: number
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getWorksByTopicTop(topicId, pageSize);
+    const works = await this.#readApi.getWorksByTopicTop(topicId, pageSize);
     if (works) return this.#getWorkWithAuthors(works.workModels);
     return null;
   }
 
   async getWorkLikeCount(workId: string): Promise<number> {
-    return await this.#writeApi.getWorkLikeCount(workId);
+    return await this.#readApi.getWorkLikeCount(workId);
   }
 
   async getWorkResponses(

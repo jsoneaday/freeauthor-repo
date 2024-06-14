@@ -537,28 +537,28 @@ describe("IrysApi Work tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
 
-    const profilea = await api.addProfile(
+    const profilea = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    const worka = await api.addWork(
+    const worka = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
       profilea.id
     );
-    const workb = await api.addWork(
+    const workb = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
       profilea.id
     );
-    const workc = await api.addWork(
+    const workc = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
@@ -568,16 +568,16 @@ describe("IrysApi Work tests", () => {
     const existingTopics = await irysRead.getAllTopics();
     let topicaRespId: string;
     if (existingTopics.length === 0) {
-      topicaRespId = (await api.addTopic(faker.company.name())).id;
+      topicaRespId = (await irysWrite.addTopic(faker.company.name())).id;
     } else {
       topicaRespId = existingTopics[0].id;
     }
 
-    await api.addWorkTopic(topicaRespId, worka.id);
-    await api.addWorkTopic(topicaRespId, workb.id);
-    await api.addWorkTopic(topicaRespId, workc.id);
+    await irysWrite.addWorkTopic(topicaRespId, worka.id);
+    await irysWrite.addWorkTopic(topicaRespId, workb.id);
+    await irysWrite.addWorkTopic(topicaRespId, workc.id);
 
-    const works = await api.getWorksByTopic(topicaRespId, 2);
+    const works = await irysRead.getWorksByTopic(topicaRespId, 2);
     expect(works!.workModels.length).toBe(2);
     expect(works!.workModels[0].id).toBe(workc.id);
     expect(works!.workModels[1].id).toBe(workb.id);
@@ -588,38 +588,38 @@ describe("IrysApi Work tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
 
-    const profilea = await api.addProfile(
+    const profilea = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profileb = await api.addProfile(
+    const profileb = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    const worka = await api.addWork(
+    const worka = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
       profilea.id
     );
-    await api.addWorkLike(worka.id, profilea.id);
+    await irysWrite.addWorkLike(worka.id, profilea.id);
 
-    const workb = await api.addWork(
+    const workb = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
       profilea.id
     );
-    await api.addWorkLike(workb.id, profilea.id);
-    await api.addWorkLike(workb.id, profileb.id);
+    await irysWrite.addWorkLike(workb.id, profilea.id);
+    await irysWrite.addWorkLike(workb.id, profileb.id);
 
-    const workc = await api.addWork(
+    const workc = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
@@ -629,16 +629,16 @@ describe("IrysApi Work tests", () => {
     const existingTopics = await irysRead.getAllTopics();
     let topicaRespId: string;
     if (existingTopics.length === 0) {
-      topicaRespId = (await api.addTopic(faker.company.name())).id;
+      topicaRespId = (await irysWrite.addTopic(faker.company.name())).id;
     } else {
       topicaRespId = existingTopics[0].id;
     }
 
-    await api.addWorkTopic(topicaRespId, worka.id);
-    await api.addWorkTopic(topicaRespId, workb.id);
-    await api.addWorkTopic(topicaRespId, workc.id);
+    await irysWrite.addWorkTopic(topicaRespId, worka.id);
+    await irysWrite.addWorkTopic(topicaRespId, workb.id);
+    await irysWrite.addWorkTopic(topicaRespId, workc.id);
 
-    const works = await api.getWorksByTopicTop(topicaRespId);
+    const works = await irysRead.getWorksByTopicTop(topicaRespId);
     console.log(
       "works!.workModels",
       works!.workModels.length,
@@ -934,26 +934,26 @@ describe("WorkLike related tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
 
-    const profileResp = await api.addProfile(
+    const profileResp = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    const workResp = await api.addWork(
+    const workResp = await irysWrite.addWork(
       faker.lorem.words(3),
       faker.lorem.sentence(1),
       faker.lorem.paragraph(1),
       profileResp.id
     );
 
-    await api.addWorkLike(workResp.id, profileResp.id);
+    await irysWrite.addWorkLike(workResp.id, profileResp.id);
 
-    await api.removeWorkLike(workResp.id, profileResp.id);
-    let count = await api.getWorkLikeCount(workResp.id);
+    await irysWrite.removeWorkLike(workResp.id, profileResp.id);
+    let count = await irysRead.getWorkLikeCount(workResp.id);
     expect(count).toBe(0);
   });
 });

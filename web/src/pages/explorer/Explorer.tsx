@@ -92,6 +92,7 @@ export function Explorer() {
   }, [topic_id, topics]);
 
   const getData = async (priorKeyset: string) => {
+    console.log("searchTxt", searchTxt);
     if (searchTxt && searchTxt.length > 0) {
       if (validateSearchTxt(searchTxt) !== ValidationStates.FieldIsValid) {
         setValidationMsg(validateSearchTxt(searchTxt));
@@ -111,6 +112,7 @@ export function Explorer() {
 
       return works;
     } else {
+      console.log("priorKeyset", priorKeyset, topic_id);
       let works: WorkWithAuthor[] | null | undefined;
       if (priorKeyset === "") {
         works = await api?.getWorksByTopicTop(topic_id || "", PAGE_SIZE);

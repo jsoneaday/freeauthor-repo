@@ -1,6 +1,5 @@
 import { IRYS_GRAPHQL_URL } from "../../Env";
-import { IWriteApi } from "../interfaces/IWriteApi";
-import { IGraphql } from "../interfaces/IGraphqlApi";
+import { IGraphqlApi } from "../interfaces/IGraphqlApi";
 import { ICommonApi } from "../interfaces/ICommonApi";
 import {
   convertModelsToWorkResponseWithAuthor,
@@ -33,14 +32,15 @@ import {
   WorkTopicTagNames,
   WorkWithAuthorModel,
 } from "./models/ApiModels";
+import { IReadApi } from "../interfaces/IReadApi";
 
-export class IrysGraphql implements IGraphql {
+export class IrysGraphql implements IGraphqlApi {
   #irysCommon: ICommonApi;
-  #irysApi: IWriteApi;
+  #irysRead: IReadApi;
 
-  constructor(uploaddata: ICommonApi, irysApi: IWriteApi) {
+  constructor(uploaddata: ICommonApi, irysApi: IReadApi) {
     this.#irysCommon = uploaddata;
-    this.#irysApi = irysApi;
+    this.#irysRead = irysApi;
   }
 
   async queryGraphQL(
@@ -224,7 +224,7 @@ export class IrysGraphql implements IGraphql {
       gqlResponse,
       data as string | null
     );
-    const profile = await this.#irysApi.getProfile(workResponse.responder_id);
+    const profile = await this.#irysRead.getProfile(workResponse.responder_id);
     if (!profile) {
       throw new Error(
         `Responder ${workResponse.responder_id} for work response cannot be found`
@@ -319,8 +319,8 @@ export class IrysGraphql implements IGraphql {
   ): Promise<WorkWithAuthorModel> {
     const data = await this.#irysCommon.getData(gqlResponse.id, true);
     const workModel = this.convertGqlNodeToWork(gqlResponse, data);
-    const likeCount = await this.#irysApi.getWorkLikeCount(workModel.id);
-    const profileModel = await this.#irysApi.getProfile(workModel.author_id);
+    const likeCount = await this.#irysRead.getWorkLikeCount(workModel.id);
+    const profileModel = await this.#irysRead.getProfile(workModel.author_id);
 
     if (!profileModel) {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);

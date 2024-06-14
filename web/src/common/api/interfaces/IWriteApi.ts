@@ -79,17 +79,6 @@ export interface IWriteApi {
     pageSize: number
   ): Promise<PagedWorkWithAuthorModel | null>;
 
-  getWorksByTopic(
-    topicId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
-  getWorksByTopicTop(
-    topicId: string,
-    pageSize?: number
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
   addProfile(
     userName: string,
     fullName: string,
@@ -112,7 +101,6 @@ export interface IWriteApi {
     avatar?: Avatar
   ): Promise<UploadResponse>;
 
-  getProfile(profileId: string): Promise<ProfileModel | null>;
   getOwnersProfile(): Promise<ProfileModel | null>;
   getFollowedProfiles(followerId: string): Promise<ProfileModel[] | null>;
   getFollowerProfiles(followedId: string): Promise<ProfileModel[] | null>;
@@ -198,8 +186,6 @@ export interface IWriteApi {
   //   tx: string | null | undefined,
   //   entityType?: string
   // ): Promise<number>;
-
-  getWorkLikeCount(workId: string): Promise<number>;
 
   getWorkResponseCount(workId: string): Promise<number>;
 

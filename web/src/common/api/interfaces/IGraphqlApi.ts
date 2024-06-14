@@ -17,7 +17,7 @@ import {
   WorkWithAuthorModel,
 } from "../irys/models/ApiModels";
 
-export interface IGraphql {
+export interface IGraphqlApi {
   removeDeletedRecords(
     response: IrysGraphqlResponse | null,
     entityType: EntityType
