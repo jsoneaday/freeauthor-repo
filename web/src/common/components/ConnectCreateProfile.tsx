@@ -37,6 +37,9 @@ export function ConnectCreateProfile({
     if (api) {
       startTransition(() => {
         if (!profile) {
+          if (!solflareWallet?.isConnected) {
+            return;
+          }
           api.getOwnersProfile().then((ownersProfile) => {
             if (!ownersProfile) {
               setShowProfileForm(true);

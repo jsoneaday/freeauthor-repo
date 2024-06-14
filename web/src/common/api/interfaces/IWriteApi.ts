@@ -9,7 +9,7 @@ import {
   WorkWithAuthorModel,
 } from "../irys/models/ApiModels";
 
-export interface IApi {
+export interface IWriteApi {
   get Address(): string;
 
   arbitraryFund(amount: number): Promise<void>;
@@ -206,7 +206,6 @@ export interface IApi {
   getFollowedCount(profileId: string): Promise<number>;
   getFollowerCount(profileId: string): Promise<number>;
 
-  getAllTopics(): Promise<TopicModel[]>;
   getTopicsByWork(workId: string): Promise<TopicModel[] | null>;
 
   // cleanDb(): TxHashPromise;

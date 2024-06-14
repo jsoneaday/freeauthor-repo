@@ -13,16 +13,23 @@ export default function UiApiProvider({ children }: UiApiProps) {
   const wallet = useContext(SolflareContext);
   const [uiApi, setUiApi] = useState<UiApi | null>(null);
 
-  const setupUiApi = async () => {
-    const _uiApi = await initOrGetUiApi(wallet);
-    setUiApi(_uiApi);
+  const connectUiApi = async () => {
+    console.log("connect wallet to irys");
+    uiApi?.connect(wallet);
   };
 
   useEffect(() => {
-    wallet?.on("connect", setupUiApi);
+    console.log("wallet", wallet);
+
+    if (wallet) {
+      initOrGetUiApi().then((_uiApi) => {
+        setUiApi(_uiApi);
+      });
+    }
+    wallet?.on("connect", connectUiApi);
 
     return () => {
-      wallet?.off("connect", setupUiApi);
+      wallet?.off("connect", connectUiApi);
     };
   }, [wallet]);
 

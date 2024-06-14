@@ -1,6 +1,6 @@
 import { IRYS_GRAPHQL_URL } from "../../Env";
-import { IApi } from "../interfaces/IApi";
-import { IGraphql } from "../interfaces/IGraphql";
+import { IWriteApi } from "../interfaces/IWriteApi";
+import { IGraphql } from "../interfaces/IGraphqlApi";
 import { ICommonApi } from "../interfaces/ICommonApi";
 import {
   convertModelsToWorkResponseWithAuthor,
@@ -36,9 +36,9 @@ import {
 
 export class IrysGraphql implements IGraphql {
   #irysCommon: ICommonApi;
-  #irysApi: IApi;
+  #irysApi: IWriteApi;
 
-  constructor(uploaddata: ICommonApi, irysApi: IApi) {
+  constructor(uploaddata: ICommonApi, irysApi: IWriteApi) {
     this.#irysCommon = uploaddata;
     this.#irysApi = irysApi;
   }

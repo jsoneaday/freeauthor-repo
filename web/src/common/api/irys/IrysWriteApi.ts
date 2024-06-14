@@ -23,71 +23,65 @@ import {
   ActionType,
   BaseQueryTags,
 } from "./models/ApiModels";
-import { IApi } from "../interfaces/IApi";
+import { IWriteApi } from "../interfaces/IWriteApi";
 import { WebIrys } from "@irys/sdk";
 import SolanaConfig from "@irys/sdk/node/tokens/solana";
 import { BaseWebIrys } from "@irys/sdk/web/base";
 import { type WebToken } from "@irys/sdk/web/types";
 import Query from "@irys/query";
-import { RPC_URL, TOKEN, NETWORK, TX_METADATA_URL } from "../../Env";
+import { RPC_URL, TOKEN, TX_METADATA_URL } from "../../Env";
 import bs58 from "bs58";
 import { UploadResponse } from "@irys/sdk/common/types";
-import { IGraphql } from "../interfaces/IGraphql";
+import { IGraphql } from "../interfaces/IGraphqlApi";
 import { IrysGraphql } from "./IrysGraphql";
 import { ICommonApi } from "../interfaces/ICommonApi";
-import { IrysCommon } from "./IrysCommon";
+import { DESC, SEARCH_TX } from "./IrysCommon";
 import {
   convertModelsToWorkWithAuthor,
   convertQueryToProfile,
   convertQueryToWork,
 } from "./models/ApiModelConverters";
 import { PAGE_SIZE } from "../../utils/StandardValues";
-
-const DESC = "DESC";
-//const ASC = "ASC";
-const SEARCH_TX = "irys:transactions";
+import { IReadApi } from "../interfaces/IReadApi";
 
 /// Note all entity id are the transaction id on Irys
-export class IrysApi implements IApi {
+export class IrysWriteApi implements IWriteApi {
   #irys?: WebIrys | BaseWebIrys;
   get #Irys() {
     if (!this.#irys) throw new Error("#irys is not set yet!");
     return this.#irys;
   }
+
   #irysQuery?: Query;
   get #IrysQuery() {
     if (!this.#irysQuery) {
-      this.#irysQuery = new Query({ network: this.#network });
+      this.#irysQuery = new Query({ network: this.#irysCommon.Network });
     }
     return this.#irysQuery;
   }
+
   #address?: string;
   get Address() {
     if (!this.#address) throw new Error("#address is not set yet!");
     return this.#address;
   }
-  #network = NETWORK;
-  #token = TOKEN;
+
   #wallet?: { rpcUrl: string; name: string; provider: object };
 
   #irysGraphql?: IGraphql;
   get #IrysGql() {
     if (!this.#irysGraphql) {
-      this.#irysGraphql = new IrysGraphql(this.#IrysCommon, this);
+      this.#irysGraphql = new IrysGraphql(this.#irysCommon, this);
     }
     return this.#irysGraphql;
   }
-  #irysCommon?: ICommonApi;
-  get #IrysCommon() {
-    if (!this.#irysCommon) {
-      this.#irysCommon = new IrysCommon();
-    }
-    return this.#irysCommon;
-  }
 
-  constructor(network: string, token: string) {
-    this.#network = network;
-    this.#token = token;
+  #irysCommon: ICommonApi;
+  #irysRead: IReadApi;
+
+  constructor(common: ICommonApi, irysRead: IReadApi) {
+    this.#irysCommon = common;
+    this.#irysRead = irysRead;
   }
 
   async isConnected(): Promise<boolean> {
@@ -104,8 +98,8 @@ export class IrysApi implements IApi {
         provider: walletProvider,
       };
       const webIrys = new WebIrys({
-        network: this.#network,
-        token: this.#token,
+        network: this.#irysCommon.Network,
+        token: this.#irysCommon.Token,
         wallet: this.#wallet,
       });
       this.#irys = await webIrys.ready();
@@ -117,14 +111,14 @@ export class IrysApi implements IApi {
       const key = bs58.encode(keyBuffer);
 
       const irys = new BaseWebIrys({
-        network: this.#network,
+        network: this.#irysCommon.Network,
         config: {
           providerUrl: RPC_URL,
         },
         getTokenConfig: (irys): WebToken =>
           new SolanaConfig({
             irys,
-            name: this.#token,
+            name: this.#irysCommon.Token,
             ticker: this.#getTickerFromToken(),
             minConfirm: 1,
             providerUrl: RPC_URL,
@@ -139,10 +133,10 @@ export class IrysApi implements IApi {
   }
 
   #getTickerFromToken() {
-    if (this.#token === "solana") {
+    if (this.#irysCommon.Token === "solana") {
       return "SOL";
     }
-    throw new Error(`${this.#token}'s ticker not implemented`);
+    throw new Error(`${this.#irysCommon.Token}'s ticker not implemented`);
   }
 
   async #fundText(content: string) {
@@ -199,26 +193,8 @@ export class IrysApi implements IApi {
     return false;
   }
 
-  async #convertQueryToTopics(queryResponse: QueryResponse[]) {
-    const _queryResp = this.#removeDeletedRecords(
-      queryResponse,
-      EntityType.Topic
-    );
-    const topics: TopicModel[] = new Array(_queryResp.length);
-    for (let i = 0; i < _queryResp.length; i++) {
-      topics[i] = {
-        id: _queryResp[i].id,
-        updated_at: _queryResp[i].timestamp,
-        name:
-          _queryResp[i].tags.find((tag) => tag.name === TopicTagNames.TopicName)
-            ?.value || "",
-      };
-    }
-    return topics;
-  }
-
   async #convertQueryToWorkWithAuthors(queryResponse: QueryResponse[]) {
-    const _queryResp = this.#removeDeletedRecords(
+    const _queryResp = this.#irysCommon.removeDeletedRecords(
       queryResponse,
       EntityType.Work
     );
@@ -232,7 +208,7 @@ export class IrysApi implements IApi {
   }
 
   async #convertQueryToWorkWithAuthor(queryResp: QueryResponse) {
-    const data = await this.#IrysCommon.getData(queryResp.id, true);
+    const data = await this.#irysCommon.getData(queryResp.id, true);
     const workModel = convertQueryToWork(queryResp, data);
     workModel.content = data as string;
     const likeCount = await this.getWorkLikeCount(workModel.id);
@@ -242,81 +218,6 @@ export class IrysApi implements IApi {
       throw new Error(`Profile with id ${workModel.author_id} not found!`);
     }
     return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
-  }
-
-  /// Assumed sort by last inserted record first (i.e. timestamp),
-  /// as its possible after a remove a new insert is then done
-  #getNonRemovedResponses(entityType: EntityType, responses: QueryResponse[]) {
-    const nonRemovedResponses: QueryResponse[] = [];
-
-    // see if each response is already in final list and add it if not
-    for (let i = 0; i < responses.length; i++) {
-      const responseToCheck = responses[i];
-
-      if (
-        !this.#containsMatchingResponse(
-          responseToCheck,
-          nonRemovedResponses,
-          entityType
-        )
-      ) {
-        nonRemovedResponses.push(responseToCheck);
-      }
-    }
-
-    // after getting list of unique records remove the nodes tagged Remove
-    return nonRemovedResponses.filter(
-      (resp) =>
-        !resp.tags.find(
-          (tag) => tag.name === ActionName && tag.value === ActionType.Remove
-        )
-    );
-  }
-
-  /// if all tags have matching names
-  #containsMatchingResponse(
-    responseToCheck: QueryResponse,
-    searchResponses: QueryResponse[],
-    entityType: EntityType
-  ) {
-    const checkTags = responseToCheck.tags;
-    for (const searchResponse of searchResponses) {
-      let matchCount = 0;
-
-      for (const checkTag of checkTags) {
-        let currentTagMatches = false;
-
-        for (const searchTag of searchResponse.tags) {
-          if (
-            this.#IrysCommon.tagsMatchByEntityType(
-              entityType,
-              checkTag,
-              searchTag
-            )
-          ) {
-            currentTagMatches = true;
-            break;
-          }
-        }
-        if (currentTagMatches) {
-          matchCount += 1;
-        }
-      }
-      if (checkTags.length === matchCount) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /// Arweave has no way of actually deleting records
-  /// This set of function will filter for records that have NOT
-  /// been tagged as remove (deleted)
-  #removeDeletedRecords(
-    response: QueryResponse[] | null,
-    entityType: EntityType
-  ): QueryResponse[] {
-    return !response ? [] : this.#getNonRemovedResponses(entityType, response);
   }
 
   async arbitraryFund(amount: number): Promise<void> {
@@ -671,7 +572,7 @@ export class IrysApi implements IApi {
       .ids([profileId])
       .sort(DESC);
 
-    const data = await this.#IrysCommon.getData(result[0].id, false);
+    const data = await this.#irysCommon.getData(result[0].id, false);
 
     return convertQueryToProfile(result[0], data as ArrayBuffer | null);
   }
@@ -689,7 +590,7 @@ export class IrysApi implements IApi {
     if (!searchResults || searchResults.data.transactions.edges.length === 0)
       return null;
     const node = searchResults.data.transactions.edges[0].node;
-    const data = await this.#IrysCommon.getData(node.id, false);
+    const data = await this.#irysCommon.getData(node.id, false);
     return {
       id: node.id,
       updated_at: node.timestamp,
@@ -734,7 +635,10 @@ export class IrysApi implements IApi {
       .search(SEARCH_TX)
       .tags(searchTags)
       .sort(DESC);
-    responses = this.#removeDeletedRecords(responses, EntityType.Follow);
+    responses = this.#irysCommon.removeDeletedRecords(
+      responses,
+      EntityType.Follow
+    );
 
     const follow: ProfileModel[] = new Array(responses.length);
     let filterTagValue = FollowerTagNames.FollowedId;
@@ -967,19 +871,6 @@ export class IrysApi implements IApi {
     return (await this.getFollowerProfiles(profileId))?.length || 0;
   }
 
-  async getAllTopics(): Promise<TopicModel[]> {
-    const response = await this.#IrysQuery
-      .search(SEARCH_TX)
-      .tags([
-        ...BaseQueryTags,
-        { name: AppTagNames.EntityType, values: [EntityType.Topic] },
-      ])
-      .sort(DESC)
-      .limit(PAGE_SIZE);
-
-    return this.#convertQueryToTopics(response) || [];
-  }
-
   async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
     const workTopicResponse = await this.#IrysGql.queryGraphQL({
       tags: [
@@ -991,7 +882,7 @@ export class IrysApi implements IApi {
 
     const workTopics =
       this.#IrysGql.convertGqlResponseToWorkTopic(workTopicResponse);
-    const allTopicModels = await this.getAllTopics();
+    const allTopicModels = await this.#irysRead.getAllTopics();
     const topics: TopicModel[] = new Array(workTopics.length);
 
     for (let i = 0; i < workTopics.length; i++) {

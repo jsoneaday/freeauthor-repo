@@ -1,4 +1,5 @@
-import { IApi } from "../api/interfaces/IApi";
+import { IReadApi } from "../api/interfaces/IReadApi";
+import { IWriteApi } from "../api/interfaces/IWriteApi";
 import {
   ActionType,
   Avatar,
@@ -15,27 +16,26 @@ import {
 import { UploadResponse } from "@irys/sdk/common/types";
 
 export class UiApi {
-  #api: IApi | null = null;
-  get #Api(): IApi {
-    return this.#api!;
-  }
+  #writeApi: IWriteApi;
+  #readApi: IReadApi;
 
   get Address() {
-    return this.#Api.Address;
+    return this.#writeApi.Address;
   }
 
   /// Pass api instance here
   /// e.g. new FakeApi("0xE7DCCAE2d95A1cB1E30E07477207065A9EDf6D38")
-  constructor(apiObj: IApi) {
-    this.#api = apiObj;
+  constructor(writeApi: IWriteApi, readApi: IReadApi) {
+    this.#writeApi = writeApi;
+    this.#readApi = readApi;
   }
 
   async isConnected(): Promise<boolean> {
-    return await this.#Api?.isConnected();
+    return await this.#writeApi.isConnected();
   }
 
   async connect(walletProvider?: object | null): Promise<void> {
-    await this.#Api.connect(walletProvider);
+    await this.#writeApi.connect(walletProvider);
   }
 
   /// Works can have more than one topic but adding a default topic upon creation
@@ -47,7 +47,7 @@ export class UiApi {
     topicId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    const work = await this.#Api.addWork(
+    const work = await this.#writeApi.addWork(
       title,
       description,
       content,
@@ -68,7 +68,7 @@ export class UiApi {
     avatar?: Avatar,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    return await this.#Api.addProfile(
+    return await this.#writeApi.addProfile(
       userName,
       fullName,
       description,
@@ -83,23 +83,23 @@ export class UiApi {
     followerId: string,
     followedId: string
   ): Promise<UploadResponse> {
-    return await this.#Api.addFollow(followerId, followedId);
+    return await this.#writeApi.addFollow(followerId, followedId);
   }
   async addTopic(name: string): Promise<UploadResponse> {
-    return await this.#Api.addTopic(name);
+    return await this.#writeApi.addTopic(name);
   }
   async addWorkTopic(topicId: string, workId: string): Promise<UploadResponse> {
-    return await this.#Api.addWorkTopic(topicId, workId);
+    return await this.#writeApi.addWorkTopic(topicId, workId);
   }
   async addWorkLikes(workId: string, likerId: string): Promise<UploadResponse> {
-    return await this.#Api.addWorkLike(workId, likerId);
+    return await this.#writeApi.addWorkLike(workId, likerId);
   }
   async addWorkResponse(
     content: string,
     workId: string,
     responderId: string
   ): Promise<UploadResponse> {
-    return await this.#Api.addWorkResponse(content, workId, responderId);
+    return await this.#writeApi.addWorkResponse(content, workId, responderId);
   }
 
   async updateWorkWithTopic(
@@ -111,7 +111,7 @@ export class UiApi {
     topicId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    const updatedWork = await this.#Api.updateWork(
+    const updatedWork = await this.#writeApi.updateWork(
       title,
       description,
       content,
@@ -119,7 +119,7 @@ export class UiApi {
       workId,
       fund
     );
-    await this.#Api.removeWorkTopic(topicId, updatedWork.id);
+    await this.#writeApi.removeWorkTopic(topicId, updatedWork.id);
     await this.addWorkTopic(topicId, updatedWork.id);
     return updatedWork;
   }
@@ -135,7 +135,7 @@ export class UiApi {
     avatar?: Avatar,
     fund: boolean = false
   ): Promise<UploadResponse> {
-    return this.#Api.updateProfile(
+    return this.#writeApi.updateProfile(
       profileId,
       userName,
       fullName,
@@ -148,34 +148,34 @@ export class UiApi {
   }
 
   async getProfile(profileId: string): Promise<Profile | null> {
-    return this.#getProfile(await this.#Api.getProfile(profileId));
+    return this.#getProfile(await this.#writeApi.getProfile(profileId));
   }
 
   async getOwnersProfile(): Promise<Profile | null> {
-    const profile = await this.#Api.getOwnersProfile();
+    const profile = await this.#writeApi.getOwnersProfile();
     if (profile) return this.#getProfile(profile);
     return null;
   }
 
   async getFollowedProfiles(profileId: string): Promise<Profile[] | null> {
-    const profiles = await this.#Api.getFollowedProfiles(profileId);
+    const profiles = await this.#writeApi.getFollowedProfiles(profileId);
     if (profiles) return this.#getProfiles(profiles);
     return null;
   }
 
   async getFollowerProfiles(profileId: string): Promise<Profile[] | null> {
-    const profiles = await this.#Api.getFollowerProfiles(profileId);
+    const profiles = await this.#writeApi.getFollowerProfiles(profileId);
     if (profiles) return this.#getProfiles(profiles);
     return null;
   }
 
   async getWork(workId: string): Promise<WorkWithAuthor | null> {
-    const work = await this.#Api.getWork(workId);
+    const work = await this.#writeApi.getWork(workId);
     return this.#getWorkWithAuthor(work);
   }
 
   async searchWorksTop(searchTxt: string): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.searchWorksTop(searchTxt);
+    const works = await this.#writeApi.searchWorksTop(searchTxt);
     if (works) return this.#getWorkWithAuthors(works);
     return null;
   }
@@ -185,7 +185,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.searchWorks(searchTxt, pageSize, cursor);
+    const works = await this.#writeApi.searchWorks(searchTxt, pageSize, cursor);
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -195,7 +195,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByAllFollowed(
+    const works = await this.#writeApi.getWorksByAllFollowed(
       followerId,
       pageSize,
       cursor
@@ -207,7 +207,7 @@ export class UiApi {
   async getWorksByAllFollowedTop(
     followerId: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByAllFollowedTop(followerId);
+    const works = await this.#writeApi.getWorksByAllFollowedTop(followerId);
     if (works) return this.#getWorkWithAuthors(works.workModels);
     return null;
   }
@@ -217,7 +217,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByOneFollowed(
+    const works = await this.#writeApi.getWorksByOneFollowed(
       followedId,
       pageSize,
       cursor
@@ -229,7 +229,7 @@ export class UiApi {
   async getWorksByOneFollowedTop(
     followedId: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByOneFollowedTop(followedId);
+    const works = await this.#writeApi.getWorksByOneFollowedTop(followedId);
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -239,7 +239,11 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getAuthorWorks(authorId, pageSize, cursor);
+    const works = await this.#writeApi.getAuthorWorks(
+      authorId,
+      pageSize,
+      cursor
+    );
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -248,7 +252,7 @@ export class UiApi {
     authorId: string,
     pageSize: number
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getAuthorWorksTop(authorId, pageSize);
+    const works = await this.#writeApi.getAuthorWorksTop(authorId, pageSize);
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -258,7 +262,11 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByTopic(topicId, pageSize, cursor);
+    const works = await this.#writeApi.getWorksByTopic(
+      topicId,
+      pageSize,
+      cursor
+    );
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -267,13 +275,13 @@ export class UiApi {
     topicId: string,
     pageSize: number
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#Api.getWorksByTopicTop(topicId, pageSize);
+    const works = await this.#writeApi.getWorksByTopicTop(topicId, pageSize);
     if (works) return this.#getWorkWithAuthors(works.workModels);
     return null;
   }
 
   async getWorkLikeCount(workId: string): Promise<number> {
-    return await this.#Api.getWorkLikeCount(workId);
+    return await this.#writeApi.getWorkLikeCount(workId);
   }
 
   async getWorkResponses(
@@ -281,7 +289,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#Api.getWorkResponses(
+    const responses = await this.#writeApi.getWorkResponses(
       workId,
       pageSize,
       cursor
@@ -298,7 +306,10 @@ export class UiApi {
     workId: string,
     pageSize: number
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#Api.getWorkResponsesTop(workId, pageSize);
+    const responses = await this.#writeApi.getWorkResponsesTop(
+      workId,
+      pageSize
+    );
     if (responses)
       return this.#getResponseWithResponders(
         responses.workResponseModels,
@@ -312,7 +323,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#Api.getWorkResponsesByProfile(
+    const responses = await this.#writeApi.getWorkResponsesByProfile(
       profileId,
       pageSize,
       cursor
@@ -329,7 +340,7 @@ export class UiApi {
     profileId: string,
     pageSize: number
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#Api.getWorkResponsesByProfileTop(
+    const responses = await this.#writeApi.getWorkResponsesByProfileTop(
       profileId,
       pageSize
     );
@@ -342,18 +353,18 @@ export class UiApi {
   }
 
   async getWorkResponseCount(workId: string): Promise<number> {
-    return await this.#Api.getWorkResponseCount(workId);
+    return await this.#writeApi.getWorkResponseCount(workId);
   }
 
   async getFollowedCount(profileId: string): Promise<number> {
-    return this.#Api.getFollowedCount(profileId);
+    return this.#writeApi.getFollowedCount(profileId);
   }
   async getFollowerCount(profileId: string): Promise<number> {
-    return this.#Api.getFollowerCount(profileId);
+    return this.#writeApi.getFollowerCount(profileId);
   }
 
   async getAllTopics(): Promise<Topic[] | null> {
-    const topics = await this.#Api.getAllTopics();
+    const topics = await this.#readApi.getAllTopics();
     return (
       topics?.map((topic) => ({
         id: topic.id,
@@ -364,7 +375,7 @@ export class UiApi {
   }
 
   async getTopicByWork(workId: string): Promise<Topic[] | null> {
-    const topics = await this.#Api.getTopicsByWork(workId);
+    const topics = await this.#writeApi.getTopicsByWork(workId);
     return (
       topics?.map((topic) => ({
         id: topic.id,
@@ -375,11 +386,11 @@ export class UiApi {
   }
 
   // async cleanDb(): Promise<UploadResponse> {
-  //   return await this.#Api.cleanDb();
+  //   return await this.#writeApi.cleanDb();
   // }
 
   // async setupData(): Promise<UploadResponse> {
-  //   return await this.#Api.setupData();
+  //   return await this.#writeApi.setupData();
   // }
 
   #getResponseWithResponders(

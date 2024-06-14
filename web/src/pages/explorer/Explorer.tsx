@@ -59,10 +59,11 @@ export function Explorer() {
   };
 
   useEffect(() => {
+    console.log("api", api);
     api?.getAllTopics().then((topics) => {
       setTopics(topics);
     });
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     if (!topics) return;
