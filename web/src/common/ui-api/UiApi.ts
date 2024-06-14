@@ -34,6 +34,10 @@ export class UiApi {
     return await this.#writeApi.isConnected();
   }
 
+  disconnect() {
+    this.#writeApi.disconnect();
+  }
+
   async connect(walletProvider?: object | null): Promise<void> {
     await this.#writeApi.connect(walletProvider);
   }

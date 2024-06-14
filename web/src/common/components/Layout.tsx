@@ -33,7 +33,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="layout-container">
       <nav className="layout-nav">
         <a href="/" className="layout-title">
-          FREE-AUTHOR
+          FreeAuth
         </a>
         <span className="layout-links">
           <NavAnchor path="/write/new" label="WRITE" />

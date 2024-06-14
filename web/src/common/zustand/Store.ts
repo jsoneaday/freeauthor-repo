@@ -3,7 +3,7 @@ import { Profile } from "./Profile";
 
 export type ProfileStore = {
   profile: Profile | null;
-  setProfile: (profile: Profile) => void;
+  setProfile: (profile: Profile | null) => void;
 };
 
 export type NotificationStore = {
@@ -13,7 +13,7 @@ export type NotificationStore = {
 
 export const useProfile = create<ProfileStore>((set) => ({
   profile: null,
-  setProfile: (profile: Profile) => set((_state) => ({ profile })),
+  setProfile: (profile: Profile | null) => set((_state) => ({ profile })),
 }));
 
 export const useNotification = create<NotificationStore>((set) => ({

@@ -74,8 +74,18 @@ export function ConnectCreateProfile({
     e.preventDefault();
 
     setConnectValidationMsg("Waiting for wallet connection ...");
-
     await walletState?.walletObject?.wallet.connect();
+  };
+
+  const afterDisconnect = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    api?.disconnect();
+    toggleNotificationState();
+    setProfile(null);
+    setShowProfileForm(false);
+    setNotificationHeight(SMALL_NOTIFICATION_HEIGHT);
+    setConnectValidationMsg("");
   };
 
   return (
@@ -98,7 +108,9 @@ export function ConnectCreateProfile({
             {connectValidationMsg}
           </div>
           {walletState?.walletObject?.wallet?.connected ? (
-            <button className="primary-btn">Disconnect</button>
+            <button className="primary-btn" onClick={afterDisconnect}>
+              Disconnect
+            </button>
           ) : (
             <button className="primary-btn" onClick={afterConnect}>
               Connect

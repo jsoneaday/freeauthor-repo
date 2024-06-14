@@ -136,6 +136,7 @@ export interface IWriteApi {
   ): Promise<PagedWorkResponseModel | null>;
 
   isConnected(): Promise<boolean>;
+  disconnect(): void;
   connect(walletProvider?: object | null): Promise<void>;
 
   addFollow(
