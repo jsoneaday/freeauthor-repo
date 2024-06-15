@@ -288,46 +288,46 @@ describe("IrysApi Work tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
     const desc = faker.lorem.lines(1);
 
-    const profile = await api.addProfile(
+    const profile = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    const workd = await api.addWork(
+    const workd = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id
     );
 
-    const workc = await api.addWork(
+    const workc = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id
     );
 
-    await api.addWork(
+    await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id
     );
 
-    await api.addWork(
+    await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id
     );
 
-    const firstSearchResult = await api.getAuthorWorks(profile.id, 2);
-    const secondSearchResult = await api.getAuthorWorks(
+    const firstSearchResult = await irysRead.getAuthorWorks(profile.id, 2);
+    const secondSearchResult = await irysRead.getAuthorWorks(
       profile.id,
       2,
       firstSearchResult!.cursor
@@ -341,65 +341,65 @@ describe("IrysApi Work tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
     const desc = faker.lorem.lines(1);
 
-    const profile1 = await api.addProfile(
+    const profile1 = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile2 = await api.addProfile(
+    const profile2 = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile3 = await api.addProfile(
+    const profile3 = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile4 = await api.addProfile(
+    const profile4 = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    const workd = await api.addWork(
+    const workd = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile1.id
     );
 
-    const workc = await api.addWork(
+    const workc = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile1.id
     );
-    await api.addWorkLike(workc.id, profile2.id);
-    await api.addWorkLike(workc.id, profile3.id);
-    await api.addWorkLike(workc.id, profile4.id);
+    await irysWrite.addWorkLike(workc.id, profile2.id);
+    await irysWrite.addWorkLike(workc.id, profile3.id);
+    await irysWrite.addWorkLike(workc.id, profile4.id);
 
-    const workb = await api.addWork(
+    const workb = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile1.id
     );
-    await api.addWorkLike(workb.id, profile2.id);
-    await api.addWorkLike(workb.id, profile3.id);
+    await irysWrite.addWorkLike(workb.id, profile2.id);
+    await irysWrite.addWorkLike(workb.id, profile3.id);
 
-    const worka = await api.addWork(
+    const worka = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile1.id
     );
 
-    const searchResult = await api.getAuthorWorksTop(profile1.id, 10);
+    const searchResult = await irysRead.getAuthorWorksTop(profile1.id, 10);
     expect(workc.id).toBe(searchResult!.workModels[0].id);
     expect(workb.id).toBe(searchResult!.workModels[1].id);
     expect(worka.id).toBe(searchResult!.workModels[2].id);
@@ -722,22 +722,22 @@ describe("Profile related tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
 
-    const profile_follower = await api.addProfile(
+    const profile_follower = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile_followed = await api.addProfile(
+    const profile_followed = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    await api.addFollow(profile_follower.id, profile_followed.id);
-    const followed = await api.getFollowedProfiles(profile_follower.id);
+    await irysWrite.addFollow(profile_follower.id, profile_followed.id);
+    const followed = await irysRead.getFollowedProfiles(profile_follower.id);
     expect(profile_followed.id).toBe(followed![0].id);
   });
 
@@ -746,22 +746,22 @@ describe("Profile related tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
 
-    const profile_follower = await api.addProfile(
+    const profile_follower = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const profile_followed = await api.addProfile(
+    const profile_followed = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
 
-    await api.addFollow(profile_follower.id, profile_followed.id);
-    const followers = await api.getFollowerProfiles(profile_followed.id);
+    await irysWrite.addFollow(profile_follower.id, profile_followed.id);
+    const followers = await irysRead.getFollowerProfiles(profile_followed.id);
     expect(profile_follower.id).toBe(followers![0].id);
   });
 });
@@ -772,28 +772,40 @@ describe("WorkResponse related tests", () => {
     irysCommon.Network = network;
     irysCommon.Token = token;
     const irysRead = new IrysReadApi(irysCommon);
-    const api: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
-    await api.connect();
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
     const desc = faker.lorem.lines(1);
 
-    const profile = await api.addProfile(
+    const profile = await irysWrite.addProfile(
       faker.internet.userName(),
       faker.internet.displayName(),
       faker.lorem.sentence(1)
     );
-    const work = await api.addWork(
+    const work = await irysWrite.addWork(
       faker.lorem.words(3),
       desc,
       faker.lorem.paragraph(1),
       profile.id
     );
 
-    await api.addWorkResponse("hello a", work.id, profile.id);
-    const responseb = await api.addWorkResponse("hello b", work.id, profile.id);
-    const responsec = await api.addWorkResponse("hello c", work.id, profile.id);
-    const responsed = await api.addWorkResponse("hello d", work.id, profile.id);
+    await irysWrite.addWorkResponse("hello a", work.id, profile.id);
+    const responseb = await irysWrite.addWorkResponse(
+      "hello b",
+      work.id,
+      profile.id
+    );
+    const responsec = await irysWrite.addWorkResponse(
+      "hello c",
+      work.id,
+      profile.id
+    );
+    const responsed = await irysWrite.addWorkResponse(
+      "hello d",
+      work.id,
+      profile.id
+    );
 
-    const workResponses = await api.getWorkResponses(work.id, 3);
+    const workResponses = await irysRead.getWorkResponses(work.id, 3);
     expect(responsed.id).toBe(workResponses?.workResponseModels[0].id);
     expect(responsec.id).toBe(workResponses?.workResponseModels[1].id);
     expect(responseb.id).toBe(workResponses?.workResponseModels[2].id);
@@ -825,7 +837,7 @@ describe("WorkResponse related tests", () => {
     await irysWrite.addWorkResponse("hello c", work.id, profile.id);
     await irysWrite.addWorkResponse("hello d", work.id, profile.id);
 
-    const workResponseCount = await irysWrite.getWorkResponseCount(work.id);
+    const workResponseCount = await irysRead.getWorkResponseCount(work.id);
     console.log("workResponseCount", workResponseCount);
     expect(workResponseCount).toBe(4);
   });
@@ -877,7 +889,7 @@ describe("WorkResponse related tests", () => {
       profileWorkResponseOwner.id
     );
 
-    const workResponses = await irysWrite.getWorkResponsesByProfile(
+    const workResponses = await irysRead.getWorkResponsesByProfile(
       profileWorkResponseOwner.id,
       4
     );
@@ -911,8 +923,8 @@ describe("follow related topics", () => {
     await irysWrite.addFollow(profilea.id, profileb.id);
     await irysWrite.removeFollow(profilea.id, profileb.id);
 
-    const followed = await irysWrite.getFollowedProfiles(profilea.id);
-    const follower = await irysWrite.getFollowerProfiles(profileb.id);
+    const followed = await irysRead.getFollowedProfiles(profilea.id);
+    const follower = await irysRead.getFollowerProfiles(profileb.id);
 
     expect(followed?.length).toBe(0);
     expect(follower?.length).toBe(0);
@@ -1000,5 +1012,42 @@ describe("WorkLike related tests", () => {
     await irysWrite.removeWorkLike(workResp.id, profileResp.id);
     let count = await irysRead.getWorkLikeCount(workResp.id);
     expect(count).toBe(0);
+  });
+});
+
+describe("Topic related tests", () => {
+  it("getTopicsByWork returns correct topics", async () => {
+    const irysCommon = new IrysCommon();
+    irysCommon.Network = network;
+    irysCommon.Token = token;
+    const irysRead = new IrysReadApi(irysCommon);
+    const irysWrite: IWriteApi = new IrysWriteApi(irysCommon, irysRead);
+    await irysWrite.connect();
+
+    const profile = await irysWrite.addProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(1)
+    );
+
+    const work = await irysWrite.addWork(
+      faker.lorem.words(3),
+      faker.lorem.sentence(1),
+      faker.lorem.paragraph(1),
+      profile.id
+    );
+
+    const topica = await irysWrite.addTopic(faker.company.name());
+    const topicb = await irysWrite.addTopic(faker.company.name());
+    // need to wait for irys cache update
+    setTimeout(async () => {
+      await irysWrite.addWorkTopic(topica.id, work.id);
+      await irysWrite.addWorkTopic(topicb.id, work.id);
+
+      const topics = await irysRead.getTopicsByWork(work.id);
+      expect(topics?.length).toBe(2);
+      expect(topicb.id).toBe(topics![0].id);
+      expect(topica.id).toBe(topics![1].id);
+    }, 3000);
   });
 });

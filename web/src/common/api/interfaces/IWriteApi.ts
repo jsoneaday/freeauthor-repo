@@ -3,10 +3,7 @@ import {
   ActionType,
   Avatar,
   Bundle,
-  PagedWorkResponseModel,
-  PagedWorkWithAuthorModel,
   ProfileModel,
-  TopicModel,
 } from "../irys/models/ApiModels";
 
 export interface IWriteApi {
@@ -39,17 +36,6 @@ export interface IWriteApi {
     fund?: boolean
   ): Promise<UploadResponse>;
 
-  getAuthorWorks(
-    authorId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
-  getAuthorWorksTop(
-    authorId: string,
-    pageSize: number
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
   addProfile(
     userName: string,
     fullName: string,
@@ -73,8 +59,6 @@ export interface IWriteApi {
   ): Promise<UploadResponse>;
 
   getOwnersProfile(): Promise<ProfileModel | null>;
-  getFollowedProfiles(followerId: string): Promise<ProfileModel[] | null>;
-  getFollowerProfiles(followedId: string): Promise<ProfileModel[] | null>;
 
   addWorkResponse(
     content: string,
@@ -83,28 +67,6 @@ export interface IWriteApi {
     action?: ActionType,
     fund?: boolean
   ): Promise<UploadResponse>;
-
-  getWorkResponses(
-    workId: string,
-    pageSize?: number,
-    cursor?: string
-  ): Promise<PagedWorkResponseModel | null>;
-
-  getWorkResponsesTop(
-    workId: string,
-    pageSize: number
-  ): Promise<PagedWorkResponseModel | null>;
-
-  getWorkResponsesByProfile(
-    profileId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkResponseModel | null>;
-
-  getWorkResponsesByProfileTop(
-    profileId: string,
-    pageSize: number
-  ): Promise<PagedWorkResponseModel | null>;
 
   isConnected(): Promise<boolean>;
   disconnect(): void;
@@ -158,13 +120,6 @@ export interface IWriteApi {
   //   tx: string | null | undefined,
   //   entityType?: string
   // ): Promise<number>;
-
-  getWorkResponseCount(workId: string): Promise<number>;
-
-  getFollowedCount(profileId: string): Promise<number>;
-  getFollowerCount(profileId: string): Promise<number>;
-
-  getTopicsByWork(workId: string): Promise<TopicModel[] | null>;
 
   // cleanDb(): TxHashPromise;
   // setupData(): TxHashPromise;

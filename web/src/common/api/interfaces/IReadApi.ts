@@ -1,12 +1,13 @@
 import {
+  PagedWorkResponseModel,
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
   WorkWithAuthorModel,
 } from "../irys/models/ApiModels";
-import { IGraphqlApi } from "./IGraphqlApi";
+import { IGraphqlBase } from "./IGraphqlApi";
 
-export interface IReadApi extends IGraphqlApi {
+export interface IReadApi extends IGraphqlBase {
   getWork(workId: string): Promise<WorkWithAuthorModel | null>;
 
   searchWorksTop(searchTxt: string): Promise<WorkWithAuthorModel[] | null>;
@@ -53,4 +54,46 @@ export interface IReadApi extends IGraphqlApi {
   getWorksByOneFollowedTop(
     followedId: string
   ): Promise<PagedWorkWithAuthorModel | null>;
+
+  getAuthorWorks(
+    authorId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkWithAuthorModel | null>;
+
+  getAuthorWorksTop(
+    authorId: string,
+    pageSize: number
+  ): Promise<PagedWorkWithAuthorModel | null>;
+
+  getFollowedProfiles(followerId: string): Promise<ProfileModel[] | null>;
+  getFollowerProfiles(followedId: string): Promise<ProfileModel[] | null>;
+  getFollowedCount(profileId: string): Promise<number>;
+  getFollowerCount(profileId: string): Promise<number>;
+
+  getWorkResponses(
+    workId: string,
+    pageSize?: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null>;
+
+  getWorkResponsesTop(
+    workId: string,
+    pageSize: number
+  ): Promise<PagedWorkResponseModel | null>;
+
+  getWorkResponsesByProfile(
+    profileId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null>;
+
+  getWorkResponsesByProfileTop(
+    profileId: string,
+    pageSize: number
+  ): Promise<PagedWorkResponseModel | null>;
+
+  getWorkResponseCount(workId: string): Promise<number>;
+
+  getTopicsByWork(workId: string): Promise<TopicModel[] | null>;
 }

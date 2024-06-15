@@ -12,26 +12,19 @@ import {
 import {
   AppTagNames,
   BaseQueryTags,
-  DataUpload,
   EntityType,
-  FollowModel,
   FollowerTagNames,
   InputTag,
   IrysGraphqlResponse,
-  IrysGraphqlResponseNode,
   IrysGraphqlVariables,
-  PagedProfileModel,
   PagedWorkResponseModel,
   PagedWorkWithAuthorModel,
   ProfileModel,
   QueryResponse,
   TopicModel,
   WorkLikeTagNames,
-  WorkModel,
-  WorkResponseModel,
-  WorkResponseModelWithProfile,
+  WorkResponderTagNames,
   WorkTagNames,
-  WorkTopicModel,
   WorkTopicTagNames,
   WorkWithAuthorModel,
 } from "./models/ApiModels";
@@ -78,99 +71,48 @@ export class IrysReadApi implements IReadApi {
     return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
-  removeDeletedRecords(
-    response: IrysGraphqlResponse | null,
-    entityType: EntityType
-  ): IrysGraphqlResponse {
-    return this.#IrysGql.removeDeletedRecords(response, entityType);
-  }
-
-  async queryGraphQL(
-    variables: IrysGraphqlVariables
-  ): Promise<IrysGraphqlResponse | null> {
-    console.log("variables", variables);
-    return await this.#IrysGql.queryGraphQL(variables);
-  }
-
-  async convertGqlResponseToWorkResponse(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedWorkResponseModel | null> {
-    return await this.#IrysGql.convertGqlResponseToWorkResponse(searchResults);
-  }
-
-  async convertGqlResponseNodeToWorkResponse(
-    gqlResponse: IrysGraphqlResponseNode
-  ): Promise<WorkResponseModelWithProfile> {
-    return await this.#IrysGql.convertGqlResponseNodeToWorkResponse(
-      gqlResponse
+  /// getFollowed decides whether to return a list of followed or follower
+  async #getFollowProfiles(profileId: string, getFollowed: boolean) {
+    const searchTags: InputTag[] = [
+      ...BaseQueryTags,
+      { name: AppTagNames.EntityType, values: [EntityType.Follow] },
+    ];
+    if (getFollowed) {
+      searchTags.push({
+        name: FollowerTagNames.FollowerId,
+        values: [profileId],
+      });
+    } else {
+      searchTags.push({
+        name: FollowerTagNames.FollowedId,
+        values: [profileId],
+      });
+    }
+    let responses: QueryResponse[] = await this.#IrysQuery
+      .search(SEARCH_TX)
+      .tags(searchTags)
+      .sort(DESC);
+    responses = this.#irysCommon.removeDeletedRecords(
+      responses,
+      EntityType.Follow
     );
-  }
 
-  async convertGqlResponseToProfile(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedProfileModel | null> {
-    return await this.#IrysGql.convertGqlResponseToProfile(searchResults);
-  }
+    const follow: ProfileModel[] = new Array(responses.length);
+    let filterTagValue = FollowerTagNames.FollowedId;
+    if (!getFollowed) {
+      filterTagValue = FollowerTagNames.FollowerId;
+    }
+    for (let i = 0; i < responses.length; i++) {
+      const followId = responses[i].tags.find(
+        (tag) => tag.name === filterTagValue
+      )!.value;
+      const profileModel = await this.getProfile(followId);
+      if (!profileModel)
+        throw new Error(`Follow ProfileModel ${followId} was not found!`);
+      follow[i] = profileModel;
+    }
 
-  async convertGqlResponseNodeToProfile(
-    gqlResponse: IrysGraphqlResponseNode
-  ): Promise<ProfileModel> {
-    return await this.#IrysGql.convertGqlResponseNodeToProfile(gqlResponse);
-  }
-
-  async convertGqlResponseToWorkWithAuthor(
-    searchResults: IrysGraphqlResponse | null
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
-      searchResults
-    );
-  }
-
-  convertGqlResponseToTopic(
-    response: IrysGraphqlResponse | null
-  ): TopicModel[] {
-    return this.#IrysGql.convertGqlResponseToTopic(response);
-  }
-
-  convertGqlResponseToWorkTopic(
-    response: IrysGraphqlResponse | null
-  ): WorkTopicModel[] {
-    return this.#IrysGql.convertGqlResponseToWorkTopic(response);
-  }
-
-  convertGqlResponseToFollow(
-    response: IrysGraphqlResponse | null
-  ): FollowModel[] {
-    return this.#IrysGql.convertGqlResponseToFollow(response);
-  }
-
-  async convertGqlResponseNodeToWorkWithAuthor(
-    gqlResponse: IrysGraphqlResponseNode
-  ): Promise<WorkWithAuthorModel> {
-    return await this.#IrysGql.convertGqlResponseNodeToWorkWithAuthor(
-      gqlResponse
-    );
-  }
-
-  convertGqlNodeToWorkResponse(
-    response: IrysGraphqlResponseNode,
-    data: string | null
-  ): WorkResponseModel {
-    return this.#IrysGql.convertGqlNodeToWorkResponse(response, data);
-  }
-
-  convertGqlNodeToProfile(
-    response: IrysGraphqlResponseNode,
-    data: ArrayBuffer | null
-  ): ProfileModel {
-    return this.#IrysGql.convertGqlNodeToProfile(response, data);
-  }
-
-  convertGqlNodeToWork(
-    response: IrysGraphqlResponseNode,
-    data: DataUpload
-  ): WorkModel {
-    return this.#IrysGql.convertGqlNodeToWork(response, data);
+    return follow;
   }
 
   #irysQuery?: Query;
@@ -179,6 +121,12 @@ export class IrysReadApi implements IReadApi {
       this.#irysQuery = new Query({ network: this.#irysCommon.Network });
     }
     return this.#irysQuery;
+  }
+
+  async queryGraphQL(
+    variables: IrysGraphqlVariables
+  ): Promise<IrysGraphqlResponse | null> {
+    return await this.#IrysGql.queryGraphQL(variables);
   }
 
   async getWork(workId: string): Promise<WorkWithAuthorModel | null> {
@@ -255,8 +203,7 @@ export class IrysReadApi implements IReadApi {
         ...BaseQueryTags,
         { name: AppTagNames.EntityType, values: [EntityType.Topic] },
       ])
-      .sort(DESC)
-      .limit(PAGE_SIZE);
+      .sort(DESC);
 
     return this.#irysCommon.convertQueryToTopics(response) || [];
   }
@@ -393,5 +340,150 @@ export class IrysReadApi implements IReadApi {
     followedId: string
   ): Promise<PagedWorkWithAuthorModel | null> {
     return await this.getWorksByOneFollowed(followedId, PAGE_SIZE);
+  }
+
+  async getAuthorWorks(
+    authorId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    const searchResults = await this.#IrysGql.queryGraphQL({
+      tags: [
+        ...BaseQueryTags,
+        { name: AppTagNames.EntityType, values: [EntityType.Work] },
+        { name: WorkTagNames.AuthorId, values: [authorId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
+
+    return await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
+      searchResults
+    );
+  }
+
+  async getAuthorWorksTop(
+    authorId: string,
+    pageSize: number
+  ): Promise<PagedWorkWithAuthorModel | null> {
+    const searchResults = await this.#IrysGql.queryGraphQL({
+      tags: [
+        ...BaseQueryTags,
+        { name: AppTagNames.EntityType, values: [EntityType.Work] },
+        { name: WorkTagNames.AuthorId, values: [authorId] },
+      ],
+      limit: pageSize,
+    });
+
+    const works = await this.#IrysGql.convertGqlResponseToWorkWithAuthor(
+      searchResults
+    );
+    if (!works) {
+      return null;
+    }
+    works.workModels.sort((a, b) => {
+      if (a.likes > b.likes) return -1;
+      if (a.likes < b.likes) return 1;
+      return 0;
+    });
+    return works;
+  }
+
+  async getFollowedProfiles(
+    followerId: string
+  ): Promise<ProfileModel[] | null> {
+    return this.#getFollowProfiles(followerId, true);
+  }
+
+  async getFollowerProfiles(
+    followedId: string
+  ): Promise<ProfileModel[] | null> {
+    return this.#getFollowProfiles(followedId, false);
+  }
+
+  async getFollowedCount(profileId: string): Promise<number> {
+    return (await this.getFollowedProfiles(profileId))?.length || 0;
+  }
+
+  async getFollowerCount(profileId: string): Promise<number> {
+    return (await this.getFollowerProfiles(profileId))?.length || 0;
+  }
+
+  async getWorkResponses(
+    workId: string,
+    pageSize?: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null> {
+    const response = await this.#IrysGql.queryGraphQL({
+      tags: [
+        ...BaseQueryTags,
+        { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
+        { name: WorkResponderTagNames.WorkId, values: [workId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
+    return await this.#IrysGql.convertGqlResponseToWorkResponse(response);
+  }
+
+  /// todo: needs an update to include likes or I might not have response likes altogether
+  async getWorkResponsesTop(
+    workId: string,
+    pageSize: number = PAGE_SIZE
+  ): Promise<PagedWorkResponseModel | null> {
+    return await this.getWorkResponses(workId, pageSize);
+  }
+
+  async getWorkResponsesByProfile(
+    profileId: string,
+    pageSize: number,
+    cursor?: string
+  ): Promise<PagedWorkResponseModel | null> {
+    const response = await this.#IrysGql.queryGraphQL({
+      tags: [
+        ...BaseQueryTags,
+        { name: AppTagNames.EntityType, values: [EntityType.WorkResponse] },
+        { name: WorkResponderTagNames.ResponderId, values: [profileId] },
+      ],
+      limit: pageSize,
+      cursor,
+    });
+    return await this.#IrysGql.convertGqlResponseToWorkResponse(response);
+  }
+
+  /// todo: needs an update to include likes or I might not have response likes altogether
+  async getWorkResponsesByProfileTop(
+    profileId: string,
+    pageSize: number = PAGE_SIZE
+  ): Promise<PagedWorkResponseModel | null> {
+    return await this.getWorkResponsesByProfile(profileId, pageSize);
+  }
+
+  async getWorkResponseCount(workId: string): Promise<number> {
+    return (
+      (await this.getWorkResponses(workId))?.workResponseModels.length || 0
+    );
+  }
+
+  async getTopicsByWork(workId: string): Promise<TopicModel[] | null> {
+    const workTopicResponse = await this.#IrysGql.queryGraphQL({
+      tags: [
+        ...BaseQueryTags,
+        { name: AppTagNames.EntityType, values: [EntityType.WorkTopic] },
+        { name: WorkTopicTagNames.WorkId, values: [workId] },
+      ],
+    });
+
+    const workTopics =
+      this.#IrysGql.convertGqlResponseToWorkTopic(workTopicResponse);
+    const allTopicModels = await this.getAllTopics();
+    const topics: TopicModel[] = new Array(workTopics.length);
+
+    for (let i = 0; i < workTopics.length; i++) {
+      topics[i] = allTopicModels.find(
+        (topic) => topic.id === workTopics[i].topic_id
+      )!;
+    }
+    return topics;
   }
 }

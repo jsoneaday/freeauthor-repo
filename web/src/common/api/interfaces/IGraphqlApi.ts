@@ -17,15 +17,17 @@ import {
   WorkWithAuthorModel,
 } from "../irys/models/ApiModels";
 
-export interface IGraphqlApi {
+export interface IGraphqlBase {
+  queryGraphQL(
+    variables: IrysGraphqlVariables
+  ): Promise<IrysGraphqlResponse | null>;
+}
+
+export interface IGraphqlApi extends IGraphqlBase {
   removeDeletedRecords(
     response: IrysGraphqlResponse | null,
     entityType: EntityType
   ): IrysGraphqlResponse;
-
-  queryGraphQL(
-    variables: IrysGraphqlVariables
-  ): Promise<IrysGraphqlResponse | null>;
 
   convertGqlResponseToWorkResponse(
     searchResults: IrysGraphqlResponse | null

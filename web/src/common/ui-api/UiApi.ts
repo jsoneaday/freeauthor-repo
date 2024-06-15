@@ -195,13 +195,13 @@ export class UiApi {
   }
 
   async getFollowedProfiles(profileId: string): Promise<Profile[] | null> {
-    const profiles = await this.#writeApi.getFollowedProfiles(profileId);
+    const profiles = await this.#readApi.getFollowedProfiles(profileId);
     if (profiles) return this.#getProfiles(profiles);
     return null;
   }
 
   async getFollowerProfiles(profileId: string): Promise<Profile[] | null> {
-    const profiles = await this.#writeApi.getFollowerProfiles(profileId);
+    const profiles = await this.#readApi.getFollowerProfiles(profileId);
     if (profiles) return this.#getProfiles(profiles);
     return null;
   }
@@ -276,7 +276,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getAuthorWorks(
+    const works = await this.#readApi.getAuthorWorks(
       authorId,
       pageSize,
       cursor
@@ -289,7 +289,7 @@ export class UiApi {
     authorId: string,
     pageSize: number
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getAuthorWorksTop(authorId, pageSize);
+    const works = await this.#readApi.getAuthorWorksTop(authorId, pageSize);
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -326,7 +326,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#writeApi.getWorkResponses(
+    const responses = await this.#readApi.getWorkResponses(
       workId,
       pageSize,
       cursor
@@ -343,10 +343,7 @@ export class UiApi {
     workId: string,
     pageSize: number
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#writeApi.getWorkResponsesTop(
-      workId,
-      pageSize
-    );
+    const responses = await this.#readApi.getWorkResponsesTop(workId, pageSize);
     if (responses)
       return this.#getResponseWithResponders(
         responses.workResponseModels,
@@ -360,7 +357,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#writeApi.getWorkResponsesByProfile(
+    const responses = await this.#readApi.getWorkResponsesByProfile(
       profileId,
       pageSize,
       cursor
@@ -377,7 +374,7 @@ export class UiApi {
     profileId: string,
     pageSize: number
   ): Promise<ResponseWithResponder[] | null> {
-    const responses = await this.#writeApi.getWorkResponsesByProfileTop(
+    const responses = await this.#readApi.getWorkResponsesByProfileTop(
       profileId,
       pageSize
     );
@@ -390,14 +387,14 @@ export class UiApi {
   }
 
   async getWorkResponseCount(workId: string): Promise<number> {
-    return await this.#writeApi.getWorkResponseCount(workId);
+    return await this.#readApi.getWorkResponseCount(workId);
   }
 
   async getFollowedCount(profileId: string): Promise<number> {
-    return this.#writeApi.getFollowedCount(profileId);
+    return this.#readApi.getFollowedCount(profileId);
   }
   async getFollowerCount(profileId: string): Promise<number> {
-    return this.#writeApi.getFollowerCount(profileId);
+    return this.#readApi.getFollowerCount(profileId);
   }
 
   async getAllTopics(): Promise<Topic[] | null> {
@@ -412,7 +409,7 @@ export class UiApi {
   }
 
   async getTopicByWork(workId: string): Promise<Topic[] | null> {
-    const topics = await this.#writeApi.getTopicsByWork(workId);
+    const topics = await this.#readApi.getTopicsByWork(workId);
     return (
       topics?.map((topic) => ({
         id: topic.id,
