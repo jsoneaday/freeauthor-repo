@@ -40,7 +40,7 @@ export function WriteStory() {
     work_id: string;
     validation_msg: string | undefined;
   }>();
-  const [selectedTopicId, setSelectedTopicId] = useState("1"); //todo: replace this with a real id
+  const [selectedTopicId, setSelectedTopicId] = useState("");
   const [topics, setTopics] = useState<OptionType[]>([]);
   const api = useUiApi();
 
@@ -149,12 +149,14 @@ export function WriteStory() {
         selectedTopicId
       );
       console.log("updateWork tx", tx);
-    } catch (e) {
-      console.log(e);
-    } finally {
       setValidationMsg(
         "Story submitted successfully. You can continue editing it here or browse other stories."
       );
+    } catch (e) {
+      console.log(e);
+      setValidationMsg("Failed to upload story");
+    } finally {
+      setIsSubmitBtnDisabled(false);
     }
   };
 
@@ -203,6 +205,7 @@ export function WriteStory() {
     const titleValidation = validateTitle(title);
     const descValidation = validateDesc(description);
     const contentValidation = validateContent();
+    console.log("selectedTopicId", selectedTopicId);
     const topicValidation = validateTopic(selectedTopicId);
 
     if (titleValidation !== WriteValidation.FieldIsValid) {

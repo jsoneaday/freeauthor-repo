@@ -2,11 +2,11 @@ import { UploadResponse } from "@irys/sdk/common/types";
 import {
   ActionType,
   Avatar,
+  Bundle,
   PagedWorkResponseModel,
   PagedWorkWithAuthorModel,
   ProfileModel,
   TopicModel,
-  WorkWithAuthorModel,
 } from "../irys/models/ApiModels";
 
 export interface IWriteApi {
@@ -16,6 +16,8 @@ export interface IWriteApi {
 
   /// Loaded balance on Irys
   balance(): Promise<number>;
+
+  uploadBundles(bundles: Bundle[]): Promise<UploadResponse | undefined>;
 
   addWork(
     title: string,
@@ -36,37 +38,6 @@ export interface IWriteApi {
     priorWorkId: string,
     fund?: boolean
   ): Promise<UploadResponse>;
-
-  /// workId is transaction id
-  getWork(workId: string): Promise<WorkWithAuthorModel | null>;
-
-  searchWorksTop(searchTxt: string): Promise<WorkWithAuthorModel[] | null>;
-
-  searchWorks(
-    searchTxt: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
-  getWorksByAllFollowed(
-    followerId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
-  getWorksByAllFollowedTop(
-    followerId: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
-  getWorksByOneFollowed(
-    followedId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
-
-  getWorksByOneFollowedTop(
-    followedId: string
-  ): Promise<PagedWorkWithAuthorModel | null>;
 
   getAuthorWorks(
     authorId: string,

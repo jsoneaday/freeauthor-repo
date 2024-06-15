@@ -4,7 +4,6 @@ import {
   ProfileModel,
   Tag,
   TopicModel,
-  WorkWithAuthorModel,
   QueryResponse,
   TxValidationMetadata,
   EntityType,
@@ -22,6 +21,7 @@ import {
   ActionName,
   ActionType,
   BaseQueryTags,
+  Bundle,
 } from "./models/ApiModels";
 import { IWriteApi } from "../interfaces/IWriteApi";
 import { WebIrys } from "@irys/sdk";
@@ -31,14 +31,9 @@ import { type WebToken } from "@irys/sdk/web/types";
 import Query from "@irys/query";
 import { RPC_URL, TOKEN, TX_METADATA_URL } from "../../Env";
 import bs58 from "bs58";
-import { UploadResponse } from "@irys/sdk/common/types";
+import { IrysTransaction, UploadResponse } from "@irys/sdk/common/types";
 import { ICommonApi } from "../interfaces/ICommonApi";
 import { DESC, SEARCH_TX } from "./IrysCommon";
-import {
-  convertModelsToWorkWithAuthor,
-  convertQueryToWork,
-} from "./models/ApiModelConverters";
-import { PAGE_SIZE } from "../../utils/StandardValues";
 import { IReadApi } from "../interfaces/IReadApi";
 
 /// Note all entity id are the transaction id on Irys
@@ -151,12 +146,27 @@ export class IrysWriteApi implements IWriteApi {
     return encodedString.length;
   }
 
+  async uploadBundles(bundles: Bundle[]): Promise<UploadResponse | undefined> {
+    let txs: IrysTransaction[] = new Array(bundles.length);
+
+    for (let i = 0; i < bundles.length; i++) {
+      const tx = this.#irys?.createTransaction(bundles[i].content, {
+        tags: bundles[i].tags,
+      });
+      if (tx) {
+        tx.sign();
+        txs[i] = tx;
+      }
+    }
+
+    return (await this.#irys?.uploader.uploadBundle(txs))?.data;
+  }
+
   async #uploadText(
     content: string,
     tags: Tag[],
     fund: boolean
   ): Promise<UploadResponse> {
-    console.log("upload text", content);
     if (fund) await this.#fundText(content);
 
     return await this.#Irys.upload(content, {
@@ -186,33 +196,6 @@ export class IrysWriteApi implements IWriteApi {
       return txMeta.address === verificationAddress;
     }
     return false;
-  }
-
-  async #convertQueryToWorkWithAuthors(queryResponse: QueryResponse[]) {
-    const _queryResp = this.#irysCommon.removeDeletedRecords(
-      queryResponse,
-      EntityType.Work
-    );
-    const workWithAuthors: WorkWithAuthorModel[] = new Array(_queryResp.length);
-    for (let i = 0; i < _queryResp.length; i++) {
-      workWithAuthors[i] = await this.#convertQueryToWorkWithAuthor(
-        _queryResp[i]
-      );
-    }
-    return workWithAuthors;
-  }
-
-  async #convertQueryToWorkWithAuthor(queryResp: QueryResponse) {
-    const data = await this.#irysCommon.getData(queryResp.id, true);
-    const workModel = convertQueryToWork(queryResp, data);
-    workModel.content = data as string;
-    const likeCount = await this.#irysRead.getWorkLikeCount(workModel.id);
-    const profileModel = await this.#irysRead.getProfile(workModel.author_id);
-
-    if (!profileModel) {
-      throw new Error(`Profile with id ${workModel.author_id} not found!`);
-    }
-    return convertModelsToWorkWithAuthor(workModel, profileModel, likeCount);
   }
 
   async arbitraryFund(amount: number): Promise<void> {
@@ -268,135 +251,6 @@ export class IrysWriteApi implements IWriteApi {
       ActionType.Update,
       fund
     );
-  }
-
-  async getWork(workId: string): Promise<WorkWithAuthorModel | null> {
-    const workQueryResponse = await this.#IrysQuery
-      .search(SEARCH_TX)
-      .ids([workId])
-      .sort(DESC)
-      .limit(1);
-
-    if (workQueryResponse.length > 0) {
-      return this.#convertQueryToWorkWithAuthor(workQueryResponse[0]);
-    }
-    return null;
-  }
-
-  async searchWorksTop(
-    searchTxt: string
-  ): Promise<WorkWithAuthorModel[] | null> {
-    const workResponses: QueryResponse[] = await this.#IrysQuery
-      .search(SEARCH_TX)
-      .tags([
-        ...BaseQueryTags,
-        { name: AppTagNames.EntityType, values: [EntityType.Work] },
-        { name: WorkTagNames.Description, values: [searchTxt] },
-      ])
-      .sort(DESC)
-      .limit(PAGE_SIZE);
-
-    const works: WorkWithAuthorModel[] =
-      await this.#convertQueryToWorkWithAuthors(workResponses);
-
-    return works.sort((a, b) => {
-      if (a.likes > b.likes) return -1;
-      if (a.likes < b.likes) return 1;
-      return 0;
-    });
-  }
-
-  async searchWorks(
-    searchTxt: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    const searchResults = await this.#irysRead.queryGraphQL({
-      tags: [
-        ...BaseQueryTags,
-        { name: AppTagNames.EntityType, values: [EntityType.Work] },
-        { name: WorkTagNames.Description, values: [searchTxt] },
-      ],
-      limit: pageSize,
-      cursor,
-    });
-
-    return await this.#irysRead.convertGqlResponseToWorkWithAuthor(
-      searchResults
-    );
-  }
-
-  async getWorksByAllFollowed(
-    followerId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    const followsResp = await this.#irysRead.queryGraphQL({
-      tags: [
-        ...BaseQueryTags,
-        { name: AppTagNames.EntityType, values: [EntityType.Follow] },
-        { name: FollowerTagNames.FollowerId, values: [followerId] },
-      ],
-    });
-    const followModels = this.#irysRead.convertGqlResponseToFollow(followsResp);
-
-    const tags: InputTag[] = new Array(4);
-    tags[0] = { name: AppTagNames.EntityType, values: [EntityType.Work] };
-    tags[1] = {
-      name: WorkTagNames.AuthorId,
-      values: followModels.map((follow) => follow.followed_id),
-    };
-    tags[2] = BaseQueryTags[0];
-    tags[3] = BaseQueryTags[1];
-
-    const worksResp = await this.#irysRead.queryGraphQL({
-      tags,
-      limit: pageSize,
-      cursor,
-    });
-
-    return await this.#irysRead.convertGqlResponseToWorkWithAuthor(worksResp);
-  }
-
-  async getWorksByAllFollowedTop(
-    followerId: string
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    let works = await this.getWorksByAllFollowed(followerId, PAGE_SIZE);
-    works?.workModels.sort((a, b) => {
-      if (a.likes > b.likes) return -1;
-      if (a.likes < b.likes) return 1;
-      return 0;
-    });
-    return works;
-  }
-
-  async getWorksByOneFollowed(
-    followedId: string,
-    pageSize: number,
-    cursor?: string
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    const tags: InputTag[] = new Array(4);
-    tags[0] = { name: AppTagNames.EntityType, values: [EntityType.Work] };
-    tags[1] = {
-      name: WorkTagNames.AuthorId,
-      values: [followedId],
-    };
-    tags[2] = BaseQueryTags[0];
-    tags[3] = BaseQueryTags[1];
-
-    const worksResp = await this.#irysRead.queryGraphQL({
-      tags,
-      limit: pageSize,
-      cursor,
-    });
-
-    return await this.#irysRead.convertGqlResponseToWorkWithAuthor(worksResp);
-  }
-
-  async getWorksByOneFollowedTop(
-    followedId: string
-  ): Promise<PagedWorkWithAuthorModel | null> {
-    return await this.getWorksByOneFollowed(followedId, PAGE_SIZE);
   }
 
   async getAuthorWorks(
@@ -642,6 +496,7 @@ export class IrysWriteApi implements IWriteApi {
       limit: pageSize,
       cursor,
     });
+    console.log("response", response?.data.transactions.edges);
     return await this.#irysRead.convertGqlResponseToWorkResponse(response);
   }
 

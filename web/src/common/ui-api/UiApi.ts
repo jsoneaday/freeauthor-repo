@@ -42,6 +42,26 @@ export class UiApi {
     await this.#writeApi.connect(walletProvider);
   }
 
+  #validateWork(
+    title: string,
+    content: string,
+    authorId: string,
+    topicId: string
+  ) {
+    if (!title) {
+      throw new Error("Title cannot be empty");
+    }
+    if (!content) {
+      throw new Error("Content cannot be empty");
+    }
+    if (!authorId) {
+      throw new Error("AuthorId is required");
+    }
+    if (!topicId) {
+      throw new Error("Topic is selected");
+    }
+  }
+
   /// Works can have more than one topic but adding a default topic upon creation
   async addWorkWithTopic(
     title: string,
@@ -51,6 +71,8 @@ export class UiApi {
     topicId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
+    this.#validateWork(title, content, authorId, topicId);
+
     const work = await this.#writeApi.addWork(
       title,
       description,
@@ -59,7 +81,7 @@ export class UiApi {
       ActionType.Add,
       fund
     );
-    await this.addWorkTopic(topicId, work.id);
+    await this.addWorkTopic(topicId, work.id, fund);
     return work;
   }
 
@@ -92,8 +114,17 @@ export class UiApi {
   async addTopic(name: string): Promise<UploadResponse> {
     return await this.#writeApi.addTopic(name);
   }
-  async addWorkTopic(topicId: string, workId: string): Promise<UploadResponse> {
-    return await this.#writeApi.addWorkTopic(topicId, workId);
+  async addWorkTopic(
+    topicId: string,
+    workId: string,
+    fund: boolean = false
+  ): Promise<UploadResponse> {
+    return await this.#writeApi.addWorkTopic(
+      topicId,
+      workId,
+      ActionType.Add,
+      fund
+    );
   }
   async addWorkLikes(workId: string, likerId: string): Promise<UploadResponse> {
     return await this.#writeApi.addWorkLike(workId, likerId);
@@ -115,6 +146,8 @@ export class UiApi {
     topicId: string,
     fund: boolean = false
   ): Promise<UploadResponse> {
+    this.#validateWork(title, content, authorId, topicId);
+
     const updatedWork = await this.#writeApi.updateWork(
       title,
       description,
@@ -174,12 +207,12 @@ export class UiApi {
   }
 
   async getWork(workId: string): Promise<WorkWithAuthor | null> {
-    const work = await this.#writeApi.getWork(workId);
+    const work = await this.#readApi.getWork(workId);
     return this.#getWorkWithAuthor(work);
   }
 
   async searchWorksTop(searchTxt: string): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.searchWorksTop(searchTxt);
+    const works = await this.#readApi.searchWorksTop(searchTxt);
     if (works) return this.#getWorkWithAuthors(works);
     return null;
   }
@@ -189,7 +222,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.searchWorks(searchTxt, pageSize, cursor);
+    const works = await this.#readApi.searchWorks(searchTxt, pageSize, cursor);
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }
@@ -199,7 +232,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getWorksByAllFollowed(
+    const works = await this.#readApi.getWorksByAllFollowed(
       followerId,
       pageSize,
       cursor
@@ -211,7 +244,7 @@ export class UiApi {
   async getWorksByAllFollowedTop(
     followerId: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getWorksByAllFollowedTop(followerId);
+    const works = await this.#readApi.getWorksByAllFollowedTop(followerId);
     if (works) return this.#getWorkWithAuthors(works.workModels);
     return null;
   }
@@ -221,7 +254,7 @@ export class UiApi {
     pageSize: number,
     cursor?: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getWorksByOneFollowed(
+    const works = await this.#readApi.getWorksByOneFollowed(
       followedId,
       pageSize,
       cursor
@@ -233,7 +266,7 @@ export class UiApi {
   async getWorksByOneFollowedTop(
     followedId: string
   ): Promise<WorkWithAuthor[] | null> {
-    const works = await this.#writeApi.getWorksByOneFollowedTop(followedId);
+    const works = await this.#readApi.getWorksByOneFollowedTop(followedId);
     if (works) return this.#getWorkWithAuthors(works.workModels, works.cursor);
     return null;
   }

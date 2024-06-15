@@ -302,3 +302,8 @@ export class WorkResponseModelWithProfile implements WorkResponseModel {
 export type PagedWorkResponseModel = {
   workResponseModels: WorkResponseModelWithProfile[];
 } & { cursor?: string };
+
+export type Bundle = {
+  content: string | Buffer;
+  tags: Tag[];
+};
