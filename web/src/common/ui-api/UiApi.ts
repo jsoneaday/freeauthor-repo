@@ -126,9 +126,11 @@ export class UiApi {
       fund
     );
   }
+
   async addWorkLikes(workId: string, likerId: string): Promise<UploadResponse> {
     return await this.#writeApi.addWorkLike(workId, likerId);
   }
+
   async addWorkResponse(
     content: string,
     workId: string,
@@ -161,7 +163,6 @@ export class UiApi {
     return updatedWork;
   }
 
-  // todo: add avatar later
   async updateProfile(
     profileId: string,
     userName: string,
@@ -418,14 +419,6 @@ export class UiApi {
       })) || null
     );
   }
-
-  // async cleanDb(): Promise<UploadResponse> {
-  //   return await this.#writeApi.cleanDb();
-  // }
-
-  // async setupData(): Promise<UploadResponse> {
-  //   return await this.#writeApi.setupData();
-  // }
 
   #getResponseWithResponders(
     responses: WorkResponseModelWithProfile[],
