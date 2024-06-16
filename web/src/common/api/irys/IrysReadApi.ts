@@ -40,6 +40,14 @@ export class IrysReadApi implements IReadApi {
     return this.#irysGraphql;
   }
 
+  #irysQuery?: Query;
+  get #IrysQuery() {
+    if (!this.#irysQuery) {
+      this.#irysQuery = new Query({ network: this.#irysCommon.Network });
+    }
+    return this.#irysQuery;
+  }
+
   constructor(common: ICommonApi) {
     this.#irysCommon = common;
   }
@@ -113,14 +121,6 @@ export class IrysReadApi implements IReadApi {
     }
 
     return follow;
-  }
-
-  #irysQuery?: Query;
-  get #IrysQuery() {
-    if (!this.#irysQuery) {
-      this.#irysQuery = new Query({ network: this.#irysCommon.Network });
-    }
-    return this.#irysQuery;
   }
 
   async queryGraphQL(
