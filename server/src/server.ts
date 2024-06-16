@@ -1,6 +1,5 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { val } from "./vars.js";
 
 dotenv.config();
 
@@ -8,7 +7,7 @@ const app: Express = express();
 const port = process.env.PORT;
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Express + Typescript" + val);
+  res.send("Express + Typescript");
 });
 
 app.listen(port, () => {
