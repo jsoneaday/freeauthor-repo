@@ -13,3 +13,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Work {
+  id            BigInt          @id @default(autoincrement()) @db.BigInt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  title         String          @db.VarChar(100)
+  content       String          @db.Text()
+  description   String          @db.VarChar(400)
+  author        Profile         @relation(fields: [authorId], references: [id])
+  authorId      BigInt          @db.BigInt
+  workTopics    WorkTopic[]     @relation("Work")
+  workLikes     WorkLike[]      @relation("Work")
+  workResponses WorkResponse[]  @relation("Work")
+}
+
+model Profile {
+  id                    BigInt      @id @default(autoincrement()) @db.BigInt
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  userName              String      @unique @db.VarChar(50)
+  fullName              String      @db.VarChar(100)
+  description           String?     @db.VarChar(250)
+  ownerAddress          String      @db.VarChar(150)
+  socialLinkPrimary     String?     @db.VarChar(250)
+  socialLinkSecondary   String?     @db.VarChar(250)
+  avatar                Bytes?      @db.ByteA
+  works                 Work[]
+  followers             Follow[]    @relation("Followed")
+  following             Follow[]    @relation("Follower")
+  workLikes             WorkLike[]  @relation("Liker")
+}
+
+model Follow {
+  id                    BigInt      @id @default(autoincrement()) @db.BigInt
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  follower              Profile     @relation("Follower", fields: [followerId], references: [id])
+  followerId            BigInt
+  followed              Profile     @relation("Followed", fields: [followedId], references: [id])
+  followedId            BigInt
+}
+
+model Topic {
+  id                BigInt      @id @default(autoincrement()) @db.BigInt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  name              String
+  workTopics        WorkTopic[] @relation("Topic")
+}
+
+model WorkTopic {
+  id                BigInt      @id @default(autoincrement()) @db.BigInt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  work              Work        @relation("Work", fields: [workId], references: [id])
+  workId            BigInt
+  topic             Topic       @relation("Topic", fields: [topicId], references: [id])
+  topicId           BigInt
+}
+
+model WorkLike {
+  id                BigInt      @id @default(autoincrement()) @db.BigInt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  work              Work        @relation("Work", fields: [workId], references: [id])
+  workId            BigInt
+  liker             Profile     @relation("Liker", fields: [likerId], references: [id])
+  likerId           BigInt
+}
+
+model WorkResponse {
+  id                BigInt      @id @default(autoincrement()) @db.BigInt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  response          String      @db.Text()
+  work              Work        @relation("Work", fields: [workId], references: [id])
+  workId            BigInt  
+}
