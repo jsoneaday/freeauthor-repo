@@ -9,7 +9,7 @@ import { faker } from "@faker-js/faker";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-describe("WorkRepo tests", () => {
+describe("Work tests", () => {
   it("insertWork creates a new work", async () => {
     const repo = new Repository();
     const title = faker.lorem.sentence(6);
@@ -41,6 +41,13 @@ describe("WorkRepo tests", () => {
       [BigInt(topic.id)]
     );
 
+    const workTopics = await repo.WorkTopic.selectWorkTopicsByWork(work.id);
+
     assert.equal(work.title, title);
+    assert.equal(work.description, description);
+    assert.equal(work.content, content);
+    assert.equal(work.authorId, author.id);
+    assert.equal(workTopics[0].workId, work.id);
+    assert.equal(workTopics[0].topicId, topic.id);
   });
 });

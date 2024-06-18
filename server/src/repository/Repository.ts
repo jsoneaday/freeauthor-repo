@@ -4,7 +4,8 @@ import { ProfileRepo } from "./profile/ProfileRepo.js";
 import { TopicRepo } from "./topic/TopicRepo.js";
 import { LikeRepo } from "./like/LikeRepo.js";
 import { FollowRepo } from "./follow/FollowRepo.js";
-import { WorkResponseRepo } from "./work/WorkResponseRepo.js";
+import { WorkResponseRepo } from "./work/workResponse/WorkResponseRepo.js";
+import { WorkTopicRepo } from "./work/workTopic/WorkTopicRepo.js";
 
 export class Repository {
   #client: PrismaClient;
@@ -27,6 +28,12 @@ export class Repository {
     return this.#workResp;
   }
 
+  #workTopic: WorkTopicRepo;
+  get WorkTopic() {
+    if (!this.#workTopic) throw new Error("workTopic is undefined");
+    return this.#workTopic;
+  }
+
   #follow: FollowRepo;
   get Follow() {
     if (!this.#follow) throw new Error("follow is undefined");
@@ -47,8 +54,10 @@ export class Repository {
 
   constructor() {
     this.#client = new PrismaClient();
+
     this.#work = new WorkRepo(this.#client);
     this.#workResp = new WorkResponseRepo();
+    this.#workTopic = new WorkTopicRepo(this.#client);
     this.#profile = new ProfileRepo(this.#client);
     this.#topic = new TopicRepo(this.#client);
     this.#likes = new LikeRepo();
