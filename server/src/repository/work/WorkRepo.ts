@@ -91,4 +91,14 @@ export class WorkRepo {
       });
     });
   }
+
+  async selectWork(workId: bigint) {
+    return await this.#client.work.findFirst({
+      where: {
+        id: {
+          equals: workId,
+        },
+      },
+    });
+  }
 }
