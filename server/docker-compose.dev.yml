@@ -8,13 +8,13 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - db
-    env_file: ./.env
+    env_file: ./.env.dev
     ports:
       - 4000:4000
   db:
     image: postgres:14-alpine
     ports:
       - 5432:5432
-    env_file: ./.env
+    env_file: ./.env.dev
     volumes:
       - ./dbdata:/var/lib/postgresql/data

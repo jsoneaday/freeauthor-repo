@@ -81,6 +81,17 @@ CREATE TABLE "WorkResponse" (
     CONSTRAINT "WorkResponse_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "WorkResponseLike" (
+    "id" BIGSERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "workResponseId" BIGINT NOT NULL,
+    "likerId" BIGINT NOT NULL,
+
+    CONSTRAINT "WorkResponseLike_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Profile_userName_key" ON "Profile"("userName");
 
@@ -107,3 +118,9 @@ ALTER TABLE "WorkLike" ADD CONSTRAINT "WorkLike_likerId_fkey" FOREIGN KEY ("like
 
 -- AddForeignKey
 ALTER TABLE "WorkResponse" ADD CONSTRAINT "WorkResponse_workId_fkey" FOREIGN KEY ("workId") REFERENCES "Work"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkResponseLike" ADD CONSTRAINT "WorkResponseLike_workResponseId_fkey" FOREIGN KEY ("workResponseId") REFERENCES "WorkResponse"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkResponseLike" ADD CONSTRAINT "WorkResponseLike_likerId_fkey" FOREIGN KEY ("likerId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

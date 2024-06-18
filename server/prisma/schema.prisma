@@ -23,25 +23,26 @@ model Work {
   author        Profile         @relation(fields: [authorId], references: [id])
   authorId      BigInt          @db.BigInt
   workTopics    WorkTopic[]     @relation("Work")
-  workLikes     WorkLike[]      @relation("Work")
-  workResponses WorkResponse[]  @relation("Work")
+  workLikes     WorkLike[]      @relation("LikedWork")
+  workResponses WorkResponse[]  @relation("RespondedWork")
 }
 
 model Profile {
-  id                    BigInt      @id @default(autoincrement()) @db.BigInt
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  userName              String      @unique @db.VarChar(50)
-  fullName              String      @db.VarChar(100)
-  description           String?     @db.VarChar(250)
-  ownerAddress          String      @db.VarChar(150)
-  socialLinkPrimary     String?     @db.VarChar(250)
-  socialLinkSecondary   String?     @db.VarChar(250)
-  avatar                Bytes?      @db.ByteA
+  id                    BigInt              @id @default(autoincrement()) @db.BigInt
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  userName              String              @unique @db.VarChar(50)
+  fullName              String              @db.VarChar(100)
+  description           String?             @db.VarChar(250)
+  ownerAddress          String              @db.VarChar(150)
+  socialLinkPrimary     String?             @db.VarChar(250)
+  socialLinkSecondary   String?             @db.VarChar(250)
+  avatar                Bytes?              @db.ByteA
   works                 Work[]
-  followers             Follow[]    @relation("Followed")
-  following             Follow[]    @relation("Follower")
-  workLikes             WorkLike[]  @relation("Liker")
+  followers             Follow[]            @relation("Followed")
+  following             Follow[]            @relation("Follower")
+  workLikes             WorkLike[]          @relation("WorkLiker")
+  workResponseLikes     WorkResponseLike[]  @relation("ResponseLiker")
 }
 
 model Follow {
@@ -76,17 +77,28 @@ model WorkLike {
   id                BigInt      @id @default(autoincrement()) @db.BigInt
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
-  work              Work        @relation("Work", fields: [workId], references: [id])
+  work              Work        @relation("LikedWork", fields: [workId], references: [id])
   workId            BigInt
-  liker             Profile     @relation("Liker", fields: [likerId], references: [id])
+  liker             Profile     @relation("WorkLiker", fields: [likerId], references: [id])
   likerId           BigInt
 }
 
 model WorkResponse {
-  id                BigInt      @id @default(autoincrement()) @db.BigInt
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  response          String      @db.Text()
-  work              Work        @relation("Work", fields: [workId], references: [id])
-  workId            BigInt  
+  id                  BigInt              @id @default(autoincrement()) @db.BigInt
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  response            String              @db.Text()
+  work                Work                @relation("RespondedWork", fields: [workId], references: [id])
+  workId              BigInt
+  workResponseLikes   WorkResponseLike[]  @relation("WorkResponse")
+}
+
+model WorkResponseLike {
+  id                BigInt        @id @default(autoincrement()) @db.BigInt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  workResponse      WorkResponse  @relation("WorkResponse", fields: [workResponseId], references: [id])
+  workResponseId    BigInt
+  liker             Profile       @relation("ResponseLiker", fields: [likerId], references: [id])
+  likerId           BigInt
 }
