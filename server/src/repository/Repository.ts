@@ -6,6 +6,7 @@ import { LikeRepo } from "./like/LikeRepo.js";
 import { FollowRepo } from "./follow/FollowRepo.js";
 import { WorkResponseRepo } from "./work/workResponse/WorkResponseRepo.js";
 import { WorkTopicRepo } from "./work/workTopic/WorkTopicRepo.js";
+import { WorkLikesRepo } from "./work/workLikes/WorkLikesRepo.js";
 
 export class Repository {
   #client: PrismaClient;
@@ -34,6 +35,12 @@ export class Repository {
     return this.#workTopic;
   }
 
+  #workLikes: WorkLikesRepo;
+  get WorkLikes() {
+    if (!this.#workLikes) throw new Error("workLikes is undefined");
+    return this.#workLikes;
+  }
+
   #follow: FollowRepo;
   get Follow() {
     if (!this.#follow) throw new Error("follow is undefined");
@@ -58,6 +65,7 @@ export class Repository {
     this.#work = new WorkRepo(this.#client);
     this.#workResp = new WorkResponseRepo();
     this.#workTopic = new WorkTopicRepo(this.#client);
+    this.#workLikes = new WorkLikesRepo(this.#client);
     this.#profile = new ProfileRepo(this.#client);
     this.#topic = new TopicRepo(this.#client);
     this.#likes = new LikeRepo();

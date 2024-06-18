@@ -107,4 +107,43 @@ describe("Work tests", () => {
       1
     );
   });
+
+  it("selectWork, gets work with author and correct likes", async () => {
+    const title = faker.lorem.sentence(6);
+    const description = faker.lorem.sentence(10);
+    const content = faker.lorem.sentences(2);
+    const filePath = join(__dirname, "__test__/longhair.jpg");
+    let avatar: Buffer | undefined = undefined;
+    readFile(filePath, (err, data) => {
+      avatar = data;
+    });
+
+    const userName = faker.internet.userName();
+    const fullName = faker.internet.displayName();
+    const desc = faker.lorem.sentence(5);
+    const author = await repo.Profile.insertProfile(
+      userName,
+      fullName,
+      desc,
+      faker.lorem.sentence(6),
+      faker.internet.url(),
+      faker.internet.url(),
+      avatar
+    );
+    const topic = await repo.Topic.insertTopic(faker.company.name());
+    const newWork = await repo.Work.insertWork(
+      title,
+      description,
+      content,
+      author.id,
+      [BigInt(topic.id)]
+    );
+    await repo.WorkLikes.insertWorkLike(newWork.id, author.id);
+
+    const work = await repo.Work.selectWork(newWork.id);
+    assert.equal(work?.author.userName, userName);
+    assert.equal(work?.author.fullName, fullName);
+    assert.equal(work?.author.description, desc);
+    assert.equal(work?.workLikes.length, 1);
+  });
 });

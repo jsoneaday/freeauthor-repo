@@ -1,4 +1,4 @@
-import { PrismaClient, WorkTopic } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 export class WorkRepo {
   #client: PrismaClient;
@@ -94,6 +94,32 @@ export class WorkRepo {
 
   async selectWork(workId: bigint) {
     return await this.#client.work.findFirst({
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        content: true,
+        author: {
+          select: {
+            userName: true,
+            fullName: true,
+            description: true,
+          },
+        },
+        workLikes: {
+          select: {
+            id: true,
+            workId: true,
+            liker: {
+              select: {
+                id: true,
+                userName: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+      },
       where: {
         id: {
           equals: workId,

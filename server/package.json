@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "tsx --test",
+    "testonly": "tsx --test --test-only",
     "start": "tsx",
     "dev": "tsx watch src/server.ts"
   },
