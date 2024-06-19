@@ -13,6 +13,7 @@
   },
   "workspaces": [
     "web",
+    "webssr",
     "common",
     "server"
   ],
