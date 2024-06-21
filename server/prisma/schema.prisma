@@ -14,17 +14,28 @@ datasource db {
 }
 
 model Work {
-  id            BigInt          @id @default(autoincrement()) @db.BigInt
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  title         String          @db.VarChar(100)
-  content       String          @db.Text()
-  description   String          @db.VarChar(400)
-  author        Profile         @relation(fields: [authorId], references: [id])
-  authorId      BigInt          @db.BigInt
-  workTopics    WorkTopic[]     @relation("Work")
-  workLikes     WorkLike[]      @relation("LikedWork")
-  workResponses WorkResponse[]  @relation("RespondedWork")
+  id            BigInt            @id @default(autoincrement()) @db.BigInt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  title         String            @db.VarChar(100)
+  content       String            @db.Text()
+  description   String            @db.VarChar(400)
+  author        Profile           @relation(fields: [authorId], references: [id])
+  authorId      BigInt            @db.BigInt
+  workImages    WorkImage[]       @relation("Work")
+  workTopics    WorkTopic[]       @relation("Work")
+  workLikes     WorkLike[]        @relation("LikedWork")
+  workResponses WorkResponse[]    @relation("RespondedWork")  
+}
+
+model WorkImage {
+  id                BigInt        @id @default(autoincrement()) @db.BigInt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  imagePlaceholder  String        @db.VarChar(50)       
+  image             Bytes         @db.ByteA
+  work              Work          @relation("Work", fields: [workId], references: [id])
+  workId            BigInt
 }
 
 model Profile {
@@ -37,12 +48,21 @@ model Profile {
   ownerAddress          String              @db.VarChar(150)
   socialLinkPrimary     String?             @db.VarChar(250)
   socialLinkSecondary   String?             @db.VarChar(250)
-  avatar                Bytes?              @db.ByteA
+  avatar                ProfileAvatar?      @relation(fields: [avatarId], references: [id])
+  avatarId              BigInt?             @unique
   works                 Work[]
   followers             Follow[]            @relation("Followed")
   following             Follow[]            @relation("Follower")
   workLikes             WorkLike[]          @relation("WorkLiker")
   workResponseLikes     WorkResponseLike[]  @relation("ResponseLiker")
+}
+
+model ProfileAvatar {
+  id          BigInt        @id @default(autoincrement()) @db.BigInt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  avatar      Bytes         @db.ByteA
+  profile     Profile?
 }
 
 model Follow {

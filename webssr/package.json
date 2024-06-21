@@ -2,6 +2,7 @@
   "name": "webssr",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,6 +10,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "date-fns": "^3.6.0",
     "next": "14.2.4",
     "react": "^18",
     "react-dom": "^18"

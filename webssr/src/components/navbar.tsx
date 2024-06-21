@@ -2,12 +2,12 @@ import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
 
 const navigation = [
-  { name: "Home", href: "/" },
-  { name: "Articles", href: "/blog" },
-  { name: "About", href: "/about" },
+  { name: "Explore", href: "/" },
+  { name: "Read", href: "/read" },
+  { name: "Write", href: "/write" },
 ];
 
-export function Navbar() {
+export default function Navbar() {
   return (
     <header className="sticky top-0 z-50">
       <nav className="navbar bg-base-100/90 shadow-sm backdrop-blur-lg justify-center items-center py-2 md:px-10 px-5">
@@ -27,35 +27,35 @@ export function Navbar() {
                 stroke="currentColor"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
                   d="M4 6h16M4 12h8m-8 6h16"
                 ></path>
               </svg>
             </button>
             <ul className="menu dropdown-content menu-md z-[1] mt-3 w-52 gap-2 rounded-box bg-base-100 p-2 shadow">
               {navigation.map((item) => (
-                <li>
-                  <a href={item.href}>{item.name}</a>
+                <li key={item.name}>
+                  <Link href={item.href}>{item.name}</Link>
                 </li>
               ))}
             </ul>
           </div>
           <a className="btn btn-ghost text-xl" href="/">
             {" "}
-            Blog
+            FreeAuth
           </a>
         </div>
         <div className="navbar-center hidden lg:flex">
           {navigation.map((item) => (
-            <nav className="menu menu-horizontal">
-              <a
+            <nav key={item.name} className="menu menu-horizontal">
+              <Link
                 href={item.href}
                 className="btn btn-ghost text-lg font-semibold"
               >
                 {item.name}
-              </a>
+              </Link>
             </nav>
           ))}
         </div>

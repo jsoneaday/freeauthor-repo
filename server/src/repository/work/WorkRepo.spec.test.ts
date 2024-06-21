@@ -1,13 +1,8 @@
-import { before, describe, it } from "node:test";
-import { readFile } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "url";
+import { describe, it } from "node:test";
 import assert from "node:assert";
 import { Repository } from "../Repository.js";
 import { faker } from "@faker-js/faker";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getAvatar } from "../../__test__/avatar.js";
 
 const repo = new Repository();
 
@@ -16,11 +11,7 @@ describe("Work tests", () => {
     const title = faker.lorem.sentence(6);
     const description = faker.lorem.sentence(10);
     const content = faker.lorem.sentences(2);
-    const filePath = join(__dirname, "__test__/longhair.jpg");
-    let avatar: Buffer | undefined = undefined;
-    readFile(filePath, (err, data) => {
-      avatar = data;
-    });
+    let avatar: Buffer | undefined = getAvatar();
 
     const author = await repo.Profile.insertProfile(
       faker.internet.userName(),
@@ -56,11 +47,7 @@ describe("Work tests", () => {
     const title = faker.lorem.sentence(6);
     const description = faker.lorem.sentence(10);
     const content = faker.lorem.sentences(2);
-    const filePath = join(__dirname, "__test__/longhair.jpg");
-    let avatar: Buffer | undefined = undefined;
-    readFile(filePath, (err, data) => {
-      avatar = data;
-    });
+    let avatar: Buffer | undefined = getAvatar();
 
     const author = await repo.Profile.insertProfile(
       faker.internet.userName(),
@@ -108,15 +95,56 @@ describe("Work tests", () => {
     );
   });
 
+  it("insertWork creates a new work with one image", async () => {
+    const title = faker.lorem.sentence(6);
+    const description = faker.lorem.sentence(10);
+    const content = faker.lorem.sentences(2);
+    let avatar: Buffer | undefined = getAvatar();
+    let image: Buffer | undefined = getAvatar();
+
+    const author = await repo.Profile.insertProfile(
+      faker.internet.userName(),
+      faker.internet.displayName(),
+      faker.lorem.sentence(5),
+      faker.lorem.sentence(6),
+      faker.internet.url(),
+      faker.internet.url(),
+      avatar
+    );
+
+    const topic = await repo.Topic.insertTopic(faker.company.name());
+
+    const imagePlaceholder = "main";
+    const work = await repo.Work.insertWork(
+      title,
+      description,
+      content,
+      author.id,
+      [BigInt(topic.id)],
+      [
+        {
+          imagePlaceholder: imagePlaceholder,
+          image,
+        },
+      ]
+    );
+
+    const workImages = await repo.WorkImage.selectWorkImages(work.id);
+
+    assert.equal(work.title, title);
+    assert.equal(work.description, description);
+    assert.equal(work.content, content);
+    assert.equal(work.authorId, author.id);
+    assert.equal(workImages[0].workId, work.id);
+    assert.equal(workImages[0].image.byteLength, image.byteLength);
+    assert.equal(workImages[0].imagePlaceholder, imagePlaceholder);
+  });
+
   it("selectWork, gets work with author and correct likes", async () => {
     const title = faker.lorem.sentence(6);
     const description = faker.lorem.sentence(10);
     const content = faker.lorem.sentences(2);
-    const filePath = join(__dirname, "__test__/longhair.jpg");
-    let avatar: Buffer | undefined = undefined;
-    readFile(filePath, (err, data) => {
-      avatar = data;
-    });
+    let avatar: Buffer | undefined = getAvatar();
 
     const userName = faker.internet.userName();
     const fullName = faker.internet.displayName();

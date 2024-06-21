@@ -16,16 +16,28 @@ export class ProfileRepo {
     socialLinkSecondary: string | undefined,
     avatar: Buffer | undefined
   ) {
-    return await this.#client.profile.create({
-      data: {
-        userName,
-        fullName,
-        description,
-        ownerAddress,
-        socialLinkPrimary,
-        socialLinkSecondary,
-        avatar,
-      },
+    return await this.#client.$transaction(async (tx) => {
+      let avatarId: bigint | undefined;
+      if (avatar) {
+        const avatarResult = await this.#client.profileAvatar.create({
+          data: {
+            avatar,
+          },
+        });
+        avatarId = avatarResult.id;
+      }
+
+      return await this.#client.profile.create({
+        data: {
+          userName,
+          fullName,
+          description,
+          ownerAddress,
+          socialLinkPrimary,
+          socialLinkSecondary,
+          avatarId,
+        },
+      });
     });
   }
 }

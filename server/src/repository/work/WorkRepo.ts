@@ -1,10 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { WorkImageRepo } from "./workImage/workImageRepo.js";
+import { WorkImageItem } from "./workImage/WorkImage.js";
 
 export class WorkRepo {
   #client: PrismaClient;
+  #workImageRepo: WorkImageRepo;
 
-  constructor(client: PrismaClient) {
+  constructor(client: PrismaClient, workImageRepo: WorkImageRepo) {
     this.#client = client;
+    this.#workImageRepo = workImageRepo;
   }
 
   async insertWork(
@@ -12,7 +16,8 @@ export class WorkRepo {
     description: string,
     content: string,
     authorId: bigint,
-    topicIds: bigint[]
+    topicIds: bigint[],
+    images?: WorkImageItem[]
   ) {
     return await this.#client.$transaction(async (tx) => {
       const work = await tx.work.create({
@@ -37,6 +42,8 @@ export class WorkRepo {
         data: topicData,
       });
 
+      await this.#workImageRepo.insertWorkImages(images, work.id, tx);
+
       return work;
     });
   }
@@ -48,7 +55,8 @@ export class WorkRepo {
     content: string,
     /// the topics here are considered adds,
     /// if any already exist it will get skipped else it is added
-    topicIds: bigint[]
+    topicIds: bigint[],
+    images?: WorkImageItem[]
   ) {
     return await this.#client.$transaction(async (tx) => {
       await tx.work.update({
@@ -89,6 +97,8 @@ export class WorkRepo {
           topicId,
         })),
       });
+
+      await this.#workImageRepo.insertWorkImages(images, workId, tx);
     });
   }
 
