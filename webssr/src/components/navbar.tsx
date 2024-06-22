@@ -42,10 +42,10 @@ export default function Navbar() {
               ))}
             </ul>
           </div>
-          <a className="btn btn-ghost text-xl" href="/">
+          <Link className="btn btn-ghost text-xl" href="/">
             {" "}
             FreeAuth
-          </a>
+          </Link>
         </div>
         <div className="navbar-center hidden lg:flex">
           {navigation.map((item) => (

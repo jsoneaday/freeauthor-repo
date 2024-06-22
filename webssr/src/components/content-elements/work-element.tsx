@@ -1,6 +1,4 @@
 import { Work } from "@/api/work/work";
-import Image from "next/image";
-import { arrayBufferToBase64 } from "@/lib/ui-utils/arraybuffer";
 import Link from "next/link";
 import ImageElement from "./img-element";
 
@@ -19,9 +17,9 @@ interface WorkElementProps {
 function WorkElement({ work }: WorkElementProps) {
   return (
     <article className="card lg:card-side ring-1 ring-base-content/10 bg-base-300/20 p-7 rounded-3xl">
-      <a className="w-full" href={`/blog/${work.slug}`}>
+      <Link className="w-full" href={`/blog/${work.slug}`}>
         <ImageElement id={work.id} />
-      </a>
+      </Link>
 
       <div className="card-body p-0 lg:ml-7">
         <h2 className="text-xs lg:text-sm text-base-content/70">
@@ -41,7 +39,7 @@ function WorkElement({ work }: WorkElementProps) {
           </p>
         </div>
 
-        <a
+        <Link
           href={`/blog/${work.slug}`}
           className=" text-primary/70 hover:underline mt-auto flex items-center"
         >
@@ -59,7 +57,7 @@ function WorkElement({ work }: WorkElementProps) {
               strokeLinejoin="round"
             />
           </svg>
-        </a>
+        </Link>
       </div>
     </article>
   );

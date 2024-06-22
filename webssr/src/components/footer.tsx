@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="footer md:px-10 px-5 py-4 border-t border-base-300 flex flex-col lg:flex-row justify-between items-center">
@@ -35,13 +37,13 @@ export default function Footer() {
         <div className="grid grid-flow-col gap-4">
           <ul className="menu menu-horizontal px-1 gap-5 md:text-lg font-semibold">
             <li>
-              <a href="/">Home</a>
+              <Link href="/">Home</Link>
             </li>
             <li>
-              <a href="/blog">Articles</a>
+              <Link href="/blog">Articles</Link>
             </li>
             <li>
-              <a href="/about">About</a>
+              <Link href="/about">About</Link>
             </li>
           </ul>
         </div>
