@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { WorkImageRepo } from "./workImage/workImageRepo.js";
+import { WorkImageRepo } from "./workImage/WorkImageRepo.js";
 import { WorkImageItem } from "./workImage/WorkImage.js";
 
 export class WorkRepo {
