@@ -12,6 +12,18 @@ CREATE TABLE "Work" (
 );
 
 -- CreateTable
+CREATE TABLE "WorkImage" (
+    "id" BIGSERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "imagePlaceholder" VARCHAR(50) NOT NULL,
+    "image" BYTEA NOT NULL,
+    "workId" BIGINT NOT NULL,
+
+    CONSTRAINT "WorkImage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Profile" (
     "id" BIGSERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -22,9 +34,19 @@ CREATE TABLE "Profile" (
     "ownerAddress" VARCHAR(150) NOT NULL,
     "socialLinkPrimary" VARCHAR(250),
     "socialLinkSecondary" VARCHAR(250),
-    "avatar" BYTEA,
+    "avatarId" BIGINT,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProfileAvatar" (
+    "id" BIGSERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "avatar" BYTEA NOT NULL,
+
+    CONSTRAINT "ProfileAvatar_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -95,8 +117,17 @@ CREATE TABLE "WorkResponseLike" (
 -- CreateIndex
 CREATE UNIQUE INDEX "Profile_userName_key" ON "Profile"("userName");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "Profile_avatarId_key" ON "Profile"("avatarId");
+
 -- AddForeignKey
 ALTER TABLE "Work" ADD CONSTRAINT "Work_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkImage" ADD CONSTRAINT "WorkImage_workId_fkey" FOREIGN KEY ("workId") REFERENCES "Work"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Profile" ADD CONSTRAINT "Profile_avatarId_fkey" FOREIGN KEY ("avatarId") REFERENCES "ProfileAvatar"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
