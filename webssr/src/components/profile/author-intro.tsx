@@ -1,43 +1,39 @@
 import Image from "next/image";
 import { Metadata, ResolvingMetadata } from "next";
-import { getMostPopularAuthors } from "@/server-actions/profile/profile";
+import { Profile } from "@/repo/profile/profile";
 
 interface MetadataProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  author: Profile;
 }
 
 export async function generateMetadata(
-  { params, searchParams }: MetadataProps,
+  { author }: MetadataProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   return {
-    title: "The work title",
-    description: "This is the work description",
+    title: `Introducing - ${author.userName}`,
+    description: author.description,
   };
 }
 
-export default async function AuthorIntro() {
-  const popAuthors = await getMostPopularAuthors();
-  const popAuthor = popAuthors[0];
-
+export default async function AuthorIntro({ author }: { author: Profile }) {
   return (
     <div className="hero py-10">
       <div className="hero-content p-0 flex-col lg:flex-row">
         <Image
-          src={`/api/profile/avatar/${popAuthor.avatarId}`}
-          alt={popAuthor.userName}
+          src={`/api/profile/avatar/${author.avatarId}`}
+          alt={author.userName}
           height={250}
           width={250}
           className="mb-6 lg:mb-0 rounded-xl shrink-0"
         />
         <div className="text-center lg:text-left lg:ml-10 xl:ml-20">
           <div className="badge badge-outline badge-md md:badge-lg mb-1">
-            <strong className="mx-2">{popAuthor.fullName}</strong>
-            {`@${popAuthor.userName}`}
+            <strong className="mx-2">{author.fullName}</strong>
+            {`@${author.userName}`}
           </div>
           <h1 className="text-2xl md:text-3xl xl:text-4xl font-black brightness-150">
-            {popAuthor.description?.substring(0, 200).replace(/[.]$/, "")}
+            {author.description?.substring(0, 200).replace(/[.]$/, "")}
             <span className="text-primary/70 brightness-50">.</span>
           </h1>
           <div className="flex justify-center lg:justify-start space-x-4 mt-4">

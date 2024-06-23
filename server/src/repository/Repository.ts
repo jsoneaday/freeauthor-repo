@@ -12,6 +12,9 @@ import { ProfileAvatarRepo } from "./profile/ProfileImage/ProfileAvatarRepo.js";
 
 export class Repository {
   #client: PrismaClient;
+  get Client(): PrismaClient {
+    return this.#client;
+  }
 
   #work: WorkRepo;
   get Work() {

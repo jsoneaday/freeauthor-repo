@@ -42,10 +42,7 @@ export class ProfileRepo {
     });
   }
 
-  async selectMostPopularAuthors(
-    fromStartDate: Date,
-    size: number = PAGE_SIZE
-  ) {
+  async selectMostPopularAuthors(size: number = PAGE_SIZE) {
     const authors = await this.#client.work.findMany({
       select: {
         author: {
@@ -54,15 +51,6 @@ export class ProfileRepo {
               include: {
                 workLikes: true,
               },
-            },
-          },
-        },
-      },
-      where: {
-        workLikes: {
-          some: {
-            createdAt: {
-              gt: fromStartDate,
             },
           },
         },

@@ -1,15 +1,6 @@
 "use server";
 
-export type Profile = {
-  id: bigint;
-  updatedAt: string;
-  userName: string;
-  fullName: string;
-  description: string;
-  socialLinkPrimary: string;
-  socialLinkSecondary: string;
-  avatarId: bigint;
-};
+import { Profile } from "@/repo/profile/profile";
 
 export async function getMostPopularAuthors() {
   const response = await fetch(

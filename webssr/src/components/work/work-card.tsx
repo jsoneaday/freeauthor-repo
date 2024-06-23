@@ -1,24 +1,25 @@
 import { Work } from "@/repo/work/work";
 import Link from "next/link";
-import ImageElement from "./img-element";
+import WorkImage from "../content-elements/img-element";
 
 interface WorkElementsProps {
   works: Work[];
 }
 
-export default function WorkElements({ works }: WorkElementsProps) {
-  return works.map((work) => <WorkElement key={work.id} work={work} />);
+export default function WorkCards({ works }: WorkElementsProps) {
+  return works.map((work) => <WorkCard key={work.id} work={work} />);
 }
 
 interface WorkElementProps {
   work: Work;
 }
 
-function WorkElement({ work }: WorkElementProps) {
+function WorkCard({ work }: WorkElementProps) {
+  console.log("work", work);
   return (
     <article className="card lg:card-side ring-1 ring-base-content/10 bg-base-300/20 p-7 rounded-3xl">
       <Link className="w-full" href={`/read/${work.slug}`}>
-        <ImageElement id={work.id} />
+        <WorkImage id={work.id} />
       </Link>
 
       <div className="card-body p-0 lg:ml-7">

@@ -1,6 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { WorkImageRepo } from "./workImage/WorkImageRepo.js";
 import { WorkImageItem } from "./workImage/WorkImage.js";
+import { PAGE_SIZE, SortOrder } from "../lib/utils.js";
+import { DefaultArgs } from "@prisma/client/runtime/library";
 
 export class WorkRepo {
   #client: PrismaClient;
@@ -106,6 +108,7 @@ export class WorkRepo {
     return await this.#client.work.findFirst({
       select: {
         id: true,
+        updatedAt: true,
         title: true,
         description: true,
         content: true,
@@ -136,5 +139,131 @@ export class WorkRepo {
         },
       },
     });
+  }
+
+  async selectMostPopularWorks(size: number = PAGE_SIZE) {
+    const works = await this.#client.work.findMany({
+      select: {
+        id: true,
+        updatedAt: true,
+        title: true,
+        description: true,
+        content: true,
+        authorId: true,
+        author: {
+          select: {
+            userName: true,
+            fullName: true,
+            description: true,
+          },
+        },
+        workTopics: {
+          select: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        workLikes: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: [
+        {
+          workLikes: {
+            _count: SortOrder.Desc,
+          },
+        },
+        { updatedAt: SortOrder.Desc },
+      ],
+      take: size,
+    });
+
+    return works.map((w) => ({
+      id: w.id,
+      updatedAt: w.updatedAt,
+      title: w.title,
+      description: w.description,
+      content: w.content,
+      authorId: w.authorId,
+      userName: w.author.userName,
+      fullName: w.author.fullName,
+      authorDesc: w.author.description,
+      workTopics: w.workTopics,
+      workLikes: w.workLikes,
+    }));
+  }
+
+  async selectLatestWorksByAuthor(
+    authorId: bigint,
+    /// to page backwards use a negative number
+    pageSize: number,
+    /// if cursor is undefined this is the first call
+    lastCursor: bigint = BigInt(0)
+  ) {
+    const works = await this.#client.work.findMany({
+      take: pageSize,
+      skip: lastCursor ? 1 : 0,
+      cursor: lastCursor
+        ? {
+            id: lastCursor,
+          }
+        : undefined,
+      select: {
+        id: true,
+        updatedAt: true,
+        title: true,
+        description: true,
+        content: true,
+        authorId: true,
+        author: {
+          select: {
+            userName: true,
+            fullName: true,
+            description: true,
+          },
+        },
+        workTopics: {
+          select: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        workLikes: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      where: {
+        authorId,
+      },
+      orderBy: {
+        id: SortOrder.Desc,
+      },
+    });
+
+    return works.map((w) => ({
+      id: w.id,
+      updatedAt: w.updatedAt,
+      title: w.title,
+      description: w.description,
+      content: w.content,
+      authorId: w.authorId,
+      userName: w.author.userName,
+      fullName: w.author.fullName,
+      authorDesc: w.author.description,
+      workTopics: w.workTopics,
+      workLikes: w.workLikes,
+    }));
   }
 }

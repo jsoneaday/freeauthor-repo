@@ -9,12 +9,13 @@ export class WorkImageRepo {
     this.#client = client;
   }
 
-  async selectWorkImages(workId: bigint) {
-    return this.#client.workImage.findMany({
+  async selectWorkImage(workId: bigint, placeholder: string) {
+    return this.#client.workImage.findFirst({
       where: {
         workId: {
           equals: workId,
         },
+        imagePlaceholder: placeholder,
       },
     });
   }

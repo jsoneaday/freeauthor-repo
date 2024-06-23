@@ -2,12 +2,23 @@ import { Express } from "express";
 import { repo } from "../SharedData.js";
 
 export function setWorkImageRoutes(app: Express) {
-  app.get("/workimg/:workId", async (req, res) => {
-    const workId = req.params.workId;
+  app.get("/work/image/:workId/:placeholder", async (req, res) => {
+    try {
+      const workId = req.params.workId;
+      const placeholder = req.params.placeholder;
+      console.log("workId", workId);
+      console.log("placeholder", placeholder);
 
-    const images = await repo.WorkImage.selectWorkImages(BigInt(workId));
+      const image = await repo.WorkImage.selectWorkImage(
+        BigInt(workId),
+        placeholder
+      );
 
-    res.contentType("image/jpeg");
-    res.send(images[0].image);
+      res.contentType("image/jpeg");
+      res.status(200).send(image?.image);
+    } catch (e) {
+      console.log(e);
+      res.status(500).json({ error: "Internal server error, image not found" });
+    }
   });
 }

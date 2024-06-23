@@ -1,6 +1,9 @@
 import { Topic } from "../topic/topic";
 
 export class Work {
+  topics: { id: bigint; name: string }[];
+  likes: { id: bigint }[];
+
   get slug() {
     return this.title.trim().replace(/[A-Z]/g, "_");
   }
@@ -14,7 +17,11 @@ export class Work {
     public authorId: bigint,
     public userName: string,
     public fullName: string,
-    public topics: Topic[],
-    public avatar?: ArrayBuffer
-  ) {}
+    public authorDesc: string,
+    workTopics: { id: bigint; name: string }[],
+    workLikes: { id: bigint }[]
+  ) {
+    this.topics = workTopics;
+    this.likes = workLikes;
+  }
 }

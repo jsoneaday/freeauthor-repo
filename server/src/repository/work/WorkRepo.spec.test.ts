@@ -3,6 +3,7 @@ import assert from "node:assert";
 import { Repository } from "../Repository.js";
 import { faker } from "@faker-js/faker";
 import { getAvatar } from "../../__test__/avatar.js";
+import { SortOrder } from "../lib/utils.js";
 
 const repo = new Repository();
 
@@ -129,15 +130,18 @@ describe("Work tests", () => {
       ]
     );
 
-    const workImages = await repo.WorkImage.selectWorkImages(work.id);
+    const workImage = await repo.WorkImage.selectWorkImage(
+      work.id,
+      imagePlaceholder
+    );
 
     assert.equal(work.title, title);
     assert.equal(work.description, description);
     assert.equal(work.content, content);
     assert.equal(work.authorId, author.id);
-    assert.equal(workImages[0].workId, work.id);
-    assert.equal(workImages[0].image.byteLength, image.byteLength);
-    assert.equal(workImages[0].imagePlaceholder, imagePlaceholder);
+    assert.equal(workImage?.workId, work.id);
+    assert.equal(workImage?.image.byteLength, image.byteLength);
+    assert.equal(workImage?.imagePlaceholder, imagePlaceholder);
   });
 
   it("selectWork, gets work with author and correct likes", async () => {
@@ -173,5 +177,99 @@ describe("Work tests", () => {
     assert.equal(work?.author.fullName, fullName);
     assert.equal(work?.author.description, desc);
     assert.equal(work?.workLikes.length, 1);
+  });
+
+  it("selectMostPopularWorks, gets works by most likes", async () => {
+    const title = faker.lorem.sentence(6);
+    const description = faker.lorem.sentence(10);
+    const content = faker.lorem.sentences(2);
+    let avatar: Buffer | undefined = getAvatar();
+
+    const userName = faker.internet.userName();
+    const fullName = faker.internet.displayName();
+    const desc = faker.lorem.sentence(5);
+    const author = await repo.Profile.insertProfile(
+      userName,
+      fullName,
+      desc,
+      faker.lorem.sentence(6),
+      faker.internet.url(),
+      faker.internet.url(),
+      avatar
+    );
+
+    // create data
+    let likeCount = 10;
+    for (let i = 0; i < 10; i++) {
+      const newWork = await repo.Work.insertWork(
+        title,
+        description,
+        content,
+        author.id,
+        []
+      );
+
+      for (let y = 0; y < likeCount; y++) {
+        await repo.WorkLikes.insertWorkLike(newWork.id, author.id);
+      }
+      likeCount -= 1;
+    }
+
+    const works = await repo.Work.selectMostPopularWorks(10);
+
+    // do raw query and compare
+    const rawWorks = await repo.Client.work.findMany({
+      orderBy: {
+        workLikes: {
+          _count: SortOrder.Desc,
+        },
+      },
+      take: 10,
+    });
+
+    assert.equal(works.length, 10);
+    assert.equal(works.length, rawWorks.length);
+  });
+
+  it("selectLatestWorksByAuthor, gets works by author desc", async () => {
+    const title = faker.lorem.sentence(6);
+    const description = faker.lorem.sentence(10);
+    const content = faker.lorem.sentences(2);
+    let avatar: Buffer | undefined = getAvatar();
+
+    const userName = faker.internet.userName();
+    const fullName = faker.internet.displayName();
+    const desc = faker.lorem.sentence(5);
+    const author = await repo.Profile.insertProfile(
+      userName,
+      fullName,
+      desc,
+      faker.lorem.sentence(6),
+      faker.internet.url(),
+      faker.internet.url(),
+      avatar
+    );
+
+    for (let i = 0; i < 10; i++) {
+      const newWork = await repo.Work.insertWork(
+        title,
+        description,
+        content,
+        author.id,
+        []
+      );
+    }
+
+    let works = await repo.Work.selectLatestWorksByAuthor(author.id, 5);
+    assert.equal(works.length, 5);
+    assert.equal(works[0].updatedAt > works[4].updatedAt, true);
+
+    works = await repo.Work.selectLatestWorksByAuthor(
+      author.id,
+      -5,
+      works[works.length - 1].id
+    );
+    assert.equal(works.length, 4); // because query skips one when using cursor
+    assert.equal(works[0].updatedAt > works[3].updatedAt, true);
   });
 });

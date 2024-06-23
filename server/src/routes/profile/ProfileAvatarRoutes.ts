@@ -1,12 +1,11 @@
 import { Express } from "express";
 import { repo } from "../SharedData.js";
-import { serializeBigInt } from "../../repository/lib/JsonUtils.js";
 
 export function setProfileAvatarRoutes(app: Express) {
-  app.get("/profile/avatar/:id", async (req, res) => {
+  app.get("/profile/avatar/:avatarId", async (req, res) => {
     try {
       const file = await repo.ProfileAvatar.selectProfileAvatar(
-        BigInt(req.params.id)
+        BigInt(req.params.avatarId)
       );
 
       res.status(200).contentType("image/jpeg").send(file?.avatar);

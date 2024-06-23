@@ -4,6 +4,7 @@ import { getAvatar } from "../../__test__/avatar.js";
 import { Repository } from "../Repository.js";
 import assert from "node:assert";
 import { Profile, Work } from "@prisma/client";
+import { SortOrder } from "../lib/utils.js";
 
 const repo = new Repository();
 
@@ -77,13 +78,25 @@ describe("ProfileRepo calls", () => {
       likesToInsert -= 1;
     }
 
-    const popAuthors = await repo.Profile.selectMostPopularAuthors(
-      start,
-      count
-    );
+    const popAuthors = await repo.Profile.selectMostPopularAuthors(count);
+    const rawPopAuthors = (
+      await repo.Client.work.findMany({
+        select: {
+          author: true,
+        },
+        orderBy: {
+          workLikes: {
+            _count: SortOrder.Desc,
+          },
+        },
+        take: count,
+      })
+    ).map((a) => a.author);
+
     assert.equal(popAuthors.length, count);
-    assert.equal(popAuthors[0].works.flatMap((w) => w.workLikes).length, 10);
-    assert.equal(popAuthors[9].works.flatMap((w) => w.workLikes).length, 1);
+    assert.equal(popAuthors.length, rawPopAuthors.length);
+    assert.equal(popAuthors[0].id, rawPopAuthors[0].id);
+    assert.equal(popAuthors[9].id, rawPopAuthors[9].id);
   });
 
   it("selectProfileAvatar returns one avatar image", async () => {
