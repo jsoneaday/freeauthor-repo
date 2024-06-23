@@ -1,4 +1,4 @@
-import { Work } from "@/api/work/work";
+import { Work } from "@/repo/work/work";
 import { formattedDate } from "@/lib/utils/DateTimeUtils";
 import { faker } from "@faker-js/faker";
 import { getTestImgFiles } from "./files";

@@ -37,13 +37,13 @@ export default function Footer() {
         <div className="grid grid-flow-col gap-4">
           <ul className="menu menu-horizontal px-1 gap-5 md:text-lg font-semibold">
             <li>
-              <Link href="/">Home</Link>
+              <Link href="/">Explore</Link>
             </li>
             <li>
-              <Link href="/blog">Articles</Link>
+              <Link href="/read">Read</Link>
             </li>
             <li>
-              <Link href="/about">About</Link>
+              <Link href="/write">Write</Link>
             </li>
           </ul>
         </div>

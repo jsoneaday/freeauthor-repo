@@ -1,4 +1,4 @@
-import { Work } from "@/api/work/work";
+import { Work } from "@/repo/work/work";
 import Link from "next/link";
 import ImageElement from "./img-element";
 
@@ -17,7 +17,7 @@ interface WorkElementProps {
 function WorkElement({ work }: WorkElementProps) {
   return (
     <article className="card lg:card-side ring-1 ring-base-content/10 bg-base-300/20 p-7 rounded-3xl">
-      <Link className="w-full" href={`/blog/${work.slug}`}>
+      <Link className="w-full" href={`/read/${work.slug}`}>
         <ImageElement id={work.id} />
       </Link>
 
@@ -29,7 +29,7 @@ function WorkElement({ work }: WorkElementProps) {
             {work.updatedAt}
           </time>
         </h2>
-        <Link href={`/blog/${work.slug}`}>
+        <Link href={`/read/${work.slug}`}>
           <h1 className="font-semibold text-lg lg:text-xl">{work.title}</h1>
         </Link>
 
@@ -40,7 +40,7 @@ function WorkElement({ work }: WorkElementProps) {
         </div>
 
         <Link
-          href={`/blog/${work.slug}`}
+          href={`/read/${work.slug}`}
           className=" text-primary/70 hover:underline mt-auto flex items-center"
         >
           <h2 className="text-sm font-semibold">Read article</h2>

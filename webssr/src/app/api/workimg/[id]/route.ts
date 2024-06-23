@@ -11,5 +11,5 @@ export async function GET(
   if (!response.ok) throw new Error("Failed to get back work image file");
 
   const buffer = Buffer.from(await response.arrayBuffer());
-  return new Response(buffer, { headers: { "Content-Type": "image/jpeg" } });
+  return new Response(buffer, { headers: response.headers });
 }

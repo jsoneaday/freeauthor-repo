@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, ProfileAvatar } from "@prisma/client";
 import { WorkRepo } from "./work/WorkRepo.js";
 import { ProfileRepo } from "./profile/ProfileRepo.js";
 import { TopicRepo } from "./topic/TopicRepo.js";
@@ -7,7 +7,8 @@ import { FollowRepo } from "./follow/FollowRepo.js";
 import { WorkResponseRepo } from "./work/workResponse/WorkResponseRepo.js";
 import { WorkTopicRepo } from "./work/workTopic/WorkTopicRepo.js";
 import { WorkLikesRepo } from "./work/workLikes/WorkLikesRepo.js";
-import { WorkImageRepo } from "./work/workImage/workImageRepo.js";
+import { WorkImageRepo } from "./work/workImage/WorkImageRepo.js";
+import { ProfileAvatarRepo } from "./profile/ProfileImage/ProfileAvatarRepo.js";
 
 export class Repository {
   #client: PrismaClient;
@@ -22,6 +23,12 @@ export class Repository {
   get Profile() {
     if (!this.#profile) throw new Error("profile is undefined");
     return this.#profile;
+  }
+
+  #profileAvatar: ProfileAvatarRepo;
+  get ProfileAvatar() {
+    if (!this.#profileAvatar) throw new Error("profileAvatar is undefined");
+    return this.#profileAvatar;
   }
 
   #workResp: WorkResponseRepo;
@@ -75,6 +82,7 @@ export class Repository {
     this.#workTopic = new WorkTopicRepo(this.#client);
     this.#workLikes = new WorkLikesRepo(this.#client);
     this.#profile = new ProfileRepo(this.#client);
+    this.#profileAvatar = new ProfileAvatarRepo(this.#client);
     this.#topic = new TopicRepo(this.#client);
     this.#likes = new LikeRepo();
     this.#follow = new FollowRepo();

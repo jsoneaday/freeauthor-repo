@@ -8,6 +8,12 @@ const nextConfig = {
         port: "4001",
         pathname: "/workimg/**",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "4001",
+        pathname: "/profile/avatar/**",
+      },
     ],
   },
 };
