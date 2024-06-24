@@ -1,8 +1,8 @@
-db_name="postgres:14-alpine"
-api_name="freeauthapi"
+db_name="freeauth-db"
+api_name="freeauth-api"
 
 echo "clear docker images"
-container_ids=$(docker ps -q --filter "ancestor=$db_name" --filter "ancestor=$api_name")
+container_ids=$(docker ps -q --filter "name=$db_name" --filter "name=$api_name")
 if [ -z "$container_ids" ]; then
   echo "No container id found using image: $db_name or image: $api_name"
 else
@@ -13,7 +13,5 @@ else
 fi
 
 echo "build new images"
-docker compose -f docker-compose.dev.yml up -d --build
+docker compose -p freeauthservices -f docker-compose.dev.yml up -d --build
 
-# echo "setup test data"
-# psql -h localhost -p 5433 -d freeauth -U freeauth -f ./tools/setup-dev-data.sql

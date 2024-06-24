@@ -4,7 +4,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "tsx --test",
+    "test": "psql postgresql://freeauth:freeauth@localhost:5432/freeauth -f ./tools/truncatedevdb.sql && tsx --test",
     "testonly": "tsx --test --test-only",
     "start": "tsx",
     "dev": "tsx watch src/server.ts"
