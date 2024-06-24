@@ -1,4 +1,6 @@
-# Long Form Content App
+# FreeAuth
+
+## A Blogging and Long Form Content App with Builtin Monetization
 
 - David Choi
 - Apache 2.0 License
