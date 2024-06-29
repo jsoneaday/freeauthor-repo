@@ -22,12 +22,22 @@ export function setWorkRoutes(app: Express) {
     res.send(files[0]);
   });
 
-  app.get("/work/popular", async (req, res) => {
+  app.get("/work/popular/:page_size/:cursor?", async (req, res) => {
     try {
+      console.log("cursor", req.params.cursor);
+      const cursor = req.params.cursor ? BigInt(req.params.cursor) : undefined;
+
       res
         .status(200)
-        .json(serializeBigInt(await repo.Work.selectMostPopularWorks()));
+        .json(
+          serializeBigInt(
+            await repo.Work.selectMostPopularWorks(
+              req.params.page_size ? Number(req.params.page_size) : undefined
+            )
+          )
+        );
     } catch (e) {
+      console.log("e", e);
       res
         .status(500)
         .json({ error: "Internval server error, get popular works failed" });

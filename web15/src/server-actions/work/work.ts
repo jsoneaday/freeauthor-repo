@@ -1,12 +1,17 @@
 "use server";
 
+import { PAGE_SIZE } from "@/lib/utils/StandardValues";
 import { Work } from "@/repo/work/work";
 
-export async function getMostPopularWorks() {
-  const response = await fetch(`${process.env.EXTERNAL_API_URL}/work/popular`, {
-    cache: "no-store",
-  });
-
+export async function getMostPopularWorks(
+  cursor?: bigint,
+  pageSize: number = PAGE_SIZE
+) {
+  const _cursor = cursor ? `/${cursor}` : "";
+  const response = await fetch(
+    `${process.env.EXTERNAL_API_URL}/work/popular/${pageSize}${_cursor}`
+  );
+  console.log("response", response);
   if (!response.ok) {
     throw new Error("Failed to get most popular works list");
   }
@@ -21,10 +26,7 @@ export async function getLatestWorksByAuthor(
   const response = await fetch(
     `${process.env.EXTERNAL_API_URL}/work/latest/${authorId}${
       cursor ? "/" + cursor : ""
-    }`,
-    {
-      cache: "no-store",
-    }
+    }`
   );
 
   if (!response.ok) {

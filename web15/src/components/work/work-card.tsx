@@ -24,7 +24,9 @@ function WorkCard({ work }: WorkElementProps) {
 
       <div className="card-body p-0 lg:ml-7">
         <h2 className="text-xs lg:text-sm text-base-content/70">
-          <span>{work.topics.length > 0 ? work.topics[0].name : ""}</span>
+          <span>
+            {work.topics && work.topics.length > 0 ? work.topics[0].name : ""}
+          </span>
           <span className="text-xl font-bold text-primary">.</span>
           <time className="text-xs lg:text-sm text-base-content/70">
             {work.updatedAt}

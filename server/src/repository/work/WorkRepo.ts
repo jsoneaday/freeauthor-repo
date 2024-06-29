@@ -141,8 +141,19 @@ export class WorkRepo {
     });
   }
 
-  async selectMostPopularWorks(size: number = PAGE_SIZE) {
+  /// gets works by like count in descending order
+  async selectMostPopularWorks(
+    pageSize: number = PAGE_SIZE,
+    lastCursor?: bigint
+  ) {
     const works = await this.#client.work.findMany({
+      take: pageSize,
+      skip: lastCursor ? 1 : 0,
+      cursor: lastCursor
+        ? {
+            id: lastCursor,
+          }
+        : undefined,
       select: {
         id: true,
         updatedAt: true,
@@ -179,9 +190,8 @@ export class WorkRepo {
             _count: SortOrder.Desc,
           },
         },
-        { updatedAt: SortOrder.Desc },
+        { id: SortOrder.Desc },
       ],
-      take: size,
     });
 
     return works.map((w) => ({
