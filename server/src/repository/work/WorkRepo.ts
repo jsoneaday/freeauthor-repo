@@ -204,7 +204,10 @@ export class WorkRepo {
       userName: w.author.userName,
       fullName: w.author.fullName,
       authorDesc: w.author.description,
-      workTopics: w.workTopics,
+      workTopics: w.workTopics.map((wt) => ({
+        id: wt.topic.id,
+        name: wt.topic.name,
+      })),
       workLikes: w.workLikes,
     }));
   }

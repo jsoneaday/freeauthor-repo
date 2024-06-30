@@ -15,11 +15,13 @@ interface WorkElementProps {
 }
 
 function WorkCard({ work }: WorkElementProps) {
-  console.log("work", work);
+  console.log("work.topic", work.topics![0].name);
   return (
     <article className="card lg:card-side ring-1 ring-base-content/10 bg-base-300/20 p-7 rounded-3xl">
-      <Link className="w-full" href={`/read/${work.slug}`}>
-        <WorkImage id={work.id} />
+      <Link href={`/read/${work.slug}`}>
+        <div style={{ width: "300px" }}>
+          <WorkImage id={work.id} />
+        </div>
       </Link>
 
       <div className="card-body p-0 lg:ml-7">

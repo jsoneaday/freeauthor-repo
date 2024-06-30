@@ -1,5 +1,6 @@
 "use server";
 
+import { friendlyDate } from "@/lib/utils/DateTimeUtils";
 import { PAGE_SIZE } from "@/lib/utils/StandardValues";
 import { Work } from "@/repo/work/work";
 
@@ -16,7 +17,7 @@ export async function getMostPopularWorks(
     throw new Error("Failed to get most popular works list");
   }
 
-  return (await response.json()) as Work[];
+  return convertToWork(await response.json());
 }
 
 export async function getLatestWorksByAuthor(
@@ -38,11 +39,12 @@ export async function getLatestWorksByAuthor(
 }
 
 function convertToWork(json: any): Work[] {
+  console.log(json);
   return json.map(
     (item: any) =>
       new Work(
         item.id,
-        item.updatedAt,
+        friendlyDate(item.updatedAt),
         item.title,
         item.description,
         item.content,

@@ -13,6 +13,35 @@ for (let i = 0; i < imageNames.length; i++) {
   imageFiles[i] = readFileSync(filePath);
 }
 
+// create topics
+const topics = new Array(5);
+topics[0] = await client.topic.create({
+  data: {
+    name: "Technology",
+  },
+});
+topics[1] = await client.topic.create({
+  data: {
+    name: "Programming",
+  },
+});
+topics[2] = await client.topic.create({
+  data: {
+    name: "Psychology",
+  },
+});
+topics[3] = await client.topic.create({
+  data: {
+    name: "History",
+  },
+});
+topics[4] = await client.topic.create({
+  data: {
+    name: "Self Improvement",
+  },
+});
+
+// create profiles
 const avatarPath = "./src/__test__/avatars";
 const avatarFilePaths = readdirSync(avatarPath);
 const avatars = new Array(avatarFilePaths.length);
@@ -66,6 +95,15 @@ async function addWorks(author) {
         workId: work.id,
         image: imageFiles[imageIndex],
         imagePlaceholder: "main",
+      },
+    });
+
+    let randTopicId = Math.round(Math.random() * 10);
+    randTopicId = randTopicId === 0 ? 1 : randTopicId > 5 ? 5 : randTopicId;
+    await client.workTopic.create({
+      data: {
+        workId: work.id,
+        topicId: BigInt(randTopicId),
       },
     });
 
