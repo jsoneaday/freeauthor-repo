@@ -1,40 +1,42 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface TopicElementProps {
   topicId: string;
   name: string;
   isSelected: boolean;
-  resetPagingState: () => void;
 }
 
 export default function TopicElement({
   topicId,
   name,
   isSelected,
-  resetPagingState,
 }: TopicElementProps) {
-  let localIsSelected = true;
-  const setLocalIsSelected = (isSelected: boolean) => {
-    localIsSelected = isSelected;
-  };
+  let [localIsSelected, setLocalIsSelected] = useState(isSelected);
 
-  if (isSelected) {
+  useEffect(() => {
+    console.log("isSelected", isSelected);
     setLocalIsSelected(isSelected);
-  }
+  }, [isSelected]);
 
   const onClickLinkTopic = () => {
     setLocalIsSelected(true);
-    resetPagingState();
   };
 
   return (
-    <Link href={`/explorer/${topicId}`} onClick={onClickLinkTopic}>
+    <Link href={`/${topicId}`} onClick={onClickLinkTopic}>
       {localIsSelected ? (
-        <div className="topic-item-selected">
-          <div className="topic-item">{name}</div>
+        <div
+          className={`whitespace-nowrap border border-black py px-4 rounded-full m-2`}
+        >
+          {name}
         </div>
       ) : (
-        <div className="topic-item" style={{ margin: ".75em" }}>
+        <div
+          className={`whitespace-nowrap border border-gray-400 py px-4 rounded-full m-4`}
+        >
           {name}
         </div>
       )}

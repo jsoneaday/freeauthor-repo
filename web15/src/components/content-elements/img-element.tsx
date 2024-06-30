@@ -8,10 +8,10 @@ export default function WorkImage({ id }: ImageElementProps) {
   return (
     <Image
       src={`/api/work/image/${id}/main`}
+      className="rounded-xl"
       alt="Description"
-      width={500}
-      height={300} // This will be ignored when using width only
-      layout="intrinsic"
+      width={300}
+      height={300}
     />
   );
 }

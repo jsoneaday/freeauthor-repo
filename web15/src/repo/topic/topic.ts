@@ -1,6 +1,6 @@
 export class Topic {
   constructor(
-    public id: bigint,
+    public id: string,
     public updatedAt: string,
     public name: string
   ) {}

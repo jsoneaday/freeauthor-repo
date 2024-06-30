@@ -12,7 +12,7 @@ export async function getMostPopularWorks(
   const response = await fetch(
     `${process.env.EXTERNAL_API_URL}/work/popular/${pageSize}${_cursor}`
   );
-  console.log("response", response);
+
   if (!response.ok) {
     throw new Error("Failed to get most popular works list");
   }
@@ -39,7 +39,6 @@ export async function getLatestWorksByAuthor(
 }
 
 function convertToWork(json: any): Work[] {
-  console.log(json);
   return json.map(
     (item: any) =>
       new Work(

@@ -8,23 +8,23 @@ import { PAGE_SIZE } from "../../repository/lib/utils.js";
 const filesDir = "./src/__test__/images";
 
 export function setWorkRoutes(app: Express) {
-  app.get("/work/:id", (req, res) => {
-    const filePaths = readdirSync(filesDir);
-    const files: Buffer[] = [];
-    for (const fileName of filePaths) {
-      const filePath = join(filesDir, fileName);
-      if (lstatSync(filePath).isFile()) {
-        const file = readFileSync(filePath);
-        files.push(file);
-      }
+  app.get("/work/:id", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .json(
+          serializeBigInt(await repo.Work.selectWork(BigInt(req.params.id)))
+        );
+    } catch (e) {
+      console.log(e);
+      res
+        .status(500)
+        .json({ error: "Internal server error, failed to get work" });
     }
-    res.contentType("image/jpeg");
-    res.send(files[0]);
   });
 
   app.get("/work/popular/:page_size/:cursor?", async (req, res) => {
     try {
-      console.log("cursor", req.params.cursor);
       const cursor = req.params.cursor ? BigInt(req.params.cursor) : undefined;
 
       res
@@ -51,7 +51,7 @@ export function setWorkRoutes(app: Express) {
         PAGE_SIZE,
         req.params.cursor ? BigInt(req.params.cursor) : undefined
       );
-      console.log("works", works);
+
       res.status(200).json(serializeBigInt(works));
     } catch (e) {
       res

@@ -1,5 +1,3 @@
-import { Topic } from "../topic/topic";
-
 export class Work {
   topics?: { id: bigint; name: string }[];
   likes?: { id: bigint }[];

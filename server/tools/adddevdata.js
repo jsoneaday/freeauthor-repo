@@ -14,32 +14,58 @@ for (let i = 0; i < imageNames.length; i++) {
 }
 
 // create topics
-const topics = new Array(5);
-topics[0] = await client.topic.create({
-  data: {
-    name: "Technology",
-  },
-});
-topics[1] = await client.topic.create({
-  data: {
-    name: "Programming",
-  },
-});
-topics[2] = await client.topic.create({
-  data: {
-    name: "Psychology",
-  },
-});
-topics[3] = await client.topic.create({
-  data: {
-    name: "History",
-  },
-});
-topics[4] = await client.topic.create({
-  data: {
-    name: "Self Improvement",
-  },
-});
+await Promise.all([
+  client.topic.create({
+    data: {
+      name: "Technology",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Programming",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Psychology",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "History",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Self Improvement",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Fitness",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Home Improvement",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Short Stories",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Celebrity",
+    },
+  }),
+  client.topic.create({
+    data: {
+      name: "Lifestyle",
+    },
+  }),
+]);
 
 // create profiles
 const avatarPath = "./src/__test__/avatars";

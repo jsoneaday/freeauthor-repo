@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { SortOrder } from "../lib/utils.js";
 
 export class TopicRepo {
   #client: PrismaClient;
@@ -11,6 +12,14 @@ export class TopicRepo {
     return await this.#client.topic.create({
       data: {
         name,
+      },
+    });
+  }
+
+  async selectAllTopics() {
+    return await this.#client.topic.findMany({
+      orderBy: {
+        name: SortOrder.Desc,
       },
     });
   }

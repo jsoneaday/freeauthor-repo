@@ -1,3 +1,4 @@
+import { TopicList } from "@/components/topic/topic-list";
 import WorkCards from "@/components/work/work-card";
 import { getMostPopularWorks } from "@/server-actions/work/work";
 
@@ -12,10 +13,8 @@ export default async function Explore() {
 
   return (
     <>
-      <div className="mt-16 flex justify-center items-center">
-        <h1 className="text-3xl md:text-5xl font-semibold text-center max-w-2xl">
-          Artitcles on digital marketing, brand building, and design.
-        </h1>
+      <div className="mt-4 flex justify-center items-center flex-wrap w-3/4 m-auto">
+        <TopicList />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-20 mt-16">
         <WorkCards works={works} />
