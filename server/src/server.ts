@@ -11,6 +11,9 @@ dotenv.config();
 const app: Express = express();
 const port = process.env.PORT;
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 setWorkRoutes(app);
 setWorkImageRoutes(app);
 setProfileRoutes(app);

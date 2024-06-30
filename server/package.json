@@ -4,7 +4,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "psql postgresql://freeauth:freeauth@localhost:5432/freeauth -f ./tools/truncatedevdb.sql && tsx --test",
+    "test": "psql postgresql://freeauth:freeauth@localhost:5432/freeauth -f ./tools/resetdbdevdata.sql && tsx --test",
     "testonly": "tsx --test --test-only",
     "start": "tsx",
     "dev": "tsx watch src/server.ts"
@@ -21,6 +21,7 @@
     "tsx": "^4.15.5"
   },
   "devDependencies": {
+    "@types/body-parser": "^1.19.5",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.2",
     "prisma": "^5.15.0",

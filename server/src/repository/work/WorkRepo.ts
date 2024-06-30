@@ -143,6 +143,7 @@ export class WorkRepo {
 
   /// gets works by like count in descending order
   async selectMostPopularWorks(
+    topicId?: bigint,
     pageSize: number = PAGE_SIZE,
     lastCursor?: bigint
   ) {
@@ -184,6 +185,15 @@ export class WorkRepo {
           },
         },
       },
+      where: topicId
+        ? {
+            workTopics: {
+              some: {
+                topicId,
+              },
+            },
+          }
+        : undefined,
       orderBy: [
         {
           workLikes: {

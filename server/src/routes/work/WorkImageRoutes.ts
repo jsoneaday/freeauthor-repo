@@ -6,8 +6,6 @@ export function setWorkImageRoutes(app: Express) {
     try {
       const workId = req.params.workId;
       const placeholder = req.params.placeholder;
-      console.log("workId", workId);
-      console.log("placeholder", placeholder);
 
       const image = await repo.WorkImage.selectWorkImage(
         BigInt(workId),

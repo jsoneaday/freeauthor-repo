@@ -179,7 +179,7 @@ describe("Work tests", () => {
     assert.equal(work?.workLikes.length, 1);
   });
 
-  it("selectMostPopularWorks, gets works by most likes", async () => {
+  it("selectMostPopularWorks, gets all works by most likes", async () => {
     const title = faker.lorem.sentence(6);
     const description = faker.lorem.sentence(10);
     const content = faker.lorem.sentences(2);
@@ -215,7 +215,7 @@ describe("Work tests", () => {
       likeCount -= 1;
     }
 
-    const works = await repo.Work.selectMostPopularWorks(10);
+    const works = await repo.Work.selectMostPopularWorks(undefined, 10);
 
     // do raw query and compare
     const rawWorks = await repo.Client.work.findMany({
@@ -229,6 +229,66 @@ describe("Work tests", () => {
 
     assert.equal(works.length, 10);
     assert.equal(works.length, rawWorks.length);
+  });
+
+  it("selectMostPopularWorks, gets works with most likes by topic", async () => {
+    const title = faker.lorem.sentence(6);
+    const description = faker.lorem.sentence(10);
+    const content = faker.lorem.sentences(2);
+    let avatar: Buffer | undefined = getAvatar();
+
+    const userName = faker.internet.userName();
+    const fullName = faker.internet.displayName();
+    const desc = faker.lorem.sentence(5);
+    const author = await repo.Profile.insertProfile(
+      userName,
+      fullName,
+      desc,
+      faker.lorem.sentence(6),
+      faker.internet.url(),
+      faker.internet.url(),
+      avatar
+    );
+
+    const topics = new Array(10);
+    for (let i = 0; i < 10; i++) {
+      topics[i] = await repo.Topic.insertTopic(faker.company.name());
+    }
+    const usedTopicIds: Set<bigint> = new Set();
+
+    // create data
+    let likeCount = 10;
+    const newWork = new Array(10);
+    for (let i = 0; i < 10; i++) {
+      let topicId = Math.round(Math.random() * 10);
+      topicId = topicId > 9 ? 0 : topicId;
+      usedTopicIds.add(topics[topicId].id);
+
+      newWork[i] = await repo.Work.insertWork(
+        title,
+        description,
+        content,
+        author.id,
+        [topics[topicId].id]
+      );
+
+      for (let y = 0; y < likeCount; y++) {
+        await repo.WorkLikes.insertWorkLike(newWork[i].id, author.id);
+      }
+      likeCount -= 1;
+    }
+
+    const testingTopicId = Array.from(usedTopicIds)[0];
+    const works = await repo.Work.selectMostPopularWorks(testingTopicId, 10);
+
+    assert.equal(
+      works[0].workLikes.length >= works[works.length - 1].workLikes.length,
+      true
+    );
+    assert.equal(
+      works.every((w) => w.workTopics.every((wt) => wt.id === testingTopicId)),
+      true
+    );
   });
 
   it("selectLatestWorksByAuthor, gets works by author desc", async () => {

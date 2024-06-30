@@ -1,11 +1,13 @@
 import { Express } from "express";
-import { lstatSync, readFileSync, readdirSync } from "fs";
-import { join } from "path";
 import { repo } from "../SharedData.js";
 import { serializeBigInt } from "../../repository/lib/JsonUtils.js";
 import { PAGE_SIZE } from "../../repository/lib/utils.js";
 
-const filesDir = "./src/__test__/images";
+type PopularWorkParameter = {
+  topicId: string | undefined;
+  pageSize: number | undefined;
+  cursor: string | undefined;
+};
 
 export function setWorkRoutes(app: Express) {
   app.get("/work/:id", async (req, res) => {
@@ -23,16 +25,24 @@ export function setWorkRoutes(app: Express) {
     }
   });
 
-  app.get("/work/popular/:page_size/:cursor?", async (req, res) => {
+  app.post("/work/popular", async (req, res) => {
     try {
-      const cursor = req.params.cursor ? BigInt(req.params.cursor) : undefined;
-
+      const { topicId, pageSize, cursor }: PopularWorkParameter = req.body;
+      console.log(
+        "topicId, pageSize, cursor",
+        req.body,
+        topicId,
+        pageSize,
+        cursor
+      );
       res
         .status(200)
         .json(
           serializeBigInt(
             await repo.Work.selectMostPopularWorks(
-              req.params.page_size ? Number(req.params.page_size) : undefined
+              topicId ? BigInt(topicId) : undefined,
+              pageSize ? pageSize : undefined,
+              cursor ? BigInt(cursor) : undefined
             )
           )
         );

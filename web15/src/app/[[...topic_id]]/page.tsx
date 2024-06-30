@@ -1,5 +1,6 @@
 import { TopicList } from "@/components/topic/topic-list";
 import WorkCards from "@/components/work/work-card";
+import { Work } from "@/repo/work/work";
 import { getMostPopularWorks } from "@/server-actions/work/work";
 
 enum ValidationStates {
@@ -13,9 +14,17 @@ export type ExploreParams = {
 };
 
 export default async function Explore({ params }: ExploreParams) {
-  const works = await getMostPopularWorks();
+  let works: Work[] | undefined = undefined;
 
-  console.log("topic_id", params?.topic_id);
+  if (params?.topic_id) {
+    works = await getMostPopularWorks(params.topic_id);
+    console.log(
+      "works",
+      works.map((w) => w.topics![0].id)
+    );
+  } else {
+    works = await getMostPopularWorks();
+  }
 
   return (
     <>

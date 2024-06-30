@@ -5,13 +5,19 @@ import { PAGE_SIZE } from "@/lib/utils/StandardValues";
 import { Work } from "@/repo/work/work";
 
 export async function getMostPopularWorks(
-  cursor?: bigint,
+  topicId?: string,
+  cursor?: string,
   pageSize: number = PAGE_SIZE
 ) {
-  const _cursor = cursor ? `/${cursor}` : "";
-  const response = await fetch(
-    `${process.env.EXTERNAL_API_URL}/work/popular/${pageSize}${_cursor}`
-  );
+  const response = await fetch(`${process.env.EXTERNAL_API_URL}/work/popular`, {
+    method: "POST",
+    body: JSON.stringify({
+      topicId,
+      pageSize,
+      cursor,
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
 
   if (!response.ok) {
     throw new Error("Failed to get most popular works list");
