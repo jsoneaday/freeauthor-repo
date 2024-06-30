@@ -1,12 +1,18 @@
+import { TopicList } from "@/components/topic/topic-list";
+import WorkCards from "@/components/work/work-card";
 import { getMostPopularWorks } from "@/server-actions/work/work";
-import { TopicList } from "./topic/topic-list";
-import WorkCards from "./work/work-card";
+
+enum ValidationStates {
+  SearchTxtTooShort = "Search string must be at least 3 characters",
+  SearchTxtTooLong = "Search string must be less than 250 characters",
+  FieldIsValid = "",
+}
 
 export type ExploreParams = {
   params: { topic_id: string | undefined };
 };
 
-export async function ExploreComponent({ params }: ExploreParams) {
+export default async function Explore({ params }: ExploreParams) {
   const works = await getMostPopularWorks();
 
   console.log("topic_id", params?.topic_id);
