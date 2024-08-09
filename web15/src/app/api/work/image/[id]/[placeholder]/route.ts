@@ -5,7 +5,7 @@ export async function GET(
   { params }: { params: { id: string; placeholder: string } }
 ) {
   const response = await fetch(
-    `${process.env.EXTERNAL_API_URL}/work/image/${params.id}/${params.placeholder}`,
+    `${process.env.EXTERNAL_API_URL}/work_image/${params.id}/${params.placeholder}`,
     { cache: "no-store" }
   );
 
