@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { SortOrder } from "../../common/utils.js";
+import { SortOrder } from "../../lib/utils.js";
 
 export class WorkTopicRepo {
   #client: PrismaClient;

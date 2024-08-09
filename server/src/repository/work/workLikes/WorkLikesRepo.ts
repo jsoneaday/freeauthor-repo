@@ -15,4 +15,12 @@ export class WorkLikesRepo {
       },
     });
   }
+
+  async selectWorkLikes(workId: bigint) {
+    return await this.#client.workLike.findMany({
+      where: {
+        workId,
+      },
+    });
+  }
 }

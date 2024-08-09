@@ -16,9 +16,5 @@
     "webssr",
     "common",
     "server"
-  ],
-  "dependencies": {
-    "@ledgerhq/errors": "6.10.0",
-    "@ledgerhq/hw-transport": "6.27.1"
-  }
+  ]
 }

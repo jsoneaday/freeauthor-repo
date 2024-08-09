@@ -1,9 +1,4 @@
-import { testWorkData } from "@/__test__/data";
-import { Work } from "@/api/work/work";
-import WorkElements from "@/components/content-elements/work-element";
-import TopicElement from "@/components/topic-element";
-import { formattedDate } from "@/lib/utils/DateTimeUtils";
-import { faker } from "@faker-js/faker";
+import WorkCards from "@/components/work/work-card";
 
 enum ValidationStates {
   SearchTxtTooShort = "Search string must be at least 3 characters",
@@ -20,7 +15,7 @@ export default function Explore() {
         </h1>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-20 mt-16">
-        <WorkElements works={testWorkData} />
+        <WorkCards works={[]} />
       </div>
     </>
   );

@@ -6,6 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export function getAvatar() {
-  const filePath = join(__dirname, "/longhair.jpg");
+  const filePath = join(__dirname, "/avatars/longhair.jpg");
   return readFileSync(filePath);
 }

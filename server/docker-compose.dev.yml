@@ -1,17 +1,17 @@
 version: "3.8"
 
 services:
-  api:
+  freeauth-api:
     image: freeauthapi
     build:
       context: .
       dockerfile: ./Dockerfile
     depends_on:
-      - db
+      - freeauth-db
     env_file: ./.env.dev
     ports:
-      - 4000:4000
-  db:
+      - 4001:4001
+  freeauth-db:
     image: postgres:14-alpine
     ports:
       - 5432:5432

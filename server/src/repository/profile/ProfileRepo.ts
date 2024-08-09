@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { PAGE_SIZE, SortOrder } from "../lib/utils.js";
 
 export class ProfileRepo {
   #client: PrismaClient;
@@ -39,5 +40,29 @@ export class ProfileRepo {
         },
       });
     });
+  }
+
+  async selectMostPopularAuthors(size: number = PAGE_SIZE) {
+    const authors = await this.#client.work.findMany({
+      select: {
+        author: {
+          include: {
+            works: {
+              include: {
+                workLikes: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        workLikes: {
+          _count: SortOrder.Desc,
+        },
+      },
+      take: size,
+    });
+
+    return authors.map((a) => a.author);
   }
 }
