@@ -34,7 +34,7 @@ export async function getLatestWorksByAuthor(
   cursor?: bigint
 ) {
   const response = await fetch(
-    `${process.env.EXTERNAL_API_URL}/work/latest/${authorId}${
+    `${process.env.EXTERNAL_API_URL}/work_latest/${authorId}${
       cursor ? "/" + cursor : ""
     }`
   );

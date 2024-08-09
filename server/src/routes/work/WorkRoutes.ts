@@ -55,7 +55,7 @@ export function setWorkRoutes(app: Express) {
     }
   });
 
-  app.get("/work/latest/:authorId/:cursor?", async (req, res) => {
+  app.get("/work_latest/:authorId/:cursor?", async (req, res) => {
     try {
       const works = await repo.Work.selectLatestWorksByAuthor(
         BigInt(req.params.authorId),

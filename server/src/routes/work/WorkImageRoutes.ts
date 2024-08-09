@@ -2,7 +2,7 @@ import { Express } from "express";
 import { repo } from "../SharedData.js";
 
 export function setWorkImageRoutes(app: Express) {
-  app.get("/work/image/:workId/:placeholder", async (req, res) => {
+  app.get("/work_image/:workId/:placeholder", async (req, res) => {
     try {
       const workId = req.params.workId;
       const placeholder = req.params.placeholder;
