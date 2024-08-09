@@ -2,6 +2,7 @@ import { Express } from "express";
 import { repo } from "../SharedData.js";
 import { serializeBigInt } from "../../repository/lib/JsonUtils.js";
 import { PAGE_SIZE } from "../../repository/lib/utils.js";
+import { logger } from "../../lib/utils/Logger.js";
 
 type PopularWorkParameter = {
   topicId: string | undefined;
@@ -25,10 +26,10 @@ export function setWorkRoutes(app: Express) {
     }
   });
 
-  app.post("/work/popular", async (req, res) => {
+  app.post("/work_popular", async (req, res) => {
     try {
       const { topicId, pageSize, cursor }: PopularWorkParameter = req.body;
-      console.log(
+      logger.info(
         "topicId, pageSize, cursor",
         req.body,
         topicId,
@@ -47,7 +48,7 @@ export function setWorkRoutes(app: Express) {
           )
         );
     } catch (e) {
-      console.log("e", e);
+      logger.error("e", e);
       res
         .status(500)
         .json({ error: "Internval server error, get popular works failed" });

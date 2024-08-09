@@ -10,7 +10,7 @@ services:
       - freeauth-db
     env_file: ./.env.dev
     ports:
-      - 4000:4000
+      - 4001:4001
   freeauth-db:
     image: postgres:14-alpine
     ports:

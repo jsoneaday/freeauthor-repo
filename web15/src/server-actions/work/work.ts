@@ -9,7 +9,9 @@ export async function getMostPopularWorks(
   cursor?: string,
   pageSize: number = PAGE_SIZE
 ) {
-  const response = await fetch(`${process.env.EXTERNAL_API_URL}/work/popular`, {
+  console.log(topicId, cursor, pageSize);
+  const url = `${process.env.EXTERNAL_API_URL}/work_popular`;
+  const response = await fetch(url, {
     method: "POST",
     body: JSON.stringify({
       topicId,
@@ -20,6 +22,7 @@ export async function getMostPopularWorks(
   });
 
   if (!response.ok) {
+    console.error(await response.text());
     throw new Error("Failed to get most popular works list");
   }
 
